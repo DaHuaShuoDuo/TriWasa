@@ -1,0 +1,148 @@
+apply plugin: 'net.fabricmc.fabric-loom'
+apply plugin: 'maven-publish'
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = "${project.archives_base_name}-fabric-${project.minecraft_version}"
+}
+
+sourceSets {
+	main {
+		java.srcDirs = [rootProject.file('src/main/java')]
+		resources.srcDirs = [rootProject.file('src/main/resources')]
+	}
+	test {
+		java.srcDirs = [rootProject.file('src/test/java')]
+	}
+}
+
+repositories {
+	flatDir {
+		dirs rootProject.file('libs')
+	}
+	maven {
+		name = 'Masa'
+		url = 'https://masa.dy.fi/maven/sakura-ryoko'
+		content {
+			includeGroupAndSubgroups('fi.dy.masa')
+		}
+	}
+	maven {
+		name = 'Fallen Breath'
+		url = 'https://maven.fallenbreath.me/releases'
+		content {
+			includeGroup('me.fallenbreath')
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	if (project.hasProperty('malilib_local_file')) {
+		implementation files(rootProject.file("libs/${project.malilib_local_file}"))
+	}
+	else {
+		implementation "fi.dy.masa.malilib:${project.malilib_module}:${project.malilib_version}"
+	}
+
+	if (project.hasProperty('litematica_local_file')) {
+		implementation files(rootProject.file("libs/${project.litematica_local_file}"))
+	}
+	else {
+		implementation("fi.dy.masa.litematica:${project.litematica_module}:${project.litematica_version}") {
+			exclude group: 'net.fabricmc', module: 'fabric-loader'
+			exclude group: 'fi.dy.masa.malilib'
+		}
+	}
+
+	// REI is optional at runtime; these dependencies are only needed for client Mixin compilation.
+	compileOnly files(rootProject.file("libs/RoughlyEnoughItems-fabric-${project.rei_version}.jar"))
+	compileOnly files(rootProject.file("libs/cloth-config-fabric-${project.cloth_config_version}.jar"))
+	compileOnly files(rootProject.file('libs/basic-math-0.6.1.jar'))
+}
+
+loom {
+	mixin {
+		useLegacyMixinAp = false
+	}
+}
+
+def processedVersion = project.version.toString()
+def minecraftDependency = project.minecraft_dependency
+def fabricLoaderDependency = project.fabricloader_dependency
+def fabricApiDependency = project.fabric_api_dependency
+def malilibDependency = project.malilib_dependency
+def litematicaDependency = project.litematica_dependency
+
+processResources {
+	inputs.property 'version', processedVersion
+	inputs.property 'minecraft_dependency', minecraftDependency
+	inputs.property 'fabricloader_dependency', fabricLoaderDependency
+	inputs.property 'fabric_api_dependency', fabricApiDependency
+	inputs.property 'malilib_dependency', malilibDependency
+	inputs.property 'litematica_dependency', litematicaDependency
+
+	filesMatching('fabric.mod.json') {
+		expand 'version': processedVersion,
+				'minecraft_dependency': minecraftDependency,
+				'fabricloader_dependency': fabricLoaderDependency,
+				'fabric_api_dependency': fabricApiDependency,
+				'malilib_dependency': malilibDependency,
+				'litematica_dependency': litematicaDependency
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.release = 25
+	options.encoding = 'UTF-8'
+	options.compilerArgs += ['-Xlint:deprecation']
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+
+	withSourcesJar()
+}
+
+def archiveBaseName = project.base.archivesName.get()
+jar {
+	from(rootProject.file('LICENSE')) {
+		rename { "${it}_${archiveBaseName}" }
+	}
+	from(rootProject.file('THIRD_PARTY_NOTICES.md')) {
+		rename { "THIRD_PARTY_NOTICES_${archiveBaseName}.md" }
+	}
+}
+
+publishing {
+	publications {
+		create('mavenJava', MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+}
+
+def testRuntimeClasspath = sourceSets.test.runtimeClasspath
+tasks.register('logicTest', JavaExec) {
+	group = 'verification'
+	description = 'Runs dependency-free Easy Place protocol tests.'
+	dependsOn testClasses
+	classpath = testRuntimeClasspath
+	mainClass = 'top.frostor.triwasa.easyplace.EasyPlaceProtocolTest'
+}
+
+tasks.named('check').configure {
+	dependsOn 'logicTest'
+}
+
+tasks.named('test').configure {
+	failOnNoDiscoveredTests = false
+}

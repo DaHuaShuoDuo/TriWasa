@@ -1,0 +1,21 @@
+{
+	"modmenu.nameTranslation.triwasa": "TriWasa",
+	"modmenu.descriptionTranslation.triwasa": "Litematica compatibility for FCA V2-Extra easy place, plus optional fixes for other client mods.",
+	"triwasa.gui.title": "TriWasa Configs",
+	"triwasa.gui.config_category.porting": "Ports",
+	"triwasa.gui.config_category.other_mod_fixes": "Other Mod Fixes",
+	"triwasa.fix.rei_submenu_text_fix": "REI Submenu Text Fix",
+	"triwasa.gui.expand_settings": "Expand or collapse sub-options",
+	"triwasa.config.porting.name.easyPlaceV2ProtocolExtra": "easyPlaceV2ProtocolExtra",
+	"triwasa.config.porting.prettyName.easyPlaceV2ProtocolExtra": "Enable V2-Extra Easy Place Protocol",
+	"triwasa.config.porting.comment.easyPlaceV2ProtocolExtra": "Enables the client-side V2-Extra easy-place protocol after the server confirms support. Use [+] to show its sub-options.",
+	"triwasa.config.porting.name.easyPlaceExpanded": "easyPlaceExpanded",
+	"triwasa.config.porting.prettyName.easyPlaceExpanded": "Expand Easy Place Sub-options",
+	"triwasa.config.porting.comment.easyPlaceExpanded": "Stores whether the Easy Place sub-options are expanded.",
+	"triwasa.config.porting.name.easyPlaceRailBlockNoShapeUpdate": "easyPlaceRailBlockNoShapeUpdate",
+	"triwasa.config.porting.prettyName.easyPlaceRailBlockNoShapeUpdate": "Preserve Rail Shape During Easy Place",
+	"triwasa.config.porting.comment.easyPlaceRailBlockNoShapeUpdate": "Requests that the server preserve the projected rail shape during this easy-place operation.",
+	"triwasa.config.porting.name.easyPlaceCrafterLockSlot": "easyPlaceCrafterLockSlot",
+	"triwasa.config.porting.prettyName.easyPlaceCrafterLockSlot": "Lock Crafter Slots During Easy Place",
+	"triwasa.config.porting.comment.easyPlaceCrafterLockSlot": "Copies disabled crafter slots from the schematic when placing a crafter."
+}

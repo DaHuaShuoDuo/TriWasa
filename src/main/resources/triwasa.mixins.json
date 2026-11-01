@@ -1,0 +1,19 @@
+{
+	"required": true,
+	"package": "top.frostor.triwasa.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"plugin": "top.frostor.triwasa.mixin.TriWasaMixinPlugin",
+	"client": [
+		"EasyPlaceCallSiteMixin",
+		"EasyPlaceV3Mixin",
+		"EasyPlaceWorldUtilsCallSiteMixin",
+		"LitematicaPrinterMixin",
+		"PlacementHandlerMixin",
+		"StandingAndWallBlockItemAccessor",
+		"rei.ReiCraftableFilterIconMixin",
+		"rei.ReiGuiGraphicsMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,0 +1,148 @@
+package top.frostor.triwasa.easyplace;
+
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.config.TriWasaConfigs;
+
+public final class EasyPlaceClientNetwork
+{
+	private static final String FCA_MOD_ID = "frostors-carpet-addition";
+	private static final int PROTOCOL_VERSION = 1;
+	private static final String NBT_PROTOCOL_VERSION = "protocol_version";
+	private static final String NBT_CAPABILITIES = "capabilities";
+	private static final String CAPABILITY_EASY_PLACE_V2_EXTRA = "easy_place_v2_extra";
+	private static boolean serverSupports;
+	private static boolean helloPending;
+	private static boolean wasEnabled;
+
+	private EasyPlaceClientNetwork()
+	{
+	}
+
+	public static void register()
+	{
+		if(!FabricLoader.getInstance().isModLoaded(FCA_MOD_ID))
+		{
+			PayloadTypeRegistry.serverboundPlay().register(EasyPlacePayload.TYPE, EasyPlacePayload.CODEC);
+			PayloadTypeRegistry.clientboundPlay().register(EasyPlacePayload.TYPE, EasyPlacePayload.CODEC);
+		}
+		ClientPlayNetworking.registerGlobalReceiver(EasyPlacePayload.TYPE, (payload, context) -> {
+			context.client().execute(() -> {
+				if(payload.packetId() == EasyPlacePayload.HELLO_ACK)
+				{
+					serverSupports = acceptsCapability(payload.data());
+					TriWasa.LOGGER.info(
+							"[EasyPlace] Client received V2-Extra acknowledgement (capability={})",
+							serverSupports
+					);
+				}
+			});
+		});
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+			reset();
+			helloPending = true;
+			trySendHello(client);
+		});
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
+		ClientTickEvents.END_CLIENT_TICK.register(EasyPlaceClientNetwork::tick);
+	}
+
+	public static boolean isActive()
+	{
+		return TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue() && serverSupports;
+	}
+
+	public static void onConfigChanged(boolean enabled)
+	{
+		serverSupports = false;
+		if(!enabled)
+		{
+			helloPending = false;
+			wasEnabled = false;
+			EasyPlaceCrafterSlotLock.clear();
+			return;
+		}
+
+		wasEnabled = true;
+		Minecraft client = Minecraft.getInstance();
+		helloPending = client.player != null && client.getConnection() != null;
+		if(helloPending)
+		{
+			trySendHello(client);
+		}
+	}
+
+	public static void reset()
+	{
+		serverSupports = false;
+		helloPending = false;
+		wasEnabled = TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue();
+		EasyPlaceCrafterSlotLock.clear();
+	}
+
+	private static void tick(Minecraft client)
+	{
+		boolean enabled = TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue();
+		if(enabled && !wasEnabled)
+		{
+			helloPending = client.player != null;
+		}
+		if(!enabled)
+		{
+			serverSupports = false;
+			helloPending = false;
+		}
+		wasEnabled = enabled;
+
+		if(helloPending)
+		{
+			trySendHello(client);
+		}
+		EasyPlaceCrafterSlotLock.clear();
+	}
+
+	private static void trySendHello(Minecraft client)
+	{
+		if(!helloPending
+				|| client.player == null
+				|| client.getConnection() == null
+				|| !TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue())
+		{
+			return;
+		}
+
+		CompoundTag data = new CompoundTag();
+		String version = FabricLoader.getInstance()
+				.getModContainer(TriWasa.MOD_ID)
+				.orElseThrow()
+				.getMetadata()
+				.getVersion()
+				.getFriendlyString();
+		data.putString("mod_version", version);
+		data.putInt(NBT_PROTOCOL_VERSION, PROTOCOL_VERSION);
+		data.putBoolean(CAPABILITY_EASY_PLACE_V2_EXTRA, true);
+		ListTag capabilities = new ListTag();
+		capabilities.add(StringTag.valueOf(CAPABILITY_EASY_PLACE_V2_EXTRA));
+		data.put(NBT_CAPABILITIES, capabilities);
+		ClientPlayNetworking.send(new EasyPlacePayload(EasyPlacePayload.HELLO, data));
+		TriWasa.LOGGER.info("[EasyPlace] Client sent V2-Extra hello");
+		helloPending = false;
+	}
+
+	static boolean acceptsCapability(CompoundTag data)
+	{
+		if(!data.contains(NBT_PROTOCOL_VERSION))
+		{
+			return true;
+		}
+		return data.getBooleanOr(CAPABILITY_EASY_PLACE_V2_EXTRA, false);
+	}
+}

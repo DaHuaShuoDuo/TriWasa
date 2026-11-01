@@ -1,0 +1,20 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+rootProject.name = 'TriWasa'
+
+for (String version : ['26.2', '26.3']) {
+	include(":$version")
+
+	def project = project(":$version")
+	project.projectDir = file("versions/$version")
+	project.buildFileName = '../../common.gradle'
+}
