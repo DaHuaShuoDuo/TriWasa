@@ -30,10 +30,13 @@ final class TriWasaConfigListWidget extends WidgetListConfigOptions
 	protected Collection<ConfigOptionWrapper> getAllEntries()
 	{
 		return super.getAllEntries().stream()
-				.filter(entry -> entry.getConfig() != TriWasaConfigs.EASY_PLACE_EXPANDED)
-				.filter(entry -> TriWasaConfigs.EASY_PLACE_EXPANDED.getBooleanValue()
-						|| this.hasFilter()
-						|| !TriWasaConfigs.EASY_PLACE_CHILDREN.contains(entry.getConfig()))
+				.filter(entry -> !TriWasaConfigs.EXPANSION_STATE_OPTIONS.contains(entry.getConfig()))
+				.filter(entry -> {
+					IConfigBase parent = TriWasaConfigs.getParentConfig(entry.getConfig());
+					return parent == null
+							|| this.hasFilter()
+							|| TriWasaConfigs.isExpandedParent(parent);
+				})
 				.toList();
 	}
 
@@ -47,9 +50,10 @@ final class TriWasaConfigListWidget extends WidgetListConfigOptions
 			return strings;
 		}
 
-		if(TriWasaConfigs.EASY_PLACE_CHILDREN.contains(config))
+		IConfigBase parent = TriWasaConfigs.getParentConfig(config);
+		if(parent != null)
 		{
-			addSearchStrings(strings, TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA);
+			addSearchStrings(strings, parent);
 		}
 		return strings;
 	}
@@ -81,7 +85,7 @@ final class TriWasaConfigListWidget extends WidgetListConfigOptions
 			}
 
 			int indent = 18;
-			if(TriWasaConfigs.EASY_PLACE_CHILDREN.contains(config))
+			if(TriWasaConfigs.isChildConfig(config))
 			{
 				indent += TriWasaConfigOptionWidget.CHILD_INDENT;
 			}

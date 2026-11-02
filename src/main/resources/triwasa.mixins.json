@@ -7,8 +7,13 @@
 		"EasyPlaceCallSiteMixin",
 		"EasyPlaceV3Mixin",
 		"EasyPlaceWorldUtilsCallSiteMixin",
+		"ItemPickupFilterMixin",
+		"LivingEntitySwingMixin26_2",
+		"LivingEntitySwingMixin26_3",
 		"LitematicaPrinterMixin",
+		"PacketProcessorMixin",
 		"PlacementHandlerMixin",
+		"QuickShulkerRestockScreenMixin",
 		"StandingAndWallBlockItemAccessor",
 		"rei.ReiCraftableFilterIconMixin",
 		"rei.ReiGuiGraphicsMixin"

@@ -37,7 +37,7 @@ final class TriWasaConfigOptionWidget extends WidgetConfigOption
 	@Override
 	protected void addConfigOption(int x, int y, int labelWidth, int configWidth, IConfigBase config)
 	{
-		if(TriWasaConfigs.EASY_PLACE_CHILDREN.contains(config))
+		if(TriWasaConfigs.isChildConfig(config))
 		{
 			x += CHILD_INDENT;
 			labelWidth = Math.max(20, labelWidth - CHILD_INDENT);
@@ -48,9 +48,10 @@ final class TriWasaConfigOptionWidget extends WidgetConfigOption
 		labelWidth = Math.max(20, labelWidth - EXPAND_BUTTON_WIDTH);
 		super.addConfigOption(x, y, labelWidth, configWidth, config);
 
-		if(config == TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA)
+		ConfigBoolean expansion = TriWasaConfigs.getExpansionState(config);
+		if(expansion != null)
 		{
-			this.addExpandButton(expandButtonX, y, TriWasaConfigs.EASY_PLACE_EXPANDED);
+			this.addExpandButton(expandButtonX, y, expansion);
 		}
 	}
 

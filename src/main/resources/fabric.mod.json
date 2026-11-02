@@ -3,7 +3,7 @@
 	"id": "triwasa",
 	"version": "${version}",
 	"name": "TriWasa",
-	"description": "Litematica compatibility for FCA V2-Extra easy place, plus optional fixes for other client mods.",
+	"description": "Litematica compatibility for FCA V2-Extra easy place, optional Quick Shulker hand restocking, a client item pickup filter, and fixes for other client mods.",
 	"authors": [
 		"Frostor"
 	],
@@ -26,7 +26,8 @@
 		"litematica": "${litematica_dependency}"
 	},
 	"suggests": {
-		"roughlyenoughitems": "*"
+		"roughlyenoughitems": "*",
+		"quickshulker": "*"
 	},
 	"breaks": {
 		"earlycompat": "*"

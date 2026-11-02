@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import top.frostor.triwasa.config.TriWasaConfigGui;
 import top.frostor.triwasa.config.TriWasaConfigs;
 import top.frostor.triwasa.easyplace.EasyPlaceClientNetwork;
+import top.frostor.triwasa.pickupfilter.ItemPickupFilter;
+import top.frostor.triwasa.quickshulker.QuickShulkerHandRestock;
 
 /**
  * Client entry point for TriWasa's Litematica integration.
@@ -24,6 +26,8 @@ public final class TriWasa implements ClientModInitializer
 	public void onInitializeClient()
 	{
 		EasyPlaceClientNetwork.register();
+		ItemPickupFilter.register();
+		QuickShulkerHandRestock.register();
 		InitializationHandler.getInstance().registerInitializationHandler(() -> {
 			ConfigManager.getInstance().registerConfigHandler(MOD_ID, new TriWasaConfigs());
 			Registry.CONFIG_SCREEN.registerConfigScreenFactory(

@@ -24,6 +24,14 @@ public final class TriWasaMixinPlugin implements IMixinConfigPlugin
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName)
 	{
+		if(mixinClassName.endsWith(".LivingEntitySwingMixin26_2"))
+		{
+			return isMinecraftVersion("26.2");
+		}
+		if(mixinClassName.endsWith(".LivingEntitySwingMixin26_3"))
+		{
+			return isMinecraftVersion("26.3");
+		}
 		if(mixinClassName.endsWith(".LitematicaPrinterMixin"))
 		{
 			return FabricLoader.getInstance().isModLoaded("litematica-printer");
@@ -34,6 +42,15 @@ public final class TriWasaMixinPlugin implements IMixinConfigPlugin
 			return FabricLoader.getInstance().isModLoaded("roughlyenoughitems");
 		}
 		return true;
+	}
+
+	private static boolean isMinecraftVersion(String version)
+	{
+		return FabricLoader.getInstance()
+				.getModContainer("minecraft")
+				.map(container -> container.getMetadata().getVersion().getFriendlyString())
+				.filter(version::equals)
+				.isPresent();
 	}
 
 	@Override

@@ -62,6 +62,10 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 		{
 			return ConfigOptionWrapper.createFor(TriWasaConfigs.PORTING_OPTIONS);
 		}
+		if(currentTab == Tab.UTILITIES)
+		{
+			return ConfigOptionWrapper.createFor(TriWasaConfigs.UTILITY_OPTIONS);
+		}
 
 		List<ConfigOptionWrapper> wrappers = new ArrayList<>();
 		wrappers.add(new ConfigOptionWrapper(
@@ -89,6 +93,7 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 	private enum Tab
 	{
 		PORTING("triwasa.gui.config_category.porting"),
+		UTILITIES("triwasa.gui.config_category.utilities"),
 		OTHER_MOD_FIXES("triwasa.gui.config_category.other_mod_fixes");
 
 		private final String translationKey;
