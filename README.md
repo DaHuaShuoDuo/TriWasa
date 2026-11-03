@@ -208,17 +208,8 @@ MaLiLib、Litematica 以及开发期 FCA/Carpet JAR 只用于编译和测试，�
 
 ## 测试
 
-构建会编译逻辑测试和客户端 GameTest。运行 GameTest 会启动 Minecraft，只有在你明确
-同意 Minecraft EULA 后才能传入 `-PacceptMinecraftEula=true`：
-
-```powershell
-.\gradlew.bat :26.2:runClientGameTest :26.3:runClientGameTest -PacceptMinecraftEula=true
-```
-
-该参数会让测试运行目录写入 EULA 接受标记。普通构建不会启动游戏，也不会默认接受 EULA。
-
-客户端 GameTest 会创建独立测试世界，不读取现有玩家世界。它可以验证菜单、协议、快照和
-界面类加载，但真实鼠标拖拽、快捷键和设备环境仍需人工验证。
+构建会运行不启动游戏的逻辑、协议、快照、布局和动作队列测试。真实菜单交互、鼠标拖拽、
+快捷键和设备环境仍需在开发客户端中人工验证。
 
 ## 项目结构
 
@@ -235,7 +226,6 @@ src/main/java/top/frostor/triwasa
 
 src/main/resources   元数据、Mixin、翻译、GUI 材质和音效
 src/test/java        逻辑、协议、快照、布局和动作队列测试
-src/gametest         客户端 Fabric GameTest
 versions/26.2        26.2 版本属性
 versions/26.3        26.3 版本属性
 ```

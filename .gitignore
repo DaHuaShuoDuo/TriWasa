@@ -7,6 +7,7 @@ run/
 .cache/
 *.class
 /docs/
+/src/gametest/
 
 # Runtime logs and crash reports
 logs/
