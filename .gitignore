@@ -6,6 +6,7 @@ out/
 run/
 .cache/
 *.class
+/docs/
 
 # Runtime logs and crash reports
 logs/

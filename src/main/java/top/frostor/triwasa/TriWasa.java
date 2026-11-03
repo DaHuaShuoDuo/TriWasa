@@ -7,6 +7,7 @@ import fi.dy.masa.malilib.util.data.ModInfo;
 import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.frostor.triwasa.bigenderchest.BigEnderChestClient;
 import top.frostor.triwasa.config.TriWasaConfigGui;
 import top.frostor.triwasa.config.TriWasaConfigs;
 import top.frostor.triwasa.easyplace.EasyPlaceClientNetwork;
@@ -25,6 +26,7 @@ public final class TriWasa implements ClientModInitializer
 	@Override
 	public void onInitializeClient()
 	{
+		BigEnderChestClient.initialize();
 		EasyPlaceClientNetwork.register();
 		ItemPickupFilter.register();
 		QuickShulkerHandRestock.register();

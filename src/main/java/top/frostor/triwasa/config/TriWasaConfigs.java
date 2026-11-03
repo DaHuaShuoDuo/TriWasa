@@ -13,6 +13,10 @@ import fi.dy.masa.malilib.config.options.ConfigStringList;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.data.json.JsonUtils;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.bigenderchest.BigEnderChestSortDirection;
+import top.frostor.triwasa.bigenderchest.BigEnderChestSortField;
+import top.frostor.triwasa.bigenderchest.BigEnderChestTerminalStyle;
+import top.frostor.triwasa.bigenderchest.network.BigEnderChestClientNetwork;
 import top.frostor.triwasa.easyplace.EasyPlaceClientNetwork;
 import top.frostor.triwasa.pickupfilter.ItemPickupFilter;
 import top.frostor.triwasa.pickupfilter.PickupFilterFeedback;
@@ -27,10 +31,13 @@ public final class TriWasaConfigs implements IConfigHandler
 {
 	public static final String PORTING_KEY = "Porting";
 	public static final String UTILITIES_KEY = "Utilities";
+	public static final String BIG_ENDER_CHEST_KEY = "BigEnderChest";
 	public static final String PICKUP_FILTER_KEY = "ItemPickupFilter";
 	public static final String CONFIG_FILE_NAME = TriWasa.MOD_ID + ".json";
 	public static final String PORTING_TRANSLATION_PREFIX = "triwasa.config.porting";
 	public static final String UTILITIES_TRANSLATION_PREFIX = "triwasa.config.utilities";
+	public static final String BIG_ENDER_CHEST_TRANSLATION_PREFIX =
+			"triwasa.config.big_ender_chest";
 	public static final String PICKUP_FILTER_TRANSLATION_PREFIX = "triwasa.config.pickup_filter";
 	private static final String LEGACY_CONFIG_FILE_NAME = "earlycompat.json";
 
@@ -50,6 +57,31 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ConfigInteger QUICK_SHULKER_HAND_RESTOCK_THRESHOLD =
 			new ConfigInteger("quickShulkerHandRestockThreshold", 8, 1, 63, true)
 					.apply(UTILITIES_TRANSLATION_PREFIX);
+
+	public static final ConfigBoolean BIG_ENDER_CHEST_TERMINAL_ENABLED =
+			new ConfigBoolean("bigEnderChestTerminalEnabled", true)
+					.apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
+	public static final ConfigBoolean BIG_ENDER_CHEST_TERMINAL_EXPANDED =
+			new ConfigBoolean("bigEnderChestTerminalExpanded", false)
+					.apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
+	public static final ConfigOptionList BIG_ENDER_CHEST_TERMINAL_STYLE =
+			new ConfigOptionList(
+					"bigEnderChestTerminalStyle",
+					BigEnderChestTerminalStyle.STANDARD
+			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
+	public static final ConfigOptionList BIG_ENDER_CHEST_SORT_FIELD =
+			new ConfigOptionList(
+					"bigEnderChestSortField",
+					BigEnderChestSortField.NAME
+			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
+	public static final ConfigOptionList BIG_ENDER_CHEST_SORT_DIRECTION =
+			new ConfigOptionList(
+					"bigEnderChestSortDirection",
+					BigEnderChestSortDirection.ASCENDING
+			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
+	public static final ConfigBoolean BIG_ENDER_CHEST_REMEMBER_SEARCH =
+			new ConfigBoolean("bigEnderChestRememberSearch", false)
+					.apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
 
 	public static final ConfigBoolean PICKUP_FILTER_ENABLED =
 			new ConfigBoolean("itemPickupFilterEnabled", false).apply(PICKUP_FILTER_TRANSLATION_PREFIX);
@@ -89,6 +121,20 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ImmutableList<IConfigBase> QUICK_SHULKER_HAND_RESTOCK_CHILDREN = ImmutableList.of(
 			QUICK_SHULKER_HAND_RESTOCK_THRESHOLD
 	);
+	public static final ImmutableList<IConfigBase> BIG_ENDER_CHEST_OPTIONS = ImmutableList.of(
+			BIG_ENDER_CHEST_TERMINAL_ENABLED,
+			BIG_ENDER_CHEST_TERMINAL_EXPANDED,
+			BIG_ENDER_CHEST_TERMINAL_STYLE,
+			BIG_ENDER_CHEST_SORT_FIELD,
+			BIG_ENDER_CHEST_SORT_DIRECTION,
+			BIG_ENDER_CHEST_REMEMBER_SEARCH
+	);
+	public static final ImmutableList<IConfigBase> BIG_ENDER_CHEST_CHILDREN = ImmutableList.of(
+			BIG_ENDER_CHEST_TERMINAL_STYLE,
+			BIG_ENDER_CHEST_SORT_FIELD,
+			BIG_ENDER_CHEST_SORT_DIRECTION,
+			BIG_ENDER_CHEST_REMEMBER_SEARCH
+	);
 	public static final ImmutableList<IConfigBase> PICKUP_FILTER_OPTIONS = ImmutableList.of(
 			PICKUP_FILTER_ENABLED,
 			PICKUP_FILTER_EXPANDED,
@@ -108,6 +154,7 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ImmutableList<IConfigBase> EXPANSION_STATE_OPTIONS = ImmutableList.of(
 			EASY_PLACE_EXPANDED,
 			QUICK_SHULKER_HAND_RESTOCK_EXPANDED,
+			BIG_ENDER_CHEST_TERMINAL_EXPANDED,
 			PICKUP_FILTER_EXPANDED
 	);
 	public static final ImmutableList<IConfigBase> PORTING_OPTIONS = ImmutableList.<IConfigBase>builder()
@@ -115,7 +162,13 @@ public final class TriWasaConfigs implements IConfigHandler
 			.addAll(PICKUP_FILTER_OPTIONS)
 			.build();
 	public static final ImmutableList<IConfigBase> PORTING_FILE_OPTIONS = EASY_PLACE_OPTIONS;
-	public static final ImmutableList<IConfigBase> UTILITY_OPTIONS = QUICK_SHULKER_HAND_RESTOCK_OPTIONS;
+	public static final ImmutableList<IConfigBase> UTILITY_OPTIONS =
+			ImmutableList.<IConfigBase>builder()
+					.addAll(QUICK_SHULKER_HAND_RESTOCK_OPTIONS)
+					.addAll(BIG_ENDER_CHEST_OPTIONS)
+					.build();
+	public static final ImmutableList<IConfigBase> UTILITY_FILE_OPTIONS =
+			QUICK_SHULKER_HAND_RESTOCK_OPTIONS;
 
 	static
 	{
@@ -124,6 +177,9 @@ public final class TriWasaConfigs implements IConfigHandler
 		);
 		QUICK_SHULKER_HAND_RESTOCK.setValueChangeCallback(
 				value -> QuickShulkerHandRestock.onConfigChanged()
+		);
+		BIG_ENDER_CHEST_TERMINAL_ENABLED.setValueChangeCallback(
+				value -> BigEnderChestClientNetwork.onConfigChanged(value.getBooleanValue())
 		);
 		PICKUP_FILTER_ENABLED.setValueChangeCallback(value -> ItemPickupFilter.onConfigChanged());
 		PICKUP_FILTER_MODE.setValueChangeCallback(value -> ItemPickupFilter.onConfigChanged());
@@ -152,14 +208,20 @@ public final class TriWasaConfigs implements IConfigHandler
 			}
 			if(root != null && root.has(UTILITIES_KEY) && root.get(UTILITIES_KEY).isJsonObject())
 			{
-				ConfigUtils.readConfigBase(root, UTILITIES_KEY, UTILITY_OPTIONS);
+				ConfigUtils.readConfigBase(root, UTILITIES_KEY, UTILITY_FILE_OPTIONS);
 				loadedUtilities = true;
+			}
+			if(root != null
+					&& root.has(BIG_ENDER_CHEST_KEY)
+					&& root.get(BIG_ENDER_CHEST_KEY).isJsonObject())
+			{
+				ConfigUtils.readConfigBase(root, BIG_ENDER_CHEST_KEY, BIG_ENDER_CHEST_OPTIONS);
 			}
 			if(!loadedUtilities && root != null
 					&& root.has(PORTING_KEY) && root.get(PORTING_KEY).isJsonObject())
 			{
 				// Early development builds stored the original utility under Porting.
-				ConfigUtils.readConfigBase(root, PORTING_KEY, UTILITY_OPTIONS);
+				ConfigUtils.readConfigBase(root, PORTING_KEY, UTILITY_FILE_OPTIONS);
 			}
 		}
 
@@ -168,6 +230,9 @@ public final class TriWasaConfigs implements IConfigHandler
 			migrateLegacyOptions();
 		}
 		ItemPickupFilter.onConfigChanged();
+		BigEnderChestClientNetwork.onConfigChanged(
+				BIG_ENDER_CHEST_TERMINAL_ENABLED.getBooleanValue()
+		);
 	}
 
 	@Override
@@ -185,8 +250,9 @@ public final class TriWasaConfigs implements IConfigHandler
 
 		JsonObject root = new JsonObject();
 		ConfigUtils.writeConfigBase(root, PORTING_KEY, PORTING_FILE_OPTIONS);
-		ConfigUtils.writeConfigBase(root, UTILITIES_KEY, UTILITY_OPTIONS);
+		ConfigUtils.writeConfigBase(root, UTILITIES_KEY, UTILITY_FILE_OPTIONS);
 		ConfigUtils.writeConfigBase(root, PICKUP_FILTER_KEY, PICKUP_FILTER_OPTIONS);
+		ConfigUtils.writeConfigBase(root, BIG_ENDER_CHEST_KEY, BIG_ENDER_CHEST_OPTIONS);
 		JsonUtils.writeJsonToFile(root, configDir.resolve(CONFIG_FILE_NAME));
 	}
 
@@ -229,6 +295,7 @@ public final class TriWasaConfigs implements IConfigHandler
 	{
 		return EASY_PLACE_CHILDREN.contains(config)
 				|| QUICK_SHULKER_HAND_RESTOCK_CHILDREN.contains(config)
+				|| BIG_ENDER_CHEST_CHILDREN.contains(config)
 				|| PICKUP_FILTER_CHILDREN.contains(config);
 	}
 
@@ -241,6 +308,10 @@ public final class TriWasaConfigs implements IConfigHandler
 		if(config == QUICK_SHULKER_HAND_RESTOCK)
 		{
 			return QUICK_SHULKER_HAND_RESTOCK_EXPANDED.getBooleanValue();
+		}
+		if(config == BIG_ENDER_CHEST_TERMINAL_ENABLED)
+		{
+			return BIG_ENDER_CHEST_TERMINAL_EXPANDED.getBooleanValue();
 		}
 		if(config == PICKUP_FILTER_ENABLED)
 		{
@@ -259,6 +330,10 @@ public final class TriWasaConfigs implements IConfigHandler
 		{
 			return QUICK_SHULKER_HAND_RESTOCK_EXPANDED;
 		}
+		if(parent == BIG_ENDER_CHEST_TERMINAL_ENABLED)
+		{
+			return BIG_ENDER_CHEST_TERMINAL_EXPANDED;
+		}
 		if(parent == PICKUP_FILTER_ENABLED)
 		{
 			return PICKUP_FILTER_EXPANDED;
@@ -275,6 +350,10 @@ public final class TriWasaConfigs implements IConfigHandler
 		if(QUICK_SHULKER_HAND_RESTOCK_CHILDREN.contains(child))
 		{
 			return QUICK_SHULKER_HAND_RESTOCK;
+		}
+		if(BIG_ENDER_CHEST_CHILDREN.contains(child))
+		{
+			return BIG_ENDER_CHEST_TERMINAL_ENABLED;
 		}
 		if(PICKUP_FILTER_CHILDREN.contains(child))
 		{

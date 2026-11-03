@@ -18,6 +18,13 @@ sourceSets {
 	}
 }
 
+configurations {
+	developmentOnly
+	runtimeClasspath {
+		extendsFrom developmentOnly
+	}
+}
+
 repositories {
 	flatDir {
 		dirs rootProject.file('libs')
@@ -43,6 +50,12 @@ dependencies {
 
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	developmentOnly files(rootProject.file("libs/fabric-carpet-${project.minecraft_version}.jar"))
+	developmentOnly files(
+			rootProject.file(
+					"libs/frostors-carpet-addition-fabric-${project.minecraft_version}-0.1.0.jar"
+			)
+	)
 
 	if (project.hasProperty('malilib_local_file')) {
 		implementation files(rootProject.file("libs/${project.malilib_local_file}"))
@@ -71,6 +84,29 @@ loom {
 	mixin {
 		useLegacyMixinAp = false
 	}
+}
+
+def acceptMinecraftEula = providers.gradleProperty("acceptMinecraftEula")
+		.map { it.toBoolean() }
+		.orElse(false)
+def externalGameTestRun = providers.gradleProperty("externalGameTestRun")
+		.map { it.toBoolean() }
+		.orElse(false)
+
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "triwasa-gametest"
+		enableGameTests = acceptMinecraftEula
+		enableClientGameTests = acceptMinecraftEula
+		eula = acceptMinecraftEula
+		clearRunDirectory = !externalGameTestRun.get()
+	}
+}
+
+sourceSets.named("gametest") {
+	java.srcDirs = [rootProject.file('src/gametest/java')]
+	resources.srcDirs = [rootProject.file('src/gametest/resources')]
 }
 
 def processedVersion = project.version.toString()
@@ -133,14 +169,14 @@ publishing {
 def testRuntimeClasspath = sourceSets.test.runtimeClasspath
 tasks.register('logicTest', JavaExec) {
 	group = 'verification'
-	description = 'Runs dependency-free Easy Place protocol tests.'
+	description = 'Runs the combined dependency-free protocol and terminal logic tests.'
 	dependsOn testClasses
 	classpath = testRuntimeClasspath
-	mainClass = 'top.frostor.triwasa.easyplace.EasyPlaceProtocolTest'
+	mainClass = 'top.frostor.triwasa.bigenderchest.BigEnderChestLogicTests'
 }
 
 tasks.named('check').configure {
-	dependsOn 'logicTest'
+	dependsOn 'logicTest', 'compileGametestJava'
 }
 
 tasks.named('test').configure {

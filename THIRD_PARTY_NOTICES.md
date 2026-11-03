@@ -35,6 +35,17 @@ TriWasa reimplements the behavior for Minecraft 26.2/26.3, moves all options to
 MaLiLib's configuration screen, and replaces the global inventory scan with a
 pickup-triggered pending-drop queue.
 
+## Frostor's Carpet Addition
+
+TriWasa implements a compatible client for FCA's public big ender chest protocol
+v2. Protocol constants, NBT field names and wire records are mirrored so the
+client can connect to a remote server without loading FCA Java classes.
+
+Frostor's Carpet Addition is licensed under the MIT License, copyright (c)
+2026 Frostor. TriWasa does not bundle FCA, its assets, or unrelated server code.
+The terminal implementation, layout renderer and interaction controller are
+TriWasa-specific and do not contain AE2 client code or textures.
+
 ## Quick Shulker
 
 The optional hand-restock integration uses Quick Shulker's public client helper

@@ -1,0 +1,11 @@
+{
+	"terminal_help": {
+		"category": "master",
+		"sounds": [
+			{
+				"name": "triwasa:terminal_help",
+				"stream": false
+			}
+		]
+	}
+}
