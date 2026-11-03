@@ -36,6 +36,10 @@ public final class TriWasaMixinPlugin implements IMixinConfigPlugin
 		{
 			return FabricLoader.getInstance().isModLoaded("litematica-printer");
 		}
+		if(mixinClassName.endsWith(".InventoryProfilesNextContainerScreenMixin"))
+		{
+			return FabricLoader.getInstance().isModLoaded("inventoryprofilesnext");
+		}
 		if(mixinClassName.endsWith(".rei.ReiCraftableFilterIconMixin")
 				|| mixinClassName.endsWith(".rei.ReiGuiGraphicsMixin"))
 		{

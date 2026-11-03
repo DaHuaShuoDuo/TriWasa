@@ -71,6 +71,9 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 		wrappers.add(new ConfigOptionWrapper(
 				StringUtils.translate("triwasa.fix.rei_submenu_text_fix")
 		));
+		wrappers.add(new ConfigOptionWrapper(
+				StringUtils.translate("triwasa.fix.ipn_terminal_widget_fix")
+		));
 		return wrappers;
 	}
 

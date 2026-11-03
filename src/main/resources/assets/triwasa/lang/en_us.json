@@ -6,6 +6,7 @@
 	"triwasa.gui.config_category.utilities": "Utilities",
 	"triwasa.gui.config_category.other_mod_fixes": "Other Mod Fixes",
 	"triwasa.fix.rei_submenu_text_fix": "REI Submenu Text Fix",
+	"triwasa.fix.ipn_terminal_widget_fix": "IPN Terminal Widget Fix",
 	"triwasa.gui.expand_settings": "Expand or collapse sub-options",
 	"triwasa.config.porting.name.easyPlaceV2ProtocolExtra": "easyPlaceV2ProtocolExtra",
 	"triwasa.config.porting.prettyName.easyPlaceV2ProtocolExtra": "Enable V2-Extra Easy Place Protocol",

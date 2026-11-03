@@ -55,6 +55,7 @@ public final class BigEnderChestClientNetwork
 	private static String pendingResyncReason;
 	private static boolean terminalDowngradeSent;
 	private static boolean helloBlockedLogged;
+	private static boolean downgradeAckExpected;
 
 	private BigEnderChestClientNetwork()
 	{
@@ -123,12 +124,21 @@ public final class BigEnderChestClientNetwork
 	public static void onConfigChanged(boolean enabled)
 	{
 		ACTIONS.clear();
+		Minecraft client = Minecraft.getInstance();
 		if(!enabled)
 		{
 			reset();
+			if(client.player != null && client.getConnection() != null)
+			{
+				downgradeAckExpected = sendHello(
+						client,
+						BigEnderChestProtocol.CAPABILITIES
+								& ~BigEnderChestProtocol.CAPABILITY_TERMINAL_MENU
+				);
+			}
 			return;
 		}
-		Minecraft client = Minecraft.getInstance();
+		downgradeAckExpected = false;
 		if(client.player != null && client.getConnection() != null)
 		{
 			SESSION.helloPending();
@@ -179,6 +189,7 @@ public final class BigEnderChestClientNetwork
 		pendingResyncReason = null;
 		terminalDowngradeSent = false;
 		helloBlockedLogged = false;
+		downgradeAckExpected = false;
 	}
 
 	private static void tick(Minecraft client)
@@ -227,16 +238,28 @@ public final class BigEnderChestClientNetwork
 			}
 			return;
 		}
+		sendHello(client, BigEnderChestProtocol.CAPABILITIES);
+		helloPending = false;
+		TriWasa.LOGGER.debug("[BigEnderChest] Sent protocol v2 HELLO");
+	}
+
+	private static boolean sendHello(Minecraft client, int capabilities)
+	{
+		if(client.player == null
+				|| client.getConnection() == null
+				|| !ClientPlayNetworking.canSend(BigEnderChestPayloadBridge.type()))
+		{
+			return false;
+		}
 		send(
 				BigEnderChestProtocol.HELLO,
 				new BigEnderChestMessages.Hello(
 						BigEnderChestProtocol.VERSION,
-						BigEnderChestProtocol.CAPABILITIES,
+						capabilities,
 						BigEnderChestProtocol.MAX_CHUNK_BYTES
 				).toTag()
 		);
-		helloPending = false;
-		TriWasa.LOGGER.debug("[BigEnderChest] Sent protocol v2 HELLO");
+		return true;
 	}
 
 	private static void handlePayload(
@@ -307,6 +330,24 @@ public final class BigEnderChestClientNetwork
 			BigEnderChestMessages.HelloAck ack
 	)
 	{
+		if(!TriWasaConfigs.BIG_ENDER_CHEST_TERMINAL_ENABLED.getBooleanValue())
+		{
+			downgradeAckExpected = false;
+			SESSION.reset();
+			return;
+		}
+		if(downgradeAckExpected)
+		{
+			downgradeAckExpected = false;
+			if(!BigEnderChestCapabilities.hasAll(
+					ack.capabilities(),
+					BigEnderChestCapabilities.REQUIRED
+			))
+			{
+				SESSION.reset();
+				return;
+			}
+		}
 		boolean accepted = SESSION.acceptHello(ack);
 		if(!accepted
 				&& ack.accepted()

@@ -9,6 +9,7 @@
 		"EasyPlaceCallSiteMixin",
 		"EasyPlaceV3Mixin",
 		"EasyPlaceWorldUtilsCallSiteMixin",
+		"InventoryProfilesNextContainerScreenMixin",
 		"ItemPickupFilterMixin",
 		"LivingEntitySwingMixin26_2",
 		"LivingEntitySwingMixin26_3",
