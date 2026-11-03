@@ -8,6 +8,7 @@ run/
 *.class
 /docs/
 /src/gametest/
+/libs/*.jar
 
 # Runtime logs and crash reports
 logs/

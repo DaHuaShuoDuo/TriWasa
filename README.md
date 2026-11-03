@@ -204,7 +204,8 @@ $env:GRADLE_USER_HOME = Join-Path $env:USERPROFILE '.gradle'
 26.2 和 26.3。
 
 MaLiLib、Litematica 以及开发期 FCA/Carpet JAR 只用于编译和测试，不会打包进 TriWasa
-产物。
+产物。TriWasa 不把依赖 JAR 提交到版本库；首次构建前请按
+[`libs/README.md`](libs/README.md) 中的文件名和版本，自行下载并放入 `libs/`。
 
 ## 测试
 

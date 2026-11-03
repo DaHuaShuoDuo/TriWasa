@@ -1,20 +1,25 @@
 # Development dependencies
 
-`malilib-fabric-26.3-rc-1-0.29.99-dev.20260910.223448.jar` is a local development
-dependency because Masa has not published this Minecraft 26.3 build to a public
-Maven repository yet.
+JAR files in this directory are ignored by Git and are not distributed with TriWasa.
+Place the required files here before running a build.
 
-`litematica-fabric-26.3-rc-1-0.28.99-dev.20260916.183551.jar` is included for
-the same reason.
+MaLiLib and Litematica:
 
-MaLiLib and Litematica are required at runtime and are not bundled into the
-TriWasa artifact.
+- `malilib-fabric-26.3-rc-1-0.29.99-dev.20260910.223448.jar`
+- `litematica-fabric-26.3-rc-1-0.28.99-dev.20260916.183551.jar`
 
-`RoughlyEnoughItems-fabric-*.jar`, `cloth-config-fabric-*.jar`, and
-`basic-math-0.6.1.jar` are compile-only dependencies used by the optional REI
-Mixins. None of these dependencies are bundled.
+These are Minecraft 26.3 development builds from the Masa/Sakura-Ryoko distribution.
+MaLiLib and Litematica are required at runtime but are not bundled into the TriWasa artifact.
 
-`fabric-carpet-26.*.jar` and
-`frostors-carpet-addition-fabric-26.*-0.1.0.jar` are development-only runtime
-dependencies for the headed Fabric Client GameTests. They are not TriWasa
-runtime requirements and are never bundled into the mod artifact.
+Optional REI Mixin compilation:
+
+- `RoughlyEnoughItems-fabric-26.2.820.jar`
+- `RoughlyEnoughItems-fabric-26.3.824.jar`
+- `cloth-config-fabric-26.2.155.jar`
+- `cloth-config-fabric-26.3.158.jar`
+- `basic-math-0.6.1.jar`
+
+Download these versions from their official Modrinth, CurseForge or Maven releases.
+REI remains optional at runtime and is not bundled.
+
+The JSON/Java build files define exact filenames and versions. Do not commit local JARs.
