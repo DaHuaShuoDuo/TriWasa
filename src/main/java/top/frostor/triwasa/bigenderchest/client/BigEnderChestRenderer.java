@@ -338,8 +338,35 @@ public final class BigEnderChestRenderer
 				item,
 				bounds.x() + 1,
 				bounds.y() + 1,
-				BigEnderChestAmountFormatter.compact(entry.totalAmount())
+				null
 		);
+		drawAmount(
+				graphics,
+				font,
+				BigEnderChestAmountFormatter.compact(entry.totalAmount()),
+				bounds.x() + 1,
+				bounds.y() + 1
+		);
+	}
+
+	private void drawAmount(
+			GuiGraphicsExtractor graphics,
+			Font font,
+			String amount,
+			int itemX,
+			int itemY
+	)
+	{
+		float scale = 2.0f / 3.0f;
+		float rightEdge = itemX + 17.0f;
+		float bottomEdge = itemY + 12.0f;
+		int textX = Math.round((rightEdge - font.width(amount) * scale) / scale);
+		int textY = Math.round(bottomEdge / scale);
+		graphics.nextStratum();
+		graphics.pose().pushMatrix();
+		graphics.pose().scale(scale);
+		graphics.text(font, amount, textX, textY, 0xffffffff);
+		graphics.pose().popMatrix();
 	}
 
 	private void drawRegion(
