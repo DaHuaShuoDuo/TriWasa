@@ -83,7 +83,9 @@ dependencies {
 		transitive = false
 	}
 	compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
-	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	compileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") {
+		transitive = false
+	}
 
 	// FCA owns the shared protocol payloads. Their classes are referenced only by adapters that
 	// load when FCA is installed, and this compile-only dependency is never bundled into TriWasa.
