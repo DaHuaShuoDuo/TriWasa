@@ -15,6 +15,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.bigenderchest.client.BigEnderChestNotifier;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestCapabilities;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestProtocol;
@@ -579,10 +580,11 @@ public final class BigEnderChestClientNetwork
 
 	private static void showMessage(String translationKey)
 	{
-		Minecraft client = Minecraft.getInstance();
-		if(client.player != null && translationKey != null)
+		if(translationKey != null)
 		{
-			client.player.sendOverlayMessage(Component.translatable(translationKey));
+			BigEnderChestNotifier.show(
+					Component.translatable(translationKey)
+			);
 		}
 	}
 }

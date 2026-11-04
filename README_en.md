@@ -37,6 +37,7 @@ Optional:
 
 - Frostor's Carpet Addition: reuse its public protocol API when loaded in the
   same process
+- Mod Menu: provides a configuration button in the mod list
 - Roughly Enough Items: enables REI interface fixes
 - Quick Shulker: enables hand-item restocking
 
@@ -73,15 +74,29 @@ aggregate menu with its custom terminal. The terminal provides:
 - Local search, sorting, scrolling, and item-list paging.
 - Stack/half-stack extraction, quick move to inventory, batch insertion, and
   dropping.
+- Large slot amounts use compact K/M/G units; terminal sub-options select small
+  (default) or large amount text. Large abbreviates from 1000 with a shorter
+  width, while tooltips retain the exact total.
+- Open, close, and action messages support silent, action-bar, and chat feedback,
+  defaulting to the action bar.
 - Capability hot-switching with fallback to the vanilla 6×9 menu.
+- Container components are passed through real item tooltip context so shulker
+  box, bundle, and other preview integrations can inspect them.
 
 FCA publishes the live `bigEnderChest` rule state through Carpet rule events. A
 client may complete the protocol handshake while the rule is disabled; enabling
 it later requires no reconnect or world reload, and the first chest opened after
 the change uses the terminal.
 
-The master switch is `bigEnderChestTerminalEnabled`. Terminal size, sorting, and
-search-persistence options are available in the MaLiLib configuration screen.
+The master switch is `bigEnderChestTerminalEnabled`. Feedback mode, terminal size,
+sorting, and search-persistence options are available in the MaLiLib
+configuration screen.
+
+### Configuration Screen
+
+Press `T+C` by default to open the main TriWasa configuration screen. The hotkey
+can be rebound on the All tab. With Mod Menu installed, the configuration
+button in the mod list opens the same screen.
 
 ### Quick Shulker Hand Restocking
 
@@ -100,15 +115,19 @@ permissions, region protection, or entity interception.
 
 TriWasa automatically fixes REI submenu clipping and terminal interaction
 bounds, and prevents Inventory Profiles Next from injecting sort buttons into
-the big ender chest terminal. These fixes do not add required dependencies.
+the big ender chest terminal. IPN compatibility is an automatic adapter and is
+not shown as a configuration-page fix. None of these compatibility features add
+required dependencies.
 
 ## Configuration
 
 TriWasa stores configuration in `config/triwasa.json` through MaLiLib:
 
+- **All**: the configuration hotkey, every feature option, and fix information
+  in one searchable list.
 - **Porting**: V2-Extra easy place and pickup filtering.
 - **Utilities**: Quick Shulker and the big ender chest terminal.
-- **Other Mod Fixes**: applied automatically when the matching mod is present.
+- **Other Mod Fixes**: optional fixes that change another mod's own behavior.
 
 The `[+]` / `[-]` control on a parent only expands or collapses child options;
 it is not a feature switch. Missing configuration, search filtering, and a

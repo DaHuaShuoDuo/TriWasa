@@ -11,7 +11,7 @@ import java.util.List;
 
 public final class TriWasaConfigGui extends GuiConfigsBase
 {
-	private Tab currentTab = Tab.PORTING;
+	private Tab currentTab = Tab.ALL;
 
 	public TriWasaConfigGui()
 	{
@@ -58,6 +58,15 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 	@Override
 	public List<ConfigOptionWrapper> getConfigs()
 	{
+		if(currentTab == Tab.ALL)
+		{
+			List<ConfigOptionWrapper> wrappers =
+					new ArrayList<>(ConfigOptionWrapper.createFor(TriWasaConfigs.ALL_OPTIONS));
+			wrappers.add(new ConfigOptionWrapper(
+					StringUtils.translate("triwasa.fix.rei_submenu_text_fix")
+			));
+			return wrappers;
+		}
 		if(currentTab == Tab.PORTING)
 		{
 			return ConfigOptionWrapper.createFor(TriWasaConfigs.PORTING_OPTIONS);
@@ -67,14 +76,9 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 			return ConfigOptionWrapper.createFor(TriWasaConfigs.UTILITY_OPTIONS);
 		}
 
-		List<ConfigOptionWrapper> wrappers = new ArrayList<>();
-		wrappers.add(new ConfigOptionWrapper(
+		return List.of(new ConfigOptionWrapper(
 				StringUtils.translate("triwasa.fix.rei_submenu_text_fix")
 		));
-		wrappers.add(new ConfigOptionWrapper(
-				StringUtils.translate("triwasa.fix.ipn_terminal_widget_fix")
-		));
-		return wrappers;
 	}
 
 	private void selectTab(Tab tab)
@@ -95,6 +99,7 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 
 	private enum Tab
 	{
+		ALL("triwasa.gui.config_category.all"),
 		PORTING("triwasa.gui.config_category.porting"),
 		UTILITIES("triwasa.gui.config_category.utilities"),
 		OTHER_MOD_FIXES("triwasa.gui.config_category.other_mod_fixes");

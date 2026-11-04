@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountStyle;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
 
 import java.util.List;
@@ -58,10 +59,12 @@ public final class BigEnderChestRenderer
 			BigEnderChestLayout layout,
 			BigEnderChestLayout.Computed computed,
 			BigEnderChestViewController view,
+			BigEnderChestAmountStyle amountStyle,
 			double mouseX,
 			double mouseY
 	)
 	{
+		boolean hasEntries = false;
 		for(BigEnderChestLayout.SlotHitbox hitbox : computed.itemSlots())
 		{
 			BigEnderChestLayout.Bounds bounds = hitbox.bounds();
@@ -78,26 +81,30 @@ public final class BigEnderChestRenderer
 			BigEnderChestMessages.EntryRecord entry = view.entryAtSlot(hitbox.index());
 			if(entry != null)
 			{
-				drawEntry(graphics, font, entry, bounds);
+				hasEntries = true;
+				drawEntryIcon(graphics, font, entry, bounds);
 			}
 		}
-	}
+		if(!hasEntries)
+		{
+			return;
+		}
 
-	public BigEnderChestMessages.EntryRecord hoveredEntry(
-			BigEnderChestViewController view,
-			BigEnderChestLayout.Computed computed,
-			double mouseX,
-			double mouseY
-	)
-	{
+		graphics.nextStratum();
 		for(BigEnderChestLayout.SlotHitbox hitbox : computed.itemSlots())
 		{
-			if(hitbox.bounds().contains(mouseX, mouseY))
+			BigEnderChestMessages.EntryRecord entry = view.entryAtSlot(hitbox.index());
+			if(entry != null)
 			{
-				return view.entryAtSlot(hitbox.index());
+				drawEntryAmount(
+						graphics,
+						font,
+						entry,
+						hitbox.bounds(),
+						amountStyle
+				);
 			}
 		}
-		return null;
 	}
 
 	public void drawSideButtons(
@@ -324,7 +331,7 @@ public final class BigEnderChestRenderer
 		);
 	}
 
-	private void drawEntry(
+	private void drawEntryIcon(
 			GuiGraphicsExtractor graphics,
 			Font font,
 			BigEnderChestMessages.EntryRecord entry,
@@ -338,8 +345,43 @@ public final class BigEnderChestRenderer
 				item,
 				bounds.x() + 1,
 				bounds.y() + 1,
-				Long.toString(entry.totalAmount())
+				null
 		);
+	}
+
+	private void drawEntryAmount(
+			GuiGraphicsExtractor graphics,
+			Font font,
+			BigEnderChestMessages.EntryRecord entry,
+			BigEnderChestLayout.Bounds bounds,
+			BigEnderChestAmountStyle amountStyle
+	)
+	{
+		String amount = BigEnderChestAmountFormatter.compact(
+				entry.totalAmount(),
+				amountStyle
+		);
+		BigEnderChestTextLayout.AmountPosition position =
+				BigEnderChestTextLayout.amount(bounds, font.width(amount), amountStyle);
+		drawAmount(
+				graphics,
+				font,
+				amount,
+				position
+		);
+	}
+
+	private void drawAmount(
+			GuiGraphicsExtractor graphics,
+			Font font,
+			String amount,
+			BigEnderChestTextLayout.AmountPosition position
+	)
+	{
+		graphics.pose().pushMatrix();
+		graphics.pose().scale(position.scale());
+		graphics.text(font, amount, position.x(), position.y(), -1);
+		graphics.pose().popMatrix();
 	}
 
 	private void drawRegion(

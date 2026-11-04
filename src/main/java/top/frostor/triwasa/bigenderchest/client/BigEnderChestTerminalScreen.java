@@ -2,6 +2,7 @@ package top.frostor.triwasa.bigenderchest.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import fi.dy.masa.malilib.config.ConfigManager;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
@@ -20,6 +21,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountStyle;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortDirection;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortField;
 import top.frostor.triwasa.bigenderchest.BigEnderChestTerminalStyle;
@@ -220,6 +222,7 @@ public final class BigEnderChestTerminalScreen
 				this.layout,
 				this.computed,
 				this.view,
+				this.selectedAmountStyle(),
 				this.relativeMouseX,
 				this.relativeMouseY
 		);
@@ -261,12 +264,12 @@ public final class BigEnderChestTerminalScreen
 			int mouseY
 	)
 	{
-		super.extractTooltip(graphics, mouseX, mouseY);
 		if(this.layout == null || this.computed == null)
 		{
+			super.extractTooltip(graphics, mouseX, mouseY);
 			return;
 		}
-		BigEnderChestMessages.EntryRecord entry = this.renderer.hoveredEntry(
+		BigEnderChestMessages.EntryRecord entry = BigEnderChestHoverResolver.entryAt(
 				this.view,
 				this.computed,
 				this.relativeMouseX,
@@ -274,22 +277,27 @@ public final class BigEnderChestTerminalScreen
 		);
 		if(entry != null)
 		{
-			List<Component> tooltip = new ArrayList<>(
-					getTooltipFromItem(this.minecraft, entry.item())
-			);
+			ItemStack item = entry.item();
+			List<Component> tooltip = new ArrayList<>(getTooltipFromItem(this.minecraft, item));
 			tooltip.add(Component.translatable(
 					"triwasa.big_ender_chest.tooltip.total",
 					entry.totalAmount()
-			));
-			graphics.setComponentTooltipForNextFrame(
+			).withStyle(ChatFormatting.DARK_GRAY));
+			graphics.setTooltipForNextFrame(
 					this.font,
 					tooltip,
+					item.getTooltipImage(),
 					mouseX,
 					mouseY
 			);
 			return;
 		}
-		String hoveredButton = this.hoveredSideButton();
+		super.extractTooltip(graphics, mouseX, mouseY);
+		String hoveredButton = BigEnderChestHoverResolver.sideButtonAt(
+				this.computed,
+				this.relativeMouseX,
+				this.relativeMouseY
+		);
 		if(hoveredButton != null)
 		{
 			graphics.setTooltipForNextFrame(
@@ -300,7 +308,12 @@ public final class BigEnderChestTerminalScreen
 			);
 			return;
 		}
-		ItemStack hoveredEquipment = this.hoveredEquipment();
+		ItemStack hoveredEquipment = BigEnderChestHoverResolver.equipmentAt(
+				this.computed,
+				this.minecraft.player,
+				this.relativeMouseX,
+				this.relativeMouseY
+		);
 		if(!hoveredEquipment.isEmpty())
 		{
 			graphics.setTooltipForNextFrame(
@@ -311,7 +324,11 @@ public final class BigEnderChestTerminalScreen
 			);
 			return;
 		}
-		String hoveredCraftingRegion = this.hoveredCraftingRegion();
+		String hoveredCraftingRegion = BigEnderChestHoverResolver.craftingRegionAt(
+				this.computed,
+				this.relativeMouseX,
+				this.relativeMouseY
+		);
 		if(hoveredCraftingRegion != null)
 		{
 			graphics.setTooltipForNextFrame(
@@ -335,12 +352,20 @@ public final class BigEnderChestTerminalScreen
 		this.updateRelativeMouse(event.x(), event.y());
 		if(this.searchBox != null
 				&& this.searchBox.isFocused()
-				&& !this.isInsideAnySearchPart(localX, localY))
+				&& !BigEnderChestHoverResolver.insideAnySearchPart(
+						this.computed,
+						localX,
+						localY
+				))
 		{
 			this.clearFocus();
 		}
 		if(event.button() == InputConstants.MOUSE_BUTTON_RIGHT
-				&& this.isInsideAnySearchPart(localX, localY))
+				&& BigEnderChestHoverResolver.insideAnySearchPart(
+						this.computed,
+						localX,
+						localY
+				))
 		{
 			if(this.searchBox != null)
 			{
@@ -348,13 +373,21 @@ public final class BigEnderChestTerminalScreen
 			}
 			return true;
 		}
-		String sideButton = this.sideButtonAt(localX, localY);
+		String sideButton = BigEnderChestHoverResolver.sideButtonAt(
+				this.computed,
+				localX,
+				localY
+		);
 		if(sideButton != null)
 		{
 			this.handleSideButton(sideButton, event.button());
 			return true;
 		}
-		if(this.hoveredCraftingRegion() != null)
+		if(BigEnderChestHoverResolver.craftingRegionAt(
+				this.computed,
+				this.relativeMouseX,
+				this.relativeMouseY
+		) != null)
 		{
 			this.message("triwasa.big_ender_chest.crafting_unsupported");
 			return true;
@@ -364,13 +397,17 @@ public final class BigEnderChestTerminalScreen
 			return true;
 		}
 		BigEnderChestMessages.EntryRecord entry =
-				this.renderer.hoveredEntry(
+				BigEnderChestHoverResolver.entryAt(
 						this.view,
 						this.computed,
 						localX,
 						localY
 				);
-		if(entry != null || this.isInsideItemGrid(localX, localY))
+		if(entry != null || BigEnderChestHoverResolver.insideItemGrid(
+				this.computed,
+				localX,
+				localY
+		))
 		{
 			this.handleStorageClick(entry, event);
 			return true;
@@ -415,7 +452,8 @@ public final class BigEnderChestTerminalScreen
 	{
 		if(this.layout != null
 				&& this.computed != null
-				&& this.isInsideItemGrid(
+				&& BigEnderChestHoverResolver.insideItemGrid(
+						this.computed,
 						mouseX - this.leftPos,
 						mouseY - this.topPos
 				)
@@ -458,7 +496,7 @@ public final class BigEnderChestTerminalScreen
 				&& this.layout != null
 				&& this.computed != null)
 		{
-			BigEnderChestMessages.EntryRecord entry = this.renderer.hoveredEntry(
+			BigEnderChestMessages.EntryRecord entry = BigEnderChestHoverResolver.entryAt(
 					this.view,
 					this.computed,
 					this.relativeMouseX,
@@ -699,7 +737,7 @@ public final class BigEnderChestTerminalScreen
 			case "sideButton5" -> {
 				if(this.minecraft.player != null)
 				{
-					this.minecraft.player.sendSystemMessage(Component.translatable(
+					BigEnderChestNotifier.show(Component.translatable(
 							"triwasa.big_ender_chest.settings_closes_session"
 					));
 				}
@@ -783,39 +821,6 @@ public final class BigEnderChestTerminalScreen
 			);
 			default -> Component.empty();
 		};
-	}
-
-	private String sideButtonAt(double mouseX, double mouseY)
-	{
-		for(BigEnderChestLayout.SideButtonBounds button : this.computed.sideButtons())
-		{
-			if(button.bounds().contains(mouseX, mouseY))
-			{
-				return button.id();
-			}
-		}
-		return null;
-	}
-
-	private String hoveredSideButton()
-	{
-		return this.sideButtonAt(this.relativeMouseX, this.relativeMouseY);
-	}
-
-	private boolean isInsideItemGrid(double mouseX, double mouseY)
-	{
-		BigEnderChestLayout.Bounds itemSlot = this.computed.bounds("itemSlot");
-		return mouseX >= itemSlot.x()
-				&& mouseY >= itemSlot.y()
-				&& mouseX < itemSlot.x() + 9 * 18
-				&& mouseY < itemSlot.y() + this.computed.rowCount() * 18;
-	}
-
-	private boolean isInsideAnySearchPart(double mouseX, double mouseY)
-	{
-		return this.computed.bounds("searchHead").contains(mouseX, mouseY)
-				|| this.computed.bounds("searchMiddle").contains(mouseX, mouseY)
-				|| this.computed.bounds("searchTail").contains(mouseX, mouseY);
 	}
 
 	private boolean startScrollbarDrag(double mouseX, double mouseY)
@@ -968,23 +973,22 @@ public final class BigEnderChestTerminalScreen
 
 	private void drawStatus(GuiGraphicsExtractor graphics)
 	{
-		BigEnderChestLayout.Bounds search =
-				this.computed.bounds("searchMiddle");
+		Component title = Component.translatable("triwasa.big_ender_chest.title");
+		BigEnderChestTextLayout.StatusPosition position =
+				BigEnderChestTextLayout.status(this.computed);
 		graphics.text(
 				this.font,
-				Component.translatable("triwasa.big_ender_chest.title"),
-				7,
-				search.y() + 4,
+				title,
+				position.titleX(),
+				position.titleY(),
 				TEXT_COLOR,
 				false
 		);
-		BigEnderChestLayout.Bounds inventory =
-				this.computed.bounds("playerInventorySlots");
 		graphics.text(
 				this.font,
 				Component.translatable("triwasa.big_ender_chest.inventory_title"),
-				inventory.x() + 1,
-				inventory.y() - 10,
+				position.inventoryTitleX(),
+				position.inventoryTitleY(),
 				TEXT_COLOR,
 				false
 		);
@@ -993,8 +997,8 @@ public final class BigEnderChestTerminalScreen
 			String crafting = this.recipeController.unavailableMessage().getString();
 			graphics.pose().pushMatrix();
 			graphics.pose().translate(
-					92.0f,
-					this.computed.bounds("playerInventorySlots").y() - 13.0f
+					position.craftingStatusX(),
+					position.craftingStatusY()
 			);
 			graphics.pose().scale(0.75f);
 			graphics.text(
@@ -1023,73 +1027,6 @@ public final class BigEnderChestTerminalScreen
 		this.minecraft.getSoundManager().play(
 				SimpleSoundInstance.forUI(TERMINAL_HELP_SOUND, 1.0f)
 		);
-	}
-
-	private ItemStack hoveredEquipment()
-	{
-		if(!this.hasRegion("armorHelmetSlot"))
-		{
-			return ItemStack.EMPTY;
-		}
-		if(this.computed.bounds("armorHelmetSlot").contains(
-				this.relativeMouseX,
-				this.relativeMouseY
-		))
-		{
-			return this.minecraft.player.getItemBySlot(EquipmentSlot.HEAD);
-		}
-		if(this.computed.bounds("armorChestSlot").contains(
-				this.relativeMouseX,
-				this.relativeMouseY
-		))
-		{
-			return this.minecraft.player.getItemBySlot(EquipmentSlot.CHEST);
-		}
-		if(this.computed.bounds("armorLegsSlot").contains(
-				this.relativeMouseX,
-				this.relativeMouseY
-		))
-		{
-			return this.minecraft.player.getItemBySlot(EquipmentSlot.LEGS);
-		}
-		if(this.computed.bounds("armorBootsSlot").contains(
-				this.relativeMouseX,
-				this.relativeMouseY
-		))
-		{
-			return this.minecraft.player.getItemBySlot(EquipmentSlot.FEET);
-		}
-		if(this.computed.bounds("offhandSlot").contains(
-				this.relativeMouseX,
-				this.relativeMouseY
-		))
-		{
-			return this.minecraft.player.getItemBySlot(EquipmentSlot.OFFHAND);
-		}
-		return ItemStack.EMPTY;
-	}
-
-	private String hoveredCraftingRegion()
-	{
-		if(!this.hasRegion("craftingMatrixSlots"))
-		{
-			return null;
-		}
-		if(this.computed.bounds("craftingMatrixSlots").contains(
-				this.relativeMouseX,
-				this.relativeMouseY
-		))
-		{
-			return "craftingMatrixSlots";
-		}
-		if(this.computed.bounds("craftingResultSlot").contains(
-				this.relativeMouseX,
-				this.relativeMouseY
-		))
-		{
-			return "craftingResultSlot";
-		}
-		return null;
 	}
 
 	private boolean hasRegion(String id)
@@ -1132,6 +1069,15 @@ public final class BigEnderChestTerminalScreen
 				: BigEnderChestTerminalStyle.STANDARD;
 	}
 
+	private BigEnderChestAmountStyle selectedAmountStyle()
+	{
+		return TriWasaConfigs.BIG_ENDER_CHEST_TERMINAL_AMOUNT_FONT_SIZE
+				.getOptionListValue()
+				instanceof BigEnderChestAmountStyle style
+				? style
+				: BigEnderChestAmountStyle.SMALL;
+	}
+
 	private void saveConfigs()
 	{
 		((ConfigManager)ConfigManager.getInstance()).saveAllConfigs();
@@ -1139,9 +1085,6 @@ public final class BigEnderChestTerminalScreen
 
 	private void message(String translationKey)
 	{
-		if(this.minecraft.player != null)
-		{
-			this.minecraft.player.sendOverlayMessage(Component.translatable(translationKey));
-		}
+		BigEnderChestNotifier.show(Component.translatable(translationKey));
 	}
 }

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import top.frostor.triwasa.bigenderchest.BigEnderChestClient;
 import top.frostor.triwasa.config.TriWasaConfigGui;
 import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.event.TriWasaHotkeys;
 import top.frostor.triwasa.easyplace.EasyPlaceClientNetwork;
 import top.frostor.triwasa.pickupfilter.ItemPickupFilter;
 import top.frostor.triwasa.quickshulker.QuickShulkerHandRestock;
@@ -30,6 +31,7 @@ public final class TriWasa implements ClientModInitializer
 		EasyPlaceClientNetwork.register();
 		ItemPickupFilter.register();
 		QuickShulkerHandRestock.register();
+		TriWasaHotkeys.register();
 		InitializationHandler.getInstance().registerInitializationHandler(() -> {
 			ConfigManager.getInstance().registerConfigHandler(MOD_ID, new TriWasaConfigs());
 			Registry.CONFIG_SCREEN.registerConfigScreenFactory(
