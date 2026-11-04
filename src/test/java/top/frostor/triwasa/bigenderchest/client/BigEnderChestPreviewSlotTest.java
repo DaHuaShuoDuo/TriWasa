@@ -40,12 +40,11 @@ public final class BigEnderChestPreviewSlotTest
 		view.refresh(Map.of(7L, entry), 1L);
 
 		BigEnderChestPreviewSlot slot = new BigEnderChestPreviewSlot(0, 10, 20);
-		slot.updateEntry(entry);
+		slot.updateItem(entry.item());
 		check(
 				contents.equals(slot.getItem().get(DataComponents.CONTAINER)),
 				"preview slots must retain container contents"
 		);
-		check(slot.entry() == entry, "preview slots must retain their aggregate entry");
 		check(!slot.mayPlace(new ItemStack(Items.DIRT)), "preview slots must reject insertion");
 		check(!slot.mayPickup(null), "preview slots must reject extraction");
 		check(slot.remove(1).isEmpty(), "preview slots must not remove their display item");
@@ -56,8 +55,7 @@ public final class BigEnderChestPreviewSlotTest
 				contents.equals(slot.getItem().get(DataComponents.CONTAINER)),
 				"preview slots must ignore direct stack replacement"
 		);
-		slot.updateEntry(null);
-		check(slot.entry() == null, "cleared preview slots must not retain an aggregate entry");
+		slot.updateItem(ItemStack.EMPTY);
 		check(slot.getItem().isEmpty(), "preview slots must support clearing after refresh");
 		System.out.println("BigEnderChestPreviewSlotTest passed " + checks + " checks");
 	}

@@ -4,8 +4,6 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
-import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
 
 /**
  * Client-only slot used to expose terminal entries to slot and tooltip integrations.
@@ -13,8 +11,6 @@ import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
 final class BigEnderChestPreviewSlot extends Slot
 {
 	private final int viewIndex;
-	@Nullable
-	private BigEnderChestMessages.EntryRecord entry;
 
 	BigEnderChestPreviewSlot(int viewIndex, int x, int y)
 	{
@@ -27,19 +23,12 @@ final class BigEnderChestPreviewSlot extends Slot
 		return this.viewIndex;
 	}
 
-	void updateEntry(@Nullable BigEnderChestMessages.EntryRecord entry)
+	void updateItem(ItemStack item)
 	{
-		this.entry = entry;
 		this.container.setItem(
 				0,
-				entry == null ? ItemStack.EMPTY : entry.item().copyWithCount(1)
+				item.isEmpty() ? ItemStack.EMPTY : item.copyWithCount(1)
 		);
-	}
-
-	@Nullable
-	BigEnderChestMessages.EntryRecord entry()
-	{
-		return this.entry;
 	}
 
 	@Override

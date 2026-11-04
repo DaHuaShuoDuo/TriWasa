@@ -17,7 +17,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import top.frostor.triwasa.TriWasa;
@@ -72,7 +71,6 @@ public final class BigEnderChestTerminalScreen
 	private boolean draggingScrollbar;
 	private int scrollbarGrabOffset;
 	private int helpSoundPlayCount;
-	private boolean previewMouseHandled;
 
 	public BigEnderChestTerminalScreen(
 			AbstractContainerMenu menu,
@@ -345,41 +343,12 @@ public final class BigEnderChestTerminalScreen
 	}
 
 	@Override
-	protected void slotClicked(
-			Slot slot,
-			int slotIndex,
-			int mouseButton,
-			ContainerInput clickType
-	)
-	{
-		if(slot instanceof BigEnderChestPreviewSlot previewSlot)
-		{
-			if(this.previewMouseHandled)
-			{
-				return;
-			}
-			BigEnderChestMessages.EntryRecord entry = previewSlot.entry();
-			if(clickType == ContainerInput.QUICK_MOVE && entry != null)
-			{
-				this.enqueueEntryAction(
-						BigEnderChestProtocol.ACTION_QUICK_MOVE_TO_PLAYER,
-						entry,
-						0
-				);
-			}
-			return;
-		}
-		super.slotClicked(slot, slotIndex, mouseButton, clickType);
-	}
-
-	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)
 	{
 		if(this.layout == null || this.computed == null)
 		{
 			return super.mouseClicked(event, doubleClick);
 		}
-		this.previewMouseHandled = false;
 		double localX = event.x() - this.leftPos;
 		double localY = event.y() - this.topPos;
 		this.updateRelativeMouse(event.x(), event.y());
@@ -422,7 +391,6 @@ public final class BigEnderChestTerminalScreen
 				);
 		if(entry != null || this.isInsideItemGrid(localX, localY))
 		{
-			this.previewMouseHandled = true;
 			this.handleStorageClick(entry, event);
 			return true;
 		}
@@ -451,17 +419,9 @@ public final class BigEnderChestTerminalScreen
 		{
 			this.updateScrollbar(event.y() - this.topPos);
 			this.draggingScrollbar = false;
-			this.previewMouseHandled = false;
 			return true;
 		}
-		try
-		{
-			return super.mouseReleased(event);
-		}
-		finally
-		{
-			this.previewMouseHandled = false;
-		}
+		return super.mouseReleased(event);
 	}
 
 	@Override
@@ -513,21 +473,6 @@ public final class BigEnderChestTerminalScreen
 		if(this.searchBox != null && this.searchBox.isFocused())
 		{
 			return super.keyPressed(event);
-		}
-		if(this.minecraft.options.keyPickItem.matches(event)
-				&& this.layout != null
-				&& this.computed != null)
-		{
-			BigEnderChestMessages.EntryRecord entry = this.renderer.hoveredEntry(
-					this.view,
-					this.computed,
-					this.relativeMouseX,
-					this.relativeMouseY
-			);
-			if(entry != null)
-			{
-				return true;
-			}
 		}
 		if(this.minecraft.options.keyDrop.matches(event)
 				&& this.layout != null
@@ -621,7 +566,7 @@ public final class BigEnderChestTerminalScreen
 		{
 			BigEnderChestMessages.EntryRecord entry =
 					this.view.entryAtSlot(slot.viewIndex());
-			slot.updateEntry(entry);
+			slot.updateItem(entry == null ? ItemStack.EMPTY : entry.item());
 		}
 	}
 
