@@ -2,7 +2,7 @@
 	"modmenu.nameTranslation.triwasa": "TriWasa",
 	"modmenu.descriptionTranslation.triwasa": "Litematica compatibility for FCA V2-Extra easy place, the FCA big ender chest terminal, optional Quick Shulker hand restocking, a client item pickup filter, and fixes for other client mods.",
 	"triwasa.gui.title": "TriWasa Configs",
-	"triwasa.gui.config_category.general": "General",
+	"triwasa.gui.config_category.all": "All",
 	"triwasa.gui.config_category.porting": "Ports",
 	"triwasa.gui.config_category.utilities": "Utilities",
 	"triwasa.gui.config_category.other_mod_fixes": "Other Mod Fixes",

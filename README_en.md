@@ -92,7 +92,7 @@ search-persistence options are available in the MaLiLib configuration screen.
 ### Configuration Screen
 
 Press `T+C` by default to open the main TriWasa configuration screen. The hotkey
-can be rebound on the General tab. With Mod Menu installed, the configuration
+can be rebound on the All tab. With Mod Menu installed, the configuration
 button in the mod list opens the same screen.
 
 ### Quick Shulker Hand Restocking
@@ -120,7 +120,8 @@ required dependencies.
 
 TriWasa stores configuration in `config/triwasa.json` through MaLiLib:
 
-- **General**: the TriWasa configuration-screen hotkey.
+- **All**: the configuration hotkey, every feature option, and fix information
+  in one searchable list.
 - **Porting**: V2-Extra easy place and pickup filtering.
 - **Utilities**: Quick Shulker and the big ender chest terminal.
 - **Other Mod Fixes**: optional fixes that change another mod's own behavior.

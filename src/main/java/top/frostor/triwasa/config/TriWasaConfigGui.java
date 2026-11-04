@@ -6,11 +6,12 @@ import fi.dy.masa.malilib.gui.widgets.WidgetListConfigOptions;
 import fi.dy.masa.malilib.util.StringUtils;
 import top.frostor.triwasa.TriWasa;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class TriWasaConfigGui extends GuiConfigsBase
 {
-	private Tab currentTab = Tab.GENERAL;
+	private Tab currentTab = Tab.ALL;
 
 	public TriWasaConfigGui()
 	{
@@ -57,9 +58,14 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 	@Override
 	public List<ConfigOptionWrapper> getConfigs()
 	{
-		if(currentTab == Tab.GENERAL)
+		if(currentTab == Tab.ALL)
 		{
-			return ConfigOptionWrapper.createFor(TriWasaConfigs.GENERAL_OPTIONS);
+			List<ConfigOptionWrapper> wrappers =
+					new ArrayList<>(ConfigOptionWrapper.createFor(TriWasaConfigs.ALL_OPTIONS));
+			wrappers.add(new ConfigOptionWrapper(
+					StringUtils.translate("triwasa.fix.rei_submenu_text_fix")
+			));
+			return wrappers;
 		}
 		if(currentTab == Tab.PORTING)
 		{
@@ -93,7 +99,7 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 
 	private enum Tab
 	{
-		GENERAL("triwasa.gui.config_category.general"),
+		ALL("triwasa.gui.config_category.all"),
 		PORTING("triwasa.gui.config_category.porting"),
 		UTILITIES("triwasa.gui.config_category.utilities"),
 		OTHER_MOD_FIXES("triwasa.gui.config_category.other_mod_fixes");

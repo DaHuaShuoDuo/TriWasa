@@ -975,14 +975,14 @@ public final class BigEnderChestTerminalScreen
 		BigEnderChestLayout.Bounds search =
 				this.computed.bounds("searchMiddle");
 		Component title = Component.translatable("triwasa.big_ender_chest.title");
-		int titleX = search.x() - 4 - this.font.width(title);
 		BigEnderChestLayout.Bounds inventory =
 				this.computed.bounds("playerInventorySlots");
+		int titleX = inventory.x() + 1;
 		graphics.text(
 				this.font,
 				title,
 				titleX,
-				search.y() + 4,
+				search.y() + 2,
 				TEXT_COLOR,
 				false
 		);

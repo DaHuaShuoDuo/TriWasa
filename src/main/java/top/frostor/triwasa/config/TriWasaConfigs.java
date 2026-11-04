@@ -183,6 +183,12 @@ public final class TriWasaConfigs implements IConfigHandler
 					.addAll(QUICK_SHULKER_HAND_RESTOCK_OPTIONS)
 					.addAll(BIG_ENDER_CHEST_OPTIONS)
 					.build();
+	public static final ImmutableList<IConfigBase> ALL_OPTIONS =
+			ImmutableList.<IConfigBase>builder()
+					.addAll(GENERAL_OPTIONS)
+					.addAll(PORTING_OPTIONS)
+					.addAll(UTILITY_OPTIONS)
+					.build();
 	public static final ImmutableList<IConfigBase> UTILITY_FILE_OPTIONS =
 			QUICK_SHULKER_HAND_RESTOCK_OPTIONS;
 
