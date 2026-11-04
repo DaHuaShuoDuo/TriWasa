@@ -72,6 +72,7 @@ public final class BigEnderChestTerminalScreen
 	private boolean draggingScrollbar;
 	private int scrollbarGrabOffset;
 	private int helpSoundPlayCount;
+	private boolean previewMouseHandled;
 
 	public BigEnderChestTerminalScreen(
 			AbstractContainerMenu menu,
@@ -350,8 +351,21 @@ public final class BigEnderChestTerminalScreen
 			ContainerInput clickType
 	)
 	{
-		if(slot instanceof BigEnderChestPreviewSlot)
+		if(slot instanceof BigEnderChestPreviewSlot previewSlot)
 		{
+			if(this.previewMouseHandled)
+			{
+				return;
+			}
+			BigEnderChestMessages.EntryRecord entry = previewSlot.entry();
+			if(clickType == ContainerInput.QUICK_MOVE && entry != null)
+			{
+				this.enqueueEntryAction(
+						BigEnderChestProtocol.ACTION_QUICK_MOVE_TO_PLAYER,
+						entry,
+						0
+				);
+			}
 			return;
 		}
 		super.slotClicked(slot, slotIndex, mouseButton, clickType);
@@ -364,6 +378,7 @@ public final class BigEnderChestTerminalScreen
 		{
 			return super.mouseClicked(event, doubleClick);
 		}
+		this.previewMouseHandled = false;
 		double localX = event.x() - this.leftPos;
 		double localY = event.y() - this.topPos;
 		this.updateRelativeMouse(event.x(), event.y());
@@ -406,6 +421,7 @@ public final class BigEnderChestTerminalScreen
 				);
 		if(entry != null || this.isInsideItemGrid(localX, localY))
 		{
+			this.previewMouseHandled = true;
 			this.handleStorageClick(entry, event);
 			return true;
 		}
@@ -434,9 +450,17 @@ public final class BigEnderChestTerminalScreen
 		{
 			this.updateScrollbar(event.y() - this.topPos);
 			this.draggingScrollbar = false;
+			this.previewMouseHandled = false;
 			return true;
 		}
-		return super.mouseReleased(event);
+		try
+		{
+			return super.mouseReleased(event);
+		}
+		finally
+		{
+			this.previewMouseHandled = false;
+		}
 	}
 
 	@Override
@@ -596,7 +620,7 @@ public final class BigEnderChestTerminalScreen
 		{
 			BigEnderChestMessages.EntryRecord entry =
 					this.view.entryAtSlot(slot.viewIndex());
-			slot.updateItem(entry == null ? ItemStack.EMPTY : entry.item());
+			slot.updateEntry(entry);
 		}
 	}
 
