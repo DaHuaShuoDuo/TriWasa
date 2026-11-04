@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import top.frostor.triwasa.TriWasa;
 import top.frostor.triwasa.config.TriWasaConfigs;
 
@@ -29,16 +30,18 @@ public final class EasyPlaceClientNetwork
 
 	public static void register()
 	{
+		@SuppressWarnings("unchecked")
+		CustomPacketPayload.Type<CustomPacketPayload> payloadType =
+				(CustomPacketPayload.Type<CustomPacketPayload>)EasyPlacePayloadBridge.type();
 		if(!FabricLoader.getInstance().isModLoaded(FCA_MOD_ID))
 		{
-			PayloadTypeRegistry.serverboundPlay().register(EasyPlacePayload.TYPE, EasyPlacePayload.CODEC);
-			PayloadTypeRegistry.clientboundPlay().register(EasyPlacePayload.TYPE, EasyPlacePayload.CODEC);
+			registerPayloadType(payloadType);
 		}
-		ClientPlayNetworking.registerGlobalReceiver(EasyPlacePayload.TYPE, (payload, context) -> {
+		ClientPlayNetworking.registerGlobalReceiver(payloadType, (payload, context) -> {
 			context.client().execute(() -> {
-				if(payload.packetId() == EasyPlacePayload.HELLO_ACK)
+				if(EasyPlacePayloadBridge.packetId(payload) == EasyPlacePayload.HELLO_ACK)
 				{
-					serverSupports = acceptsCapability(payload.data());
+					serverSupports = acceptsCapability(EasyPlacePayloadBridge.data(payload));
 					TriWasa.LOGGER.info(
 							"[EasyPlace] Client received V2-Extra acknowledgement (capability={})",
 							serverSupports
@@ -53,6 +56,21 @@ public final class EasyPlaceClientNetwork
 		});
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
 		ClientTickEvents.END_CLIENT_TICK.register(EasyPlaceClientNetwork::tick);
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static void registerPayloadType(
+			CustomPacketPayload.Type<CustomPacketPayload> payloadType
+	)
+	{
+		PayloadTypeRegistry.serverboundPlay().register(
+				(CustomPacketPayload.Type)payloadType,
+				(net.minecraft.network.codec.StreamCodec)EasyPlacePayloadBridge.codec()
+		);
+		PayloadTypeRegistry.clientboundPlay().register(
+				(CustomPacketPayload.Type)payloadType,
+				(net.minecraft.network.codec.StreamCodec)EasyPlacePayloadBridge.codec()
+		);
 	}
 
 	public static boolean isActive()
@@ -132,7 +150,7 @@ public final class EasyPlaceClientNetwork
 		ListTag capabilities = new ListTag();
 		capabilities.add(StringTag.valueOf(CAPABILITY_EASY_PLACE_V2_EXTRA));
 		data.put(NBT_CAPABILITIES, capabilities);
-		ClientPlayNetworking.send(new EasyPlacePayload(EasyPlacePayload.HELLO, data));
+		ClientPlayNetworking.send(EasyPlacePayloadBridge.create(EasyPlacePayload.HELLO, data));
 		TriWasa.LOGGER.info("[EasyPlace] Client sent V2-Extra hello");
 		helloPending = false;
 	}

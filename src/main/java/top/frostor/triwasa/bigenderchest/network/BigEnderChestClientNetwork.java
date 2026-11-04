@@ -30,7 +30,7 @@ import java.util.Set;
 
 /**
  * FCA protocol v2 client. Standalone clients use TriWasa's wire-compatible payload;
- * integrated clients reuse FCA's server-owned payload through reflection.
+ * integrated clients reuse FCA's server-owned payload through its public API.
  */
 public final class BigEnderChestClientNetwork
 {

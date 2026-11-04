@@ -29,6 +29,7 @@
 		"litematica": "${litematica_dependency}"
 	},
 	"suggests": {
+		"frostors-carpet-addition": "*",
 		"roughlyenoughitems": "*",
 		"quickshulker": "*"
 	},

@@ -11,6 +11,14 @@ MaLiLib and Litematica:
 These are Minecraft 26.3 development builds from the Masa/Sakura-Ryoko distribution.
 MaLiLib and Litematica are required at runtime but are not bundled into the TriWasa artifact.
 
+Optional FCA protocol API compilation:
+
+- `frostors-carpet-addition-fabric-26.2-0.1.0.jar`
+- `frostors-carpet-addition-fabric-26.3-0.1.0.jar`
+
+These are compile-only inputs for TriWasa's FCA payload adapters. They must match
+`fca_version` in `gradle.properties`; FCA remains optional at runtime and is not bundled.
+
 Optional REI Mixin compilation:
 
 - `RoughlyEnoughItems-fabric-26.2.820.jar`

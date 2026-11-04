@@ -65,6 +65,12 @@ dependencies {
 	compileOnly files(rootProject.file("libs/RoughlyEnoughItems-fabric-${project.rei_version}.jar"))
 	compileOnly files(rootProject.file("libs/cloth-config-fabric-${project.cloth_config_version}.jar"))
 	compileOnly files(rootProject.file('libs/basic-math-0.6.1.jar'))
+
+	// FCA owns the shared protocol payloads. Their classes are referenced only by adapters that
+	// load when FCA is installed, and this compile-only dependency is never bundled into TriWasa.
+	compileOnly files(rootProject.file(
+			"libs/frostors-carpet-addition-fabric-${project.minecraft_version}-${project.fca_version}.jar"
+	))
 }
 
 loom {
