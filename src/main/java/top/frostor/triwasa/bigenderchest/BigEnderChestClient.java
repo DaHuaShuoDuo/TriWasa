@@ -65,6 +65,12 @@ public final class BigEnderChestClient
 		);
 	}
 
+	/**
+	 * The dynamic proxy is deliberate: Fabric opens extended menus through package-private
+	 * {@code MenuScreens.getConstructor}, bypassing {@code MenuScreens.create}. TriWasa cannot
+	 * implement or lambda-target the package-private {@code ScreenConstructor}; this proxy is
+	 * the adapter that supplies TriWasa's terminal screen to that otherwise inaccessible hook.
+	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static Object screenConstructor(MenuType<?> type)
 	{

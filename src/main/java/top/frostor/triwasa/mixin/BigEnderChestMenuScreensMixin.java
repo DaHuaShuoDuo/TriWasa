@@ -15,6 +15,10 @@ import top.frostor.triwasa.bigenderchest.BigEnderChestClient;
 @Mixin(MenuScreens.class)
 public abstract class BigEnderChestMenuScreensMixin
 {
+	/*
+	 * Keep this hook: Fabric opens ExtendedMenuType screens by calling this private method
+	 * directly, so a MenuScreens.create-only injection is bypassed.
+	 */
 	@Inject(method = "getConstructor", at = @At("HEAD"), cancellable = true)
 	private static void triwasa$provideTerminalConstructor(
 			MenuType<?> type,
