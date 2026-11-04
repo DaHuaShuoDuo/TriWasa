@@ -2,6 +2,7 @@ package top.frostor.triwasa.bigenderchest.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import fi.dy.masa.malilib.config.ConfigManager;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
@@ -281,7 +282,7 @@ public final class BigEnderChestTerminalScreen
 			tooltip.add(Component.translatable(
 					"triwasa.big_ender_chest.tooltip.total",
 					entry.totalAmount()
-			));
+			).withStyle(ChatFormatting.DARK_GRAY));
 			graphics.setTooltipForNextFrame(
 					this.font,
 					tooltip,
