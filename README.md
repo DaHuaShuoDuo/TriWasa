@@ -219,6 +219,10 @@ CI 使用 GitHub Actions 的 Java 25 和 26.2/26.3 构建矩阵。每个矩阵�
 对应 FCA 版本，生成 TriWasa 的 `compileOnly` 协议 API；手动运行时可通过 `fca_ref`
 指定需要验证的 FCA 分支、标签或提交。构建产物还会检查 FCA 类没有被误打包。
 
+仓库所有者可给自己的同仓库 PR 添加 `auto-merge` 标签。双版本 CI 通过后使用 Squash
+自动合并；Fork PR、草稿 PR 以及修改工作流或 Gradle/Wrapper 配置的 PR 仍须手动审核。
+移除标签会关闭已启用的 Auto-merge。
+
 ## 测试
 
 构建会运行不启动游戏的逻辑、协议、快照、布局和动作队列测试。真实菜单交互、鼠标拖拽、
