@@ -191,21 +191,25 @@ TriWasa 会在检测到对应模组时自动应用以下修复，不增加必需
 
 ## 构建
 
-使用项目自带的 Gradle Wrapper，并将 `JAVA_HOME` 指向 Java 25。不要使用 Java 17
-或 Java 21 代替。
+使用项目自带的 Gradle Wrapper，并确保 Gradle 使用的 JVM 是 Java 25。不要使用
+Java 17 或 Java 21 代替。`JAVA_HOME` 可使用任意 JDK 25 安装路径，不要求特定厂商。
 
-PowerShell 示例：
+POSIX shell 示例：
+
+```bash
+export JAVA_HOME=/path/to/jdk-25
+./gradlew :26.2:build :26.3:build
+```
+
+Windows PowerShell 示例：
 
 ```powershell
-$env:JAVA_HOME = '<Java 25 installation>'
+$env:JAVA_HOME = '<JDK 25 installation>'
 .\gradlew.bat :26.2:build :26.3:build
 ```
 
-如果 Gradle 无法在默认位置创建缓存，可以仅为当前命令指定用户缓存：
-
-```powershell
-$env:GRADLE_USER_HOME = Join-Path $env:USERPROFILE '.gradle'
-```
+如果 Gradle 无法在默认位置创建缓存，可以把 `GRADLE_USER_HOME` 设置为任意可写目录；
+这是环境配置，不需要修改项目的 Wrapper。
 
 构建产物位于各版本子项目的 `build/libs`。共享源码、资源或 Mixin 修改后，必须同时构建
 26.2 和 26.3。

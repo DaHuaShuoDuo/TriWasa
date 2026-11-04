@@ -24,16 +24,25 @@
 
 ## 构建与验证
 
-在 PowerShell 环境中使用项目 Wrapper：
+使用项目自带的 Gradle Wrapper，并确保实际执行 Gradle 的 JVM 是 Java 25。POSIX
+shell 示例：
+
+```bash
+export JAVA_HOME=/path/to/jdk-25
+./gradlew :26.2:build :26.3:build
+```
+
+Windows PowerShell 示例：
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Zulu\zulu-25'
+$env:JAVA_HOME = '<JDK 25 installation>'
 .\gradlew.bat :26.2:build :26.3:build
 ```
 
-- 不要用 Java 17/21 代替 Java 25。
-- 若 Wrapper 尝试在不可写位置创建缓存，仅为当前命令设置
-  `GRADLE_USER_HOME = Join-Path $env:USERPROFILE '.gradle'`，不要修改 Wrapper 配置。
+- 不要求固定 JDK 厂商或安装路径；`JAVA_HOME` 指向本机可用的 JDK 25 即可。不要用
+  Java 17/21 代替 Java 25。
+- 若默认 Gradle 缓存位置不可写，仅为当前环境把 `GRADLE_USER_HOME` 指向可写缓存目录；
+  不要修改 Wrapper 配置来规避环境问题。
 - 共享源码、资源、Mixin、版本属性或依赖变更后，必须同时构建 `26.2` 和 `26.3`。
 - `:26.2:build` / `:26.3:build` 会运行 `logicTest`，覆盖轻松放置协议、大末影箱协议、
   快照、布局和动作队列。新增编译警告视为回归；排查 Gradle 弃用时可使用
@@ -41,8 +50,9 @@ $env:JAVA_HOME = 'C:\Program Files\Zulu\zulu-25'
 - 构建产物位于 `versions/<版本>/build/libs/`。不要手工编辑 `.gradle/`、`build/`、
   `versions/*/build/`、运行目录或日志。
 - 本机 GameTest（当前位于 `src/gametest`）属于开发验证，不纳入版本控制，也不进入
-  CI。真实菜单交互、鼠标拖拽、快捷键、Litematica/REI 兼容和客户端渲染仍需在开发
-  客户端中手测；交付时区分自动逻辑测试与手动运行验证。
+  CI。不得假定该目录在其他环境中存在；只有当前工作区实际包含测试类并能运行时，才可
+  声明 GameTest 通过。真实菜单交互、鼠标拖拽、快捷键、Litematica/REI 兼容和客户端
+  渲染仍需在开发客户端中手测；交付时区分自动逻辑测试与手动运行验证。
 - 本地构建前，`libs/frostors-carpet-addition-fabric-<Minecraft 版本>-<FCA 版本>.jar`
   必须对应 `gradle.properties` 中的 `fca_version`。CI 会从 FCA 仓库构建该 API；
   手动运行时可通过 workflow input `fca_ref` 指定 FCA 分支、标签或提交。
