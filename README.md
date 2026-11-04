@@ -15,7 +15,7 @@ Frostor's Carpet Addition（FCA）提供 V2-Extra 轻松放置和大末影箱终
 | Minecraft | Fabric Loader | Fabric API | MaLiLib | Litematica |
 | --- | --- | --- | --- | --- |
 | 26.2 | >= 0.19.3 | >= 0.152.1 | >= 0.29.5 | >= 0.28.6 < 0.29.0 |
-| 26.3 | >= 0.19.5 | >= 0.160.5 | >= 0.29.99-dev | >= 0.28.99-dev |
+| 26.3 | >= 0.19.5 | >= 0.160.5 | >= 0.30.2 | >= 0.29.1 < 0.30.0 |
 
 项目要求 Java 25。必须选择与 Minecraft 版本对应的 TriWasa 构建。
 
@@ -210,9 +210,14 @@ $env:GRADLE_USER_HOME = Join-Path $env:USERPROFILE '.gradle'
 构建产物位于各版本子项目的 `build/libs`。共享源码、资源或 Mixin 修改后，必须同时构建
 26.2 和 26.3。
 
-MaLiLib、Litematica 以及开发期 FCA/Carpet JAR 只用于编译和测试，不会打包进 TriWasa
-产物。TriWasa 不把依赖 JAR 提交到版本库；首次构建前请按
-[`libs/README.md`](libs/README.md) 中的文件名和版本，自行下载并放入 `libs/`。
+MaLiLib 和 Litematica 从 Masa 公共 Maven 解析；开发期 FCA API、Carpet、REI 和
+Cloth Config JAR 只用于编译和测试，不会打包进 TriWasa 产物。TriWasa 不把依赖 JAR
+提交到版本库；首次构建前请按 [`libs/README.md`](libs/README.md) 中的文件名，自行
+下载所需的本地开发依赖。
+
+CI 使用 GitHub Actions 的 Java 25 和 26.2/26.3 构建矩阵。每个矩阵任务会先检出并构建
+对应 FCA 版本，生成 TriWasa 的 `compileOnly` 协议 API；手动运行时可通过 `fca_ref`
+指定需要验证的 FCA 分支、标签或提交。构建产物还会检查 FCA 类没有被误打包。
 
 ## 测试
 

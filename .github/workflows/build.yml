@@ -1,0 +1,135 @@
+name: Build
+
+on:
+  push:
+    paths:
+      - ".github/workflows/**"
+      - "src/**"
+      - "versions/**/gradle.properties"
+      - "build.gradle"
+      - "common.gradle"
+      - "gradle.properties"
+      - "gradle/wrapper/**"
+      - "LICENSE"
+      - "settings.gradle"
+      - "THIRD_PARTY_NOTICES.md"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "src/**"
+      - "versions/**/gradle.properties"
+      - "build.gradle"
+      - "common.gradle"
+      - "gradle.properties"
+      - "gradle/wrapper/**"
+      - "LICENSE"
+      - "settings.gradle"
+      - "THIRD_PARTY_NOTICES.md"
+  workflow_dispatch:
+    inputs:
+      fca_ref:
+        description: FCA branch, tag, or commit used for the compile-only protocol API
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Minecraft ${{ matrix.minecraft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        minecraft:
+          - "26.2"
+          - "26.3"
+
+    steps:
+      - name: Checkout TriWasa
+        uses: actions/checkout@v7
+
+      - name: Checkout FCA protocol dependency
+        uses: actions/checkout@v7
+        with:
+          repository: DaHuaShuoDuo/Frostors-Carpet-Addition
+          ref: ${{ github.event.inputs.fca_ref || 'main' }}
+          path: .ci/Frostors-Carpet-Addition
+
+      - name: Validate Gradle wrappers
+        uses: gradle/actions/wrapper-validation@v5
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build FCA compile dependency
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MC_VERSION: ${{ matrix.minecraft }}
+        run: |
+          fca_root=".ci/Frostors-Carpet-Addition"
+          mkdir -p "${fca_root}/libs" "${fca_root}/.ci/carpet" libs
+          gh release download "v${MC_VERSION}" \
+            --repo gnembon/fabric-carpet \
+            --pattern "fabric-carpet-${MC_VERSION}*.jar" \
+            --dir "${fca_root}/.ci/carpet" \
+            --clobber
+          carpet_jar="$(find "${fca_root}/.ci/carpet" -maxdepth 1 -name '*.jar' -print -quit)"
+          test -n "$carpet_jar"
+          cp "$carpet_jar" "${fca_root}/libs/fabric-carpet-${MC_VERSION}.jar"
+          chmod +x "${fca_root}/gradlew"
+          (
+            cd "${fca_root}"
+            ./gradlew ":${MC_VERSION}:build" --warning-mode all
+          )
+          fca_jar="$(find "${fca_root}/versions/${MC_VERSION}/build/libs" \
+            -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' -print -quit)"
+          test -n "$fca_jar"
+          fca_version="$(sed -n 's/^[[:space:]]*mod_version=//p' "${fca_root}/gradle.properties")"
+          test -n "$fca_version"
+          cp "$fca_jar" "libs/frostors-carpet-addition-fabric-${MC_VERSION}-${fca_version}.jar"
+
+      - name: Build and test
+        env:
+          MC_VERSION: ${{ matrix.minecraft }}
+        run: ./gradlew ":${MC_VERSION}:build" --warning-mode all
+
+      - name: Verify artifact boundaries
+        env:
+          MC_VERSION: ${{ matrix.minecraft }}
+        run: |
+          main_jar="$(find "versions/${MC_VERSION}/build/libs" \
+            -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' -print -quit)"
+          test -n "$main_jar"
+          unzip -p "$main_jar" fabric.mod.json > .ci/fabric.mod.json
+          jq -e '
+            .environment == "client"
+            and .depends.malilib != null
+            and .depends.litematica != null
+            and .suggests["frostors-carpet-addition"] != null
+          ' .ci/fabric.mod.json
+          if unzip -Z1 "$main_jar" | grep '^top/frostor/carpet/' > /dev/null; then
+            echo "::error::FCA classes were bundled into $main_jar"
+            exit 1
+          fi
+          echo "Verified $main_jar"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: triwasa-${{ matrix.minecraft }}
+          path: versions/${{ matrix.minecraft }}/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14
