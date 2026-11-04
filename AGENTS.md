@@ -137,8 +137,8 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 - 提交前按变更类型验证：
   - 源码、资源、Mixin、版本属性、Gradle、Wrapper 或 workflow：构建 26.2 和 26.3，
     并运行 `logicTest`。
-  - README、docs、许可证等纯文档改动：至少确认 `CI Gate` 的变更分类逻辑，不要求
-    执行完整 Minecraft 构建。
+  - README、docs、许可证等纯文档改动：确认所有变更路径都不属于 CI 的构建必需路径，
+    不要求执行完整 Minecraft 构建；PR 已创建时仍须让 `CI Gate` 通过。
   - 涉及终端、Litematica、REI、Quick Shulker 或客户端渲染：补充 GameTest 或明确
     记录未执行的手测项。`src/gametest` 不提交、不进入 CI。
 - 提交信息使用清晰的 `type: summary` 前缀，例如 `fix:`、`feat:`、`refactor:`、
