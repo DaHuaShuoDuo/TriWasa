@@ -73,7 +73,9 @@ aggregate menu with its custom terminal. The terminal provides:
 - Local search, sorting, scrolling, and item-list paging.
 - Stack/half-stack extraction, quick move to inventory, batch insertion, and
   dropping.
-- Large slot amounts use compact K/M/G units while tooltips retain the exact total.
+- Large slot amounts use compact K/M/G units; terminal sub-options select large
+  (default) or normal amount text. Both sizes abbreviate from 10000, while
+  tooltips retain the exact total.
 - Capability hot-switching with fallback to the vanilla 6×9 menu.
 - Container components are passed through real item tooltip context so shulker
   box, bundle, and other preview integrations can inspect them.

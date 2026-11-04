@@ -31,9 +31,7 @@ public final class BigEnderChestAmountFormatterTest
 		String actual = BigEnderChestAmountFormatter.compact(amount);
 		if(!expected.equals(actual))
 		{
-			throw new AssertionError(
-					"Expected compact amount " + expected + " for " + amount + ", got " + actual
-			);
+			throw new AssertionError("Expected compact amount " + expected + " for " + amount + ", got " + actual);
 		}
 	}
 }

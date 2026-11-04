@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountFontSize;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
 
 import java.util.List;
@@ -58,6 +59,7 @@ public final class BigEnderChestRenderer
 			BigEnderChestLayout layout,
 			BigEnderChestLayout.Computed computed,
 			BigEnderChestViewController view,
+			BigEnderChestAmountFontSize amountFontSize,
 			double mouseX,
 			double mouseY
 	)
@@ -78,7 +80,7 @@ public final class BigEnderChestRenderer
 			BigEnderChestMessages.EntryRecord entry = view.entryAtSlot(hitbox.index());
 			if(entry != null)
 			{
-				drawEntry(graphics, font, entry, bounds);
+				drawEntry(graphics, font, entry, bounds, amountFontSize);
 			}
 		}
 	}
@@ -328,7 +330,8 @@ public final class BigEnderChestRenderer
 			GuiGraphicsExtractor graphics,
 			Font font,
 			BigEnderChestMessages.EntryRecord entry,
-			BigEnderChestLayout.Bounds bounds
+			BigEnderChestLayout.Bounds bounds,
+			BigEnderChestAmountFontSize amountFontSize
 	)
 	{
 		ItemStack item = entry.item();
@@ -344,6 +347,7 @@ public final class BigEnderChestRenderer
 				graphics,
 				font,
 				BigEnderChestAmountFormatter.compact(entry.totalAmount()),
+				amountFontSize.scale(),
 				bounds.x() + 1,
 				bounds.y() + 1
 		);
@@ -353,11 +357,11 @@ public final class BigEnderChestRenderer
 			GuiGraphicsExtractor graphics,
 			Font font,
 			String amount,
+			float scale,
 			int itemX,
 			int itemY
 	)
 	{
-		float scale = 2.0f / 3.0f;
 		float rightEdge = itemX + 17.0f;
 		float bottomEdge = itemY + 12.0f;
 		int textX = Math.round((rightEdge - font.width(amount) * scale) / scale);

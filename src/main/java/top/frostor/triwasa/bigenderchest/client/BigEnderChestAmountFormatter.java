@@ -3,7 +3,7 @@ package top.frostor.triwasa.bigenderchest.client;
 final class BigEnderChestAmountFormatter
 {
 	private static final char[] UNITS = {'K', 'M', 'G', 'T', 'P', 'E'};
-	private static final int DECIMAL_THRESHOLD = 10_000;
+	private static final int ABBREVIATION_THRESHOLD = 10_000;
 
 	private BigEnderChestAmountFormatter()
 	{
@@ -11,9 +11,10 @@ final class BigEnderChestAmountFormatter
 
 	static String compact(long amount)
 	{
-		if(amount < DECIMAL_THRESHOLD)
+		String full = Long.toString(amount);
+		if(amount < ABBREVIATION_THRESHOLD)
 		{
-			return Long.toString(amount);
+			return full;
 		}
 
 		long divisor = 1;

@@ -20,6 +20,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountFontSize;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortDirection;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortField;
 import top.frostor.triwasa.bigenderchest.BigEnderChestTerminalStyle;
@@ -220,6 +221,7 @@ public final class BigEnderChestTerminalScreen
 				this.layout,
 				this.computed,
 				this.view,
+				this.selectedAmountFontSize(),
 				this.relativeMouseX,
 				this.relativeMouseY
 		);
@@ -1131,6 +1133,15 @@ public final class BigEnderChestTerminalScreen
 				instanceof BigEnderChestTerminalStyle style
 				? style
 				: BigEnderChestTerminalStyle.STANDARD;
+	}
+
+	private BigEnderChestAmountFontSize selectedAmountFontSize()
+	{
+		return TriWasaConfigs.BIG_ENDER_CHEST_TERMINAL_AMOUNT_FONT_SIZE
+				.getOptionListValue()
+				instanceof BigEnderChestAmountFontSize size
+				? size
+				: BigEnderChestAmountFontSize.LARGE;
 	}
 
 	private void saveConfigs()

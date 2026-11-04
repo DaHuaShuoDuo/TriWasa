@@ -13,6 +13,7 @@ import fi.dy.masa.malilib.config.options.ConfigStringList;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.data.json.JsonUtils;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountFontSize;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortDirection;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortField;
 import top.frostor.triwasa.bigenderchest.BigEnderChestTerminalStyle;
@@ -68,6 +69,11 @@ public final class TriWasaConfigs implements IConfigHandler
 			new ConfigOptionList(
 					"bigEnderChestTerminalStyle",
 					BigEnderChestTerminalStyle.STANDARD
+			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
+	public static final ConfigOptionList BIG_ENDER_CHEST_TERMINAL_AMOUNT_FONT_SIZE =
+			new ConfigOptionList(
+					"bigEnderChestTerminalAmountFontSize",
+					BigEnderChestAmountFontSize.LARGE
 			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
 	public static final ConfigOptionList BIG_ENDER_CHEST_SORT_FIELD =
 			new ConfigOptionList(
@@ -125,12 +131,14 @@ public final class TriWasaConfigs implements IConfigHandler
 			BIG_ENDER_CHEST_TERMINAL_ENABLED,
 			BIG_ENDER_CHEST_TERMINAL_EXPANDED,
 			BIG_ENDER_CHEST_TERMINAL_STYLE,
+			BIG_ENDER_CHEST_TERMINAL_AMOUNT_FONT_SIZE,
 			BIG_ENDER_CHEST_SORT_FIELD,
 			BIG_ENDER_CHEST_SORT_DIRECTION,
 			BIG_ENDER_CHEST_REMEMBER_SEARCH
 	);
 	public static final ImmutableList<IConfigBase> BIG_ENDER_CHEST_CHILDREN = ImmutableList.of(
 			BIG_ENDER_CHEST_TERMINAL_STYLE,
+			BIG_ENDER_CHEST_TERMINAL_AMOUNT_FONT_SIZE,
 			BIG_ENDER_CHEST_SORT_FIELD,
 			BIG_ENDER_CHEST_SORT_DIRECTION,
 			BIG_ENDER_CHEST_REMEMBER_SEARCH
