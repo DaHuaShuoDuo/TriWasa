@@ -1,5 +1,7 @@
 package top.frostor.triwasa.bigenderchest.client;
 
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountStyle;
+
 final class BigEnderChestAmountFormatter
 {
 	private static final char[] UNITS = {'K', 'M', 'G', 'T', 'P', 'E'};
@@ -8,19 +10,15 @@ final class BigEnderChestAmountFormatter
 	{
 	}
 
-	static String compact(long amount)
-	{
-		return compact(amount, 4, 10_000);
-	}
-
-	static String compact(long amount, int maxCharacters, int abbreviationThreshold)
+	static String compact(long amount, BigEnderChestAmountStyle style)
 	{
 		String full = Long.toString(amount);
-		if(amount < abbreviationThreshold)
+		if(amount < style.abbreviationThreshold())
 		{
 			return full;
 		}
 
+		int maxCharacters = style.maxCharacters();
 		long divisor = 1;
 		int unitIndex = -1;
 		while(unitIndex + 1 < UNITS.length

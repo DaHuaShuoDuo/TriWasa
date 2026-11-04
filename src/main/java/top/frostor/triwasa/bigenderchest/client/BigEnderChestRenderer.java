@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import top.frostor.triwasa.bigenderchest.BigEnderChestAmountFontSize;
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountStyle;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
 
 import java.util.List;
@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class BigEnderChestRenderer
 {
-	private static final float AMOUNT_VERTICAL_PIXEL_ADJUSTMENT = 0.5f;
 	private static final Map<String, TextureSize> TEXTURES = Map.of(
 			"crafting", new TextureSize(256, 256),
 			"side_bottom", new TextureSize(24, 134),
@@ -60,11 +59,12 @@ public final class BigEnderChestRenderer
 			BigEnderChestLayout layout,
 			BigEnderChestLayout.Computed computed,
 			BigEnderChestViewController view,
-			BigEnderChestAmountFontSize amountFontSize,
+			BigEnderChestAmountStyle amountStyle,
 			double mouseX,
 			double mouseY
 	)
 	{
+		boolean hasEntries = false;
 		for(BigEnderChestLayout.SlotHitbox hitbox : computed.itemSlots())
 		{
 			BigEnderChestLayout.Bounds bounds = hitbox.bounds();
@@ -81,26 +81,30 @@ public final class BigEnderChestRenderer
 			BigEnderChestMessages.EntryRecord entry = view.entryAtSlot(hitbox.index());
 			if(entry != null)
 			{
-				drawEntry(graphics, font, entry, bounds, amountFontSize);
+				hasEntries = true;
+				drawEntryIcon(graphics, font, entry, bounds);
 			}
 		}
-	}
+		if(!hasEntries)
+		{
+			return;
+		}
 
-	public BigEnderChestMessages.EntryRecord hoveredEntry(
-			BigEnderChestViewController view,
-			BigEnderChestLayout.Computed computed,
-			double mouseX,
-			double mouseY
-	)
-	{
+		graphics.nextStratum();
 		for(BigEnderChestLayout.SlotHitbox hitbox : computed.itemSlots())
 		{
-			if(hitbox.bounds().contains(mouseX, mouseY))
+			BigEnderChestMessages.EntryRecord entry = view.entryAtSlot(hitbox.index());
+			if(entry != null)
 			{
-				return view.entryAtSlot(hitbox.index());
+				drawEntryAmount(
+						graphics,
+						font,
+						entry,
+						hitbox.bounds(),
+						amountStyle
+				);
 			}
 		}
-		return null;
 	}
 
 	public void drawSideButtons(
@@ -327,22 +331,14 @@ public final class BigEnderChestRenderer
 		);
 	}
 
-	private void drawEntry(
+	private void drawEntryIcon(
 			GuiGraphicsExtractor graphics,
 			Font font,
 			BigEnderChestMessages.EntryRecord entry,
-			BigEnderChestLayout.Bounds bounds,
-			BigEnderChestAmountFontSize amountFontSize
+			BigEnderChestLayout.Bounds bounds
 	)
 	{
 		ItemStack item = entry.item();
-		String amount = BigEnderChestAmountFormatter.compact(
-				entry.totalAmount(),
-				amountFontSize.maxCharacters(),
-				amountFontSize.abbreviationThreshold()
-		);
-		float scale = amountFontSize.scale();
-		int pixelOffset = amountFontSize.pixelOffset();
 		graphics.item(item, bounds.x() + 1, bounds.y() + 1);
 		graphics.itemDecorations(
 				font,
@@ -351,14 +347,27 @@ public final class BigEnderChestRenderer
 				bounds.y() + 1,
 				null
 		);
+	}
+
+	private void drawEntryAmount(
+			GuiGraphicsExtractor graphics,
+			Font font,
+			BigEnderChestMessages.EntryRecord entry,
+			BigEnderChestLayout.Bounds bounds,
+			BigEnderChestAmountStyle amountStyle
+	)
+	{
+		String amount = BigEnderChestAmountFormatter.compact(
+				entry.totalAmount(),
+				amountStyle
+		);
+		BigEnderChestTextLayout.AmountPosition position =
+				BigEnderChestTextLayout.amount(bounds, font.width(amount), amountStyle);
 		drawAmount(
 				graphics,
 				font,
 				amount,
-				scale,
-				pixelOffset,
-				bounds.x() + 1,
-				bounds.y() + 1
+				position
 		);
 	}
 
@@ -366,21 +375,12 @@ public final class BigEnderChestRenderer
 			GuiGraphicsExtractor graphics,
 			Font font,
 			String amount,
-			float scale,
-			int pixelOffset,
-			int contentX,
-			int contentY
+			BigEnderChestTextLayout.AmountPosition position
 	)
 	{
-		float inverseScale = 1.0f / scale;
-		int textX = (int)((contentX + pixelOffset + 18.0f
-				- font.width(amount) * scale) * inverseScale);
-		int textY = (int)((contentY + pixelOffset + 16.0f
-				- 5.0f * scale - AMOUNT_VERTICAL_PIXEL_ADJUSTMENT) * inverseScale);
-		graphics.nextStratum();
 		graphics.pose().pushMatrix();
-		graphics.pose().scale(scale);
-		graphics.text(font, amount, textX, textY, -1);
+		graphics.pose().scale(position.scale());
+		graphics.text(font, amount, position.x(), position.y(), -1);
 		graphics.pose().popMatrix();
 	}
 
