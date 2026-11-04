@@ -73,6 +73,7 @@ aggregate menu with its custom terminal. The terminal provides:
 - Local search, sorting, scrolling, and item-list paging.
 - Stack/half-stack extraction, quick move to inventory, batch insertion, and
   dropping.
+- Large slot amounts use compact K/M/G units while tooltips retain the exact total.
 - Capability hot-switching with fallback to the vanilla 6×9 menu.
 - Visible aggregate entries are exposed as client-only read-only slots so
   shulker box, bundle, and other container preview integrations can inspect them.

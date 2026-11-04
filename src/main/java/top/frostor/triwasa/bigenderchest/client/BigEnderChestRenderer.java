@@ -338,7 +338,7 @@ public final class BigEnderChestRenderer
 				item,
 				bounds.x() + 1,
 				bounds.y() + 1,
-				Long.toString(entry.totalAmount())
+				BigEnderChestAmountFormatter.compact(entry.totalAmount())
 		);
 	}
 
