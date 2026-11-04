@@ -94,7 +94,7 @@ configuration screen.
 
 ### Configuration Screen
 
-Press `T+C` by default to open the main TriWasa configuration screen. The hotkey
+Press `C+T` by default to open the main TriWasa configuration screen. The hotkey
 can be rebound on the All tab. With Mod Menu installed, the configuration
 button in the mod list opens the same screen.
 
@@ -166,6 +166,13 @@ Shared source, resource, or Mixin changes must be built for both 26.2 and 26.3.
 
 Every PR runs change classification and `CI Gate`; the full two-version build
 runs only when build-related files change.
+
+### Release Build
+
+Run **Release Build** manually from GitHub Actions. The workflow checks out the FCA
+tag matching `fca_version`, builds both 26.2 and 26.3, and uploads a
+`triwasa-<version>` Actions artifact containing both JARs, `SHA256SUMS.txt`, and
+`BUILD-INFO.txt` for creating a GitHub Release.
 
 ## License and Third-Party Sources
 

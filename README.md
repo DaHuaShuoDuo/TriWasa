@@ -76,7 +76,7 @@ FCA 通过 Carpet 规则事件推送 `bigEnderChest` 的实时启用状态。客
 
 ### 配置界面
 
-默认按 `T+C` 打开 TriWasa 配置主界面，也可在“全部”页中重新绑定热键。安装
+默认按 `C+T` 打开 TriWasa 配置主界面，也可在“全部”页中重新绑定热键。安装
 Mod Menu 后，可以直接从模组列表的配置按钮进入。
 
 ### Quick Shulker 手持补货
@@ -138,6 +138,13 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 26.2 和 26.3。
 
 PR 始终运行变更分类和 `CI Gate`；只有构建相关文件变化时才执行双版本完整构建。
+
+### 发布构建
+
+在 GitHub Actions 中手动运行 **Release Build**。工作流会按
+`gradle.properties` 中的 `mod_version` 和 `fca_version` 检出对应的 FCA 标签，
+构建 26.2、26.3 两个版本，并上传一个包含两个 JAR、`SHA256SUMS.txt` 和
+`BUILD-INFO.txt` 的 `triwasa-<version>` Actions artifact，供创建 Release 使用。
 
 ## 许可证与第三方来源
 
