@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class BigEnderChestRenderer
 {
+	private static final float AMOUNT_VERTICAL_PIXEL_ADJUSTMENT = 0.5f;
 	private static final Map<String, TextureSize> TEXTURES = Map.of(
 			"crafting", new TextureSize(256, 256),
 			"side_bottom", new TextureSize(24, 134),
@@ -375,7 +376,7 @@ public final class BigEnderChestRenderer
 		int textX = (int)((contentX + pixelOffset + 18.0f
 				- font.width(amount) * scale) * inverseScale);
 		int textY = (int)((contentY + pixelOffset + 16.0f
-				- 5.0f * scale) * inverseScale);
+				- 5.0f * scale - AMOUNT_VERTICAL_PIXEL_ADJUSTMENT) * inverseScale);
 		graphics.nextStratum();
 		graphics.pose().pushMatrix();
 		graphics.pose().scale(scale);
