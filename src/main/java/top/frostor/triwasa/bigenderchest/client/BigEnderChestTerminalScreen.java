@@ -22,6 +22,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import top.frostor.triwasa.TriWasa;
 import top.frostor.triwasa.bigenderchest.BigEnderChestAmountFontSize;
+import top.frostor.triwasa.bigenderchest.BigEnderChestFeedback;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortDirection;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortField;
 import top.frostor.triwasa.bigenderchest.BigEnderChestTerminalStyle;
@@ -703,7 +704,7 @@ public final class BigEnderChestTerminalScreen
 			case "sideButton5" -> {
 				if(this.minecraft.player != null)
 				{
-					this.minecraft.player.sendSystemMessage(Component.translatable(
+					BigEnderChestFeedback.showSelected(Component.translatable(
 							"triwasa.big_ender_chest.settings_closes_session"
 					));
 				}
@@ -1154,9 +1155,6 @@ public final class BigEnderChestTerminalScreen
 
 	private void message(String translationKey)
 	{
-		if(this.minecraft.player != null)
-		{
-			this.minecraft.player.sendOverlayMessage(Component.translatable(translationKey));
-		}
+		BigEnderChestFeedback.showSelected(Component.translatable(translationKey));
 	}
 }

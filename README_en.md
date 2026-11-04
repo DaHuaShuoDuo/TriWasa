@@ -77,6 +77,8 @@ aggregate menu with its custom terminal. The terminal provides:
 - Large slot amounts use compact K/M/G units; terminal sub-options select small
   (default) or large amount text. Large abbreviates from 1000 with a shorter
   width, while tooltips retain the exact total.
+- Open, close, and action messages support silent, action-bar, and chat feedback,
+  defaulting to the action bar.
 - Capability hot-switching with fallback to the vanilla 6×9 menu.
 - Container components are passed through real item tooltip context so shulker
   box, bundle, and other preview integrations can inspect them.
@@ -86,8 +88,9 @@ client may complete the protocol handshake while the rule is disabled; enabling
 it later requires no reconnect or world reload, and the first chest opened after
 the change uses the terminal.
 
-The master switch is `bigEnderChestTerminalEnabled`. Terminal size, sorting, and
-search-persistence options are available in the MaLiLib configuration screen.
+The master switch is `bigEnderChestTerminalEnabled`. Feedback mode, terminal size,
+sorting, and search-persistence options are available in the MaLiLib
+configuration screen.
 
 ### Configuration Screen
 
