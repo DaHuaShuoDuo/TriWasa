@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import top.frostor.triwasa.TriWasa;
@@ -61,6 +62,7 @@ public final class BigEnderChestTerminalScreen
 	private final BigEnderChestViewController view = new BigEnderChestViewController();
 	private final BigEnderChestRecipeController recipeController =
 			new BigEnderChestRecipeController();
+	private final List<BigEnderChestPreviewSlot> previewSlots = new ArrayList<>();
 	private BigEnderChestLayout layout;
 	private BigEnderChestLayout.Computed computed;
 	private EditBox searchBox;
@@ -129,6 +131,7 @@ public final class BigEnderChestTerminalScreen
 		);
 		this.searchBox.setResponder(value -> {
 			this.view.setQuery(value);
+			this.updatePreviewSlotItems();
 		});
 		this.searchBox.setValue(initialSearch);
 		this.addRenderableWidget(this.searchBox);
@@ -157,6 +160,7 @@ public final class BigEnderChestTerminalScreen
 		{
 			this.view.setViewportRows(this.computed.rowCount());
 		}
+		this.updatePreviewSlotItems();
 	}
 
 	@Override
@@ -274,16 +278,16 @@ public final class BigEnderChestTerminalScreen
 		);
 		if(entry != null)
 		{
-			List<Component> tooltip = new ArrayList<>(
-					getTooltipFromItem(this.minecraft, entry.item())
-			);
+			ItemStack item = entry.item();
+			List<Component> tooltip = new ArrayList<>(getTooltipFromItem(this.minecraft, item));
 			tooltip.add(Component.translatable(
 					"triwasa.big_ender_chest.tooltip.total",
 					entry.totalAmount()
 			));
-			graphics.setComponentTooltipForNextFrame(
+			graphics.setTooltipForNextFrame(
 					this.font,
 					tooltip,
+					item.getTooltipImage(),
 					mouseX,
 					mouseY
 			);
@@ -321,6 +325,36 @@ public final class BigEnderChestTerminalScreen
 					mouseY
 			);
 		}
+	}
+
+	@Override
+	protected void extractSlot(
+			GuiGraphicsExtractor graphics,
+			Slot slot,
+			int mouseX,
+			int mouseY
+	)
+	{
+		if(slot instanceof BigEnderChestPreviewSlot)
+		{
+			return;
+		}
+		super.extractSlot(graphics, slot, mouseX, mouseY);
+	}
+
+	@Override
+	protected void slotClicked(
+			Slot slot,
+			int slotIndex,
+			int mouseButton,
+			ContainerInput clickType
+	)
+	{
+		if(slot instanceof BigEnderChestPreviewSlot)
+		{
+			return;
+		}
+		super.slotClicked(slot, slotIndex, mouseButton, clickType);
 	}
 
 	@Override
@@ -424,6 +458,7 @@ public final class BigEnderChestTerminalScreen
 						this.computed.itemCapacity()
 				))
 		{
+			this.updatePreviewSlotItems();
 			return true;
 		}
 		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
@@ -453,6 +488,21 @@ public final class BigEnderChestTerminalScreen
 		if(this.searchBox != null && this.searchBox.isFocused())
 		{
 			return super.keyPressed(event);
+		}
+		if(this.minecraft.options.keyPickItem.matches(event)
+				&& this.layout != null
+				&& this.computed != null)
+		{
+			BigEnderChestMessages.EntryRecord entry = this.renderer.hoveredEntry(
+					this.view,
+					this.computed,
+					this.relativeMouseX,
+					this.relativeMouseY
+			);
+			if(entry != null)
+			{
+				return true;
+			}
 		}
 		if(this.minecraft.options.keyDrop.matches(event)
 				&& this.layout != null
@@ -515,6 +565,39 @@ public final class BigEnderChestTerminalScreen
 		);
 		this.positionPlayerSlots();
 		this.view.setViewportRows(this.computed.rowCount());
+		this.rebuildPreviewSlots();
+	}
+
+	private void rebuildPreviewSlots()
+	{
+		this.menu.slots.removeIf(slot -> slot instanceof BigEnderChestPreviewSlot);
+		this.previewSlots.clear();
+		if(this.computed == null)
+		{
+			return;
+		}
+		for(BigEnderChestLayout.SlotHitbox hitbox : this.computed.itemSlots())
+		{
+			BigEnderChestPreviewSlot slot = new BigEnderChestPreviewSlot(
+					hitbox.index(),
+					hitbox.bounds().x() + 1,
+					hitbox.bounds().y() + 1
+			);
+			slot.index = this.menu.slots.size();
+			this.menu.slots.add(slot);
+			this.previewSlots.add(slot);
+		}
+		this.updatePreviewSlotItems();
+	}
+
+	private void updatePreviewSlotItems()
+	{
+		for(BigEnderChestPreviewSlot slot : this.previewSlots)
+		{
+			BigEnderChestMessages.EntryRecord entry =
+					this.view.entryAtSlot(slot.viewIndex());
+			slot.updateItem(entry == null ? ItemStack.EMPTY : entry.item());
+		}
 	}
 
 	public BigEnderChestLayout.Bounds interactionBounds()

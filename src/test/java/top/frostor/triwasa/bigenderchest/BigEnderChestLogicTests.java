@@ -1,5 +1,6 @@
 package top.frostor.triwasa.bigenderchest;
 
+import top.frostor.triwasa.bigenderchest.client.BigEnderChestPreviewSlotTest;
 import top.frostor.triwasa.easyplace.EasyPlaceProtocolTest;
 
 public final class BigEnderChestLogicTests
@@ -15,5 +16,6 @@ public final class BigEnderChestLogicTests
 		BigEnderChestSnapshotTest.run();
 		BigEnderChestLayoutTest.run();
 		BigEnderChestActionQueueTest.run();
+		BigEnderChestPreviewSlotTest.run();
 	}
 }

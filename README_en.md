@@ -74,6 +74,8 @@ aggregate menu with its custom terminal. The terminal provides:
 - Stack/half-stack extraction, quick move to inventory, batch insertion, and
   dropping.
 - Capability hot-switching with fallback to the vanilla 6×9 menu.
+- Visible aggregate entries are exposed as client-only read-only slots so
+  shulker box, bundle, and other container preview integrations can inspect them.
 
 FCA publishes the live `bigEnderChest` rule state through Carpet rule events. A
 client may complete the protocol handshake while the rule is disabled; enabling
