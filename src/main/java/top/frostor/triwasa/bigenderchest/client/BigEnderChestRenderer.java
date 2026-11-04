@@ -356,8 +356,8 @@ public final class BigEnderChestRenderer
 				amount,
 				scale,
 				pixelOffset,
-				bounds.x(),
-				bounds.y()
+				bounds.x() + 1,
+				bounds.y() + 1
 		);
 	}
 
@@ -367,14 +367,14 @@ public final class BigEnderChestRenderer
 			String amount,
 			float scale,
 			int pixelOffset,
-			int slotX,
-			int slotY
+			int contentX,
+			int contentY
 	)
 	{
 		float inverseScale = 1.0f / scale;
-		int textX = (int)((slotX + pixelOffset + 18.0f
+		int textX = (int)((contentX + pixelOffset + 18.0f
 				- font.width(amount) * scale) * inverseScale);
-		int textY = (int)((slotY + pixelOffset + 16.0f
+		int textY = (int)((contentY + pixelOffset + 16.0f
 				- 5.0f * scale) * inverseScale);
 		graphics.nextStratum();
 		graphics.pose().pushMatrix();
