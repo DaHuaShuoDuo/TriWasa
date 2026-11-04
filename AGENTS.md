@@ -2,14 +2,18 @@
 
 ## 项目定位
 
-- TriWasa 是面向 Java 版 Minecraft 的 Masa 客户端附属模组，为 Frostor's Carpet
-  Addition（FCA）提供 V2-Extra 轻松放置和大末影箱终端客户端支持，并包含 Quick
-  Shulker、拾取过滤和可选客户端模组修复。
+- TriWasa 是面向 Java 版 Minecraft 的 Masa 客户端附属模组。当前已实现 FCA
+  V2-Extra 轻松放置、大末影箱终端、Quick Shulker、拾取过滤和多项可选客户端兼容
+  修复；这份列表只记录现状，不是未来功能路线图、固定产品目标或新增功能的拒绝依据。
+- 新功能可以继续加入，但必须遵守客户端边界、Masa 配置约定、可选的 FCA 依赖和双版本
+  可测试性。不要为了维持当前以 FCA 适配为中心的方向，把无关功能强行塞进现有终端、
+  轻松放置或配置分类。
 - 当前同时支持 Minecraft `26.2` 和 `26.3`。`src/main` 是两个版本共用的源码与资源；
   `versions/<版本>/gradle.properties` 只负责版本差异。不要在版本目录复制或分叉 Java
   源码。
-- TriWasa 是纯客户端模组。服务端功能、Carpet 规则、玩家档案和大末影箱权威状态由
-  FCA 负责，不要把这些逻辑迁入客户端。
+- TriWasa 是纯客户端模组。涉及 FCA 服务端功能时，Carpet 规则、玩家档案和大末影箱
+  权威状态仍由 FCA 负责，不要把这些逻辑迁入客户端；其他独立客户端功能应按自己的
+  服务端兼容边界设计，不得伪造服务端权威结果。
 - 保持 mod id `triwasa`、Java 包名 `top.frostor.triwasa`、客户端入口点和现有公开
   行为稳定，除非任务明确要求迁移。
 - 项目要求 Java 25。Gradle Wrapper、Fabric Loom 和 Minecraft 依赖固定为项目当前
