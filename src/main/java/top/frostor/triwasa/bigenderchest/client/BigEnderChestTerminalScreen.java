@@ -266,9 +266,9 @@ public final class BigEnderChestTerminalScreen
 			int mouseY
 	)
 	{
-		super.extractTooltip(graphics, mouseX, mouseY);
 		if(this.layout == null || this.computed == null)
 		{
+			super.extractTooltip(graphics, mouseX, mouseY);
 			return;
 		}
 		BigEnderChestMessages.EntryRecord entry = this.renderer.hoveredEntry(
@@ -285,14 +285,16 @@ public final class BigEnderChestTerminalScreen
 					"triwasa.big_ender_chest.tooltip.total",
 					entry.totalAmount()
 			));
-			graphics.setComponentTooltipForNextFrame(
+			graphics.setTooltipForNextFrame(
 					this.font,
 					tooltip,
+					item.getTooltipImage(),
 					mouseX,
 					mouseY
 			);
 			return;
 		}
+		super.extractTooltip(graphics, mouseX, mouseY);
 		String hoveredButton = this.hoveredSideButton();
 		if(hoveredButton != null)
 		{
