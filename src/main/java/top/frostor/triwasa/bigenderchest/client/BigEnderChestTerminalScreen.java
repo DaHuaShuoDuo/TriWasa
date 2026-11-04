@@ -285,10 +285,9 @@ public final class BigEnderChestTerminalScreen
 					"triwasa.big_ender_chest.tooltip.total",
 					entry.totalAmount()
 			));
-			graphics.setTooltipForNextFrame(
+			graphics.setComponentTooltipForNextFrame(
 					this.font,
 					tooltip,
-					item.getTooltipImage(),
 					mouseX,
 					mouseY
 			);
