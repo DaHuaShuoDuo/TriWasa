@@ -37,6 +37,7 @@ Optional:
 
 - Frostor's Carpet Addition: reuse its public protocol API when loaded in the
   same process
+- Mod Menu: provides a configuration button in the mod list
 - Roughly Enough Items: enables REI interface fixes
 - Quick Shulker: enables hand-item restocking
 
@@ -88,6 +89,12 @@ the change uses the terminal.
 The master switch is `bigEnderChestTerminalEnabled`. Terminal size, sorting, and
 search-persistence options are available in the MaLiLib configuration screen.
 
+### Configuration Screen
+
+Press `T+C` by default to open the main TriWasa configuration screen. The hotkey
+can be rebound on the General tab. With Mod Menu installed, the configuration
+button in the mod list opens the same screen.
+
 ### Quick Shulker Hand Restocking
 
 `quickShulkerHandRestock` can restock the selected hand item from Quick Shulker
@@ -105,15 +112,18 @@ permissions, region protection, or entity interception.
 
 TriWasa automatically fixes REI submenu clipping and terminal interaction
 bounds, and prevents Inventory Profiles Next from injecting sort buttons into
-the big ender chest terminal. These fixes do not add required dependencies.
+the big ender chest terminal. IPN compatibility is an automatic adapter and is
+not shown as a configuration-page fix. None of these compatibility features add
+required dependencies.
 
 ## Configuration
 
 TriWasa stores configuration in `config/triwasa.json` through MaLiLib:
 
+- **General**: the TriWasa configuration-screen hotkey.
 - **Porting**: V2-Extra easy place and pickup filtering.
 - **Utilities**: Quick Shulker and the big ender chest terminal.
-- **Other Mod Fixes**: applied automatically when the matching mod is present.
+- **Other Mod Fixes**: optional fixes that change another mod's own behavior.
 
 The `[+]` / `[-]` control on a parent only expands or collapses child options;
 it is not a feature switch. Missing configuration, search filtering, and a

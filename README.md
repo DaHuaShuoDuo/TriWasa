@@ -32,6 +32,7 @@ V2-Extra 轻松放置、大末影箱终端、Quick Shulker 手持补货、客户
 可选依赖：
 
 - Frostor's Carpet Addition：同进程加载时复用公开协议 API
+- Mod Menu：在模组列表提供 TriWasa 配置按钮
 - Roughly Enough Items：启用 REI 相关界面修复
 - Quick Shulker：启用手持物品自动补货
 
@@ -72,6 +73,11 @@ FCA 通过 Carpet 规则事件推送 `bigEnderChest` 的实时启用状态。客
 配置总开关为 `bigEnderChestTerminalEnabled`。终端尺寸、排序和搜索保留策略可在
 MaLiLib 配置界面中调整。
 
+### 配置界面
+
+默认按 `T+C` 打开 TriWasa 配置主界面，也可在“通用”页中重新绑定热键。安装
+Mod Menu 后，可以直接从模组列表的配置按钮进入。
+
 ### Quick Shulker 手持补货
 
 `quickShulkerHandRestock` 可以从玩家背包中的 Quick Shulker 盒子补充当前手持物品。
@@ -86,15 +92,17 @@ MaLiLib 配置界面中调整。
 ### 其他模组修复
 
 TriWasa 会在检测到对应模组时自动应用 REI 子菜单裁剪与终端交互区域修复，并阻止
-Inventory Profiles Next 向大末影箱终端注入整理按钮。这些修复不增加必需依赖。
+Inventory Profiles Next 向大末影箱终端注入整理按钮。IPN 兼容属于自动适配，不作为
+配置页中的修复项显示；这些兼容均不增加必需依赖。
 
 ## 配置
 
 配置保存在 `config/triwasa.json`，由 MaLiLib 配置界面管理：
 
+- **通用**：TriWasa 配置界面热键。
 - **移植**：V2-Extra 轻松放置和拾取过滤。
 - **辅助工具**：Quick Shulker 和大末影箱终端。
-- **其他模组修复**：检测到对应模组时自动生效。
+- **其他模组修复**：显示会修改其它模组自身表现的可选修复项。
 
 父项左侧 `[+]` / `[-]` 只控制子项展开，不是功能总开关。配置缺失、搜索过滤和
 父项关闭时仍会保留可恢复的配置状态。

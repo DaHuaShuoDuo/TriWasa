@@ -16,6 +16,9 @@
 		],
 		"rei_client": [
 			"top.frostor.triwasa.compat.rei.TriWasaReiClientPlugin"
+		],
+		"modmenu": [
+			"top.frostor.triwasa.compat.modmenu.TriWasaModMenu"
 		]
 	},
 	"mixins": [
@@ -31,6 +34,7 @@
 	},
 	"suggests": {
 		"frostors-carpet-addition": "*",
+		"modmenu": "*",
 		"roughlyenoughitems": "*",
 		"quickshulker": "*"
 	},

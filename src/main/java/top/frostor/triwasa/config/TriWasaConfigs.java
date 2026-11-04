@@ -7,6 +7,7 @@ import fi.dy.masa.malilib.config.ConfigUtils;
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.IConfigHandler;
 import fi.dy.masa.malilib.config.options.ConfigBoolean;
+import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.config.options.ConfigInteger;
 import fi.dy.masa.malilib.config.options.ConfigOptionList;
 import fi.dy.masa.malilib.config.options.ConfigStringList;
@@ -30,11 +31,13 @@ import java.nio.file.Path;
 
 public final class TriWasaConfigs implements IConfigHandler
 {
+	public static final String GENERAL_KEY = "General";
 	public static final String PORTING_KEY = "Porting";
 	public static final String UTILITIES_KEY = "Utilities";
 	public static final String BIG_ENDER_CHEST_KEY = "BigEnderChest";
 	public static final String PICKUP_FILTER_KEY = "ItemPickupFilter";
 	public static final String CONFIG_FILE_NAME = TriWasa.MOD_ID + ".json";
+	public static final String GENERAL_TRANSLATION_PREFIX = "triwasa.config.general";
 	public static final String PORTING_TRANSLATION_PREFIX = "triwasa.config.porting";
 	public static final String UTILITIES_TRANSLATION_PREFIX = "triwasa.config.utilities";
 	public static final String BIG_ENDER_CHEST_TRANSLATION_PREFIX =
@@ -42,6 +45,9 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final String PICKUP_FILTER_TRANSLATION_PREFIX = "triwasa.config.pickup_filter";
 	private static final String LEGACY_CONFIG_FILE_NAME = "earlycompat.json";
 
+	public static final ConfigHotkey OPEN_CONFIG_GUI =
+			new ConfigHotkey("openConfigGui", "T,C")
+					.apply(GENERAL_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_V2_PROTOCOL_EXTRA =
 			new ConfigBoolean("easyPlaceV2ProtocolExtra", true).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_EXPANDED =
@@ -109,6 +115,8 @@ public final class TriWasaConfigs implements IConfigHandler
 			new ConfigBoolean("itemPickupFilterPauseWhileSneaking", true)
 					.apply(PICKUP_FILTER_TRANSLATION_PREFIX);
 
+	public static final ImmutableList<IConfigBase> GENERAL_OPTIONS =
+			ImmutableList.of(OPEN_CONFIG_GUI);
 	public static final ImmutableList<IConfigBase> EASY_PLACE_OPTIONS = ImmutableList.of(
 			EASY_PLACE_V2_PROTOCOL_EXTRA,
 			EASY_PLACE_EXPANDED,
@@ -205,6 +213,10 @@ public final class TriWasaConfigs implements IConfigHandler
 		if(Files.isRegularFile(configFile) && Files.isReadable(configFile))
 		{
 			JsonObject root = readObject(configFile);
+			if(root != null && root.has(GENERAL_KEY) && root.get(GENERAL_KEY).isJsonObject())
+			{
+				ConfigUtils.readConfigBase(root, GENERAL_KEY, GENERAL_OPTIONS);
+			}
 			if(root != null && root.has(PORTING_KEY) && root.get(PORTING_KEY).isJsonObject())
 			{
 				ConfigUtils.readConfigBase(root, PORTING_KEY, PORTING_FILE_OPTIONS);
@@ -257,6 +269,7 @@ public final class TriWasaConfigs implements IConfigHandler
 		}
 
 		JsonObject root = new JsonObject();
+		ConfigUtils.writeConfigBase(root, GENERAL_KEY, GENERAL_OPTIONS);
 		ConfigUtils.writeConfigBase(root, PORTING_KEY, PORTING_FILE_OPTIONS);
 		ConfigUtils.writeConfigBase(root, UTILITIES_KEY, UTILITY_FILE_OPTIONS);
 		ConfigUtils.writeConfigBase(root, PICKUP_FILTER_KEY, PICKUP_FILTER_OPTIONS);
