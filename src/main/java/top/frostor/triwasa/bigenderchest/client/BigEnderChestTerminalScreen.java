@@ -61,7 +61,6 @@ public final class BigEnderChestTerminalScreen
 	private final BigEnderChestViewController view = new BigEnderChestViewController();
 	private final BigEnderChestRecipeController recipeController =
 			new BigEnderChestRecipeController();
-	private final List<BigEnderChestPreviewSlot> previewSlots = new ArrayList<>();
 	private BigEnderChestLayout layout;
 	private BigEnderChestLayout.Computed computed;
 	private EditBox searchBox;
@@ -130,7 +129,6 @@ public final class BigEnderChestTerminalScreen
 		);
 		this.searchBox.setResponder(value -> {
 			this.view.setQuery(value);
-			this.updatePreviewSlotItems();
 		});
 		this.searchBox.setValue(initialSearch);
 		this.addRenderableWidget(this.searchBox);
@@ -159,7 +157,6 @@ public final class BigEnderChestTerminalScreen
 		{
 			this.view.setViewportRows(this.computed.rowCount());
 		}
-		this.updatePreviewSlotItems();
 	}
 
 	@Override
@@ -328,21 +325,6 @@ public final class BigEnderChestTerminalScreen
 	}
 
 	@Override
-	protected void extractSlot(
-			GuiGraphicsExtractor graphics,
-			Slot slot,
-			int mouseX,
-			int mouseY
-	)
-	{
-		if(slot instanceof BigEnderChestPreviewSlot)
-		{
-			return;
-		}
-		super.extractSlot(graphics, slot, mouseX, mouseY);
-	}
-
-	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)
 	{
 		if(this.layout == null || this.computed == null)
@@ -443,7 +425,6 @@ public final class BigEnderChestTerminalScreen
 						this.computed.itemCapacity()
 				))
 		{
-			this.updatePreviewSlotItems();
 			return true;
 		}
 		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
@@ -535,39 +516,6 @@ public final class BigEnderChestTerminalScreen
 		);
 		this.positionPlayerSlots();
 		this.view.setViewportRows(this.computed.rowCount());
-		this.rebuildPreviewSlots();
-	}
-
-	private void rebuildPreviewSlots()
-	{
-		this.menu.slots.removeIf(slot -> slot instanceof BigEnderChestPreviewSlot);
-		this.previewSlots.clear();
-		if(this.computed == null)
-		{
-			return;
-		}
-		for(BigEnderChestLayout.SlotHitbox hitbox : this.computed.itemSlots())
-		{
-			BigEnderChestPreviewSlot slot = new BigEnderChestPreviewSlot(
-					hitbox.index(),
-					hitbox.bounds().x() + 1,
-					hitbox.bounds().y() + 1
-			);
-			slot.index = this.menu.slots.size();
-			this.menu.slots.add(slot);
-			this.previewSlots.add(slot);
-		}
-		this.updatePreviewSlotItems();
-	}
-
-	private void updatePreviewSlotItems()
-	{
-		for(BigEnderChestPreviewSlot slot : this.previewSlots)
-		{
-			BigEnderChestMessages.EntryRecord entry =
-					this.view.entryAtSlot(slot.viewIndex());
-			slot.updateItem(entry == null ? ItemStack.EMPTY : entry.item());
-		}
 	}
 
 	public BigEnderChestLayout.Bounds interactionBounds()

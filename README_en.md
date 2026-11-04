@@ -75,8 +75,8 @@ aggregate menu with its custom terminal. The terminal provides:
   dropping.
 - Large slot amounts use compact K/M/G units while tooltips retain the exact total.
 - Capability hot-switching with fallback to the vanilla 6×9 menu.
-- Visible aggregate entries are exposed as client-only read-only slots so
-  shulker box, bundle, and other container preview integrations can inspect them.
+- Container components are passed through real item tooltip context so shulker
+  box, bundle, and other preview integrations can inspect them.
 
 FCA publishes the live `bigEnderChest` rule state through Carpet rule events. A
 client may complete the protocol handshake while the rule is disabled; enabling
