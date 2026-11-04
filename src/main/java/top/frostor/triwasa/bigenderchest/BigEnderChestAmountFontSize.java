@@ -5,18 +5,28 @@ import fi.dy.masa.malilib.util.StringUtils;
 
 public enum BigEnderChestAmountFontSize implements IConfigOptionListEntry
 {
-	LARGE("large", 0.85f, 0),
-	NORMAL("normal", 2.0f / 3.0f, -1);
+	SMALL("small", 2.0f / 3.0f, -1, 4, 10_000),
+	LARGE("large", 0.85f, 0, 3, 1_000);
 
 	private final String value;
 	private final float scale;
 	private final int pixelOffset;
+	private final int maxCharacters;
+	private final int abbreviationThreshold;
 
-	BigEnderChestAmountFontSize(String value, float scale, int pixelOffset)
+	BigEnderChestAmountFontSize(
+			String value,
+			float scale,
+			int pixelOffset,
+			int maxCharacters,
+			int abbreviationThreshold
+	)
 	{
 		this.value = value;
 		this.scale = scale;
 		this.pixelOffset = pixelOffset;
+		this.maxCharacters = maxCharacters;
+		this.abbreviationThreshold = abbreviationThreshold;
 	}
 
 	public float scale()
@@ -27,6 +37,16 @@ public enum BigEnderChestAmountFontSize implements IConfigOptionListEntry
 	public int pixelOffset()
 	{
 		return this.pixelOffset;
+	}
+
+	public int maxCharacters()
+	{
+		return this.maxCharacters;
+	}
+
+	public int abbreviationThreshold()
+	{
+		return this.abbreviationThreshold;
 	}
 
 	@Override
@@ -53,11 +73,12 @@ public enum BigEnderChestAmountFontSize implements IConfigOptionListEntry
 	{
 		for(BigEnderChestAmountFontSize fontSize : values())
 		{
-			if(fontSize.value.equalsIgnoreCase(value))
+			if(fontSize.value.equalsIgnoreCase(value)
+					|| fontSize == SMALL && "normal".equalsIgnoreCase(value))
 			{
 				return fontSize;
 			}
 		}
-		return LARGE;
+		return SMALL;
 	}
 }

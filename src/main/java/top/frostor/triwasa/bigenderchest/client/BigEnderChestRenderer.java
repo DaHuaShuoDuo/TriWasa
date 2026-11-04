@@ -335,6 +335,13 @@ public final class BigEnderChestRenderer
 	)
 	{
 		ItemStack item = entry.item();
+		String amount = BigEnderChestAmountFormatter.compact(
+				entry.totalAmount(),
+				amountFontSize.maxCharacters(),
+				amountFontSize.abbreviationThreshold()
+		);
+		float scale = amountFontSize.scale();
+		int pixelOffset = amountFontSize.pixelOffset();
 		graphics.item(item, bounds.x() + 1, bounds.y() + 1);
 		graphics.itemDecorations(
 				font,
@@ -346,8 +353,9 @@ public final class BigEnderChestRenderer
 		drawAmount(
 				graphics,
 				font,
-				BigEnderChestAmountFormatter.compact(entry.totalAmount()),
-				amountFontSize,
+				amount,
+				scale,
+				pixelOffset,
 				bounds.x(),
 				bounds.y()
 		);
@@ -357,16 +365,17 @@ public final class BigEnderChestRenderer
 			GuiGraphicsExtractor graphics,
 			Font font,
 			String amount,
-			BigEnderChestAmountFontSize amountFontSize,
+			float scale,
+			int pixelOffset,
 			int slotX,
 			int slotY
 	)
 	{
-		float scale = amountFontSize.scale();
 		float inverseScale = 1.0f / scale;
-		int offset = amountFontSize.pixelOffset();
-		int textX = (int)((slotX + offset + 18.0f - font.width(amount) * scale) * inverseScale);
-		int textY = (int)((slotY + offset + 16.0f - 5.0f * scale) * inverseScale);
+		int textX = (int)((slotX + pixelOffset + 18.0f
+				- font.width(amount) * scale) * inverseScale);
+		int textY = (int)((slotY + pixelOffset + 16.0f
+				- 5.0f * scale) * inverseScale);
 		graphics.nextStratum();
 		graphics.pose().pushMatrix();
 		graphics.pose().scale(scale);

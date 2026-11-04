@@ -73,7 +73,7 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ConfigOptionList BIG_ENDER_CHEST_TERMINAL_AMOUNT_FONT_SIZE =
 			new ConfigOptionList(
 					"bigEnderChestTerminalAmountFontSize",
-					BigEnderChestAmountFontSize.LARGE
+					BigEnderChestAmountFontSize.SMALL
 			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
 	public static final ConfigOptionList BIG_ENDER_CHEST_SORT_FIELD =
 			new ConfigOptionList(

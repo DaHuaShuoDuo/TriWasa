@@ -1141,7 +1141,7 @@ public final class BigEnderChestTerminalScreen
 				.getOptionListValue()
 				instanceof BigEnderChestAmountFontSize size
 				? size
-				: BigEnderChestAmountFontSize.LARGE;
+				: BigEnderChestAmountFontSize.SMALL;
 	}
 
 	private void saveConfigs()
