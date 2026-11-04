@@ -34,7 +34,10 @@ public final class BigEnderChestProtocol
 	public static final int CAPABILITY_SEQUENCED_ACTIONS = BigEnderChestCapabilities.SEQUENCED_ACTIONS;
 	public static final int CAPABILITY_SNAPSHOT_ACK = BigEnderChestCapabilities.SNAPSHOT_ACK;
 	public static final int CAPABILITY_SESSION_CLOSE = BigEnderChestCapabilities.SESSION_CLOSE;
-	public static final int CAPABILITIES = BigEnderChestCapabilities.REQUIRED;
+	public static final int CAPABILITY_RULE_STATE_ACK = BigEnderChestCapabilities.RULE_STATE_ACK;
+	public static final int CAPABILITY_TERMINAL_MENU_ACTIVE =
+			BigEnderChestCapabilities.TERMINAL_MENU_ACTIVE;
+	public static final int CAPABILITIES = BigEnderChestCapabilities.CAPABILITIES;
 
 	public static final int HELLO = 1;
 	public static final int HELLO_ACK = 2;

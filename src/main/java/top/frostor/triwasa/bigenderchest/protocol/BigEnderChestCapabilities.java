@@ -19,6 +19,8 @@ public final class BigEnderChestCapabilities
 	public static final int SEQUENCED_ACTIONS = 1 << 9;
 	public static final int SNAPSHOT_ACK = 1 << 10;
 	public static final int SESSION_CLOSE = 1 << 11;
+	public static final int RULE_STATE_ACK = 1 << 12;
+	public static final int TERMINAL_MENU_ACTIVE = 1 << 13;
 
 	public static final int REQUIRED = SNAPSHOT
 			| DELTA
@@ -32,6 +34,9 @@ public final class BigEnderChestCapabilities
 			| SEQUENCED_ACTIONS
 			| SNAPSHOT_ACK
 			| SESSION_CLOSE;
+	public static final int CAPABILITIES = REQUIRED
+			| RULE_STATE_ACK
+			| TERMINAL_MENU_ACTIVE;
 
 	private BigEnderChestCapabilities()
 	{
@@ -57,6 +62,8 @@ public final class BigEnderChestCapabilities
 		append(supported, capabilities, SEQUENCED_ACTIONS, "sequenced_actions");
 		append(supported, capabilities, SNAPSHOT_ACK, "snapshot_ack");
 		append(supported, capabilities, SESSION_CLOSE, "session_close");
+		append(supported, capabilities, RULE_STATE_ACK, "rule_state_ack");
+		append(supported, capabilities, TERMINAL_MENU_ACTIVE, "terminal_menu_active");
 		return List.copyOf(supported);
 	}
 

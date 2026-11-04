@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestCapabilities;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestProtocol;
+import top.frostor.triwasa.bigenderchest.network.BigEnderChestSessionState;
 
 import java.util.List;
 
@@ -68,6 +69,31 @@ public final class BigEnderChestProtocolTest
 						== 12,
 				"all 12 required capabilities must be represented"
 		);
+		check(
+				BigEnderChestCapabilities.names(BigEnderChestCapabilities.CAPABILITIES).size()
+						== 14,
+				"optional rule-state capabilities must be advertised"
+		);
+		BigEnderChestSessionState session = new BigEnderChestSessionState();
+		session.helloPending();
+		int inactiveCapabilities = BigEnderChestCapabilities.CAPABILITIES
+				& ~BigEnderChestCapabilities.TERMINAL_MENU_ACTIVE;
+		check(
+				session.acceptHello(new BigEnderChestMessages.HelloAck(
+						BigEnderChestProtocol.VERSION,
+						inactiveCapabilities,
+						8192,
+						true
+				)),
+				"HELLO_ACK must accept protocol support while the server rule is inactive"
+		);
+		check(!session.serverRuleEnabled(), "inactive server rule must not enable the terminal");
+		check(!session.canUseTerminal(), "inactive server rule must block terminal use");
+		session.updateCapabilities(
+				inactiveCapabilities | BigEnderChestCapabilities.TERMINAL_MENU_ACTIVE
+		);
+		check(session.serverRuleEnabled(), "rule-state ACK must reactivate the terminal");
+		check(session.canUseTerminal(), "updated capabilities must permit terminal use");
 		System.out.println("BigEnderChestProtocolTest passed " + checks + " checks");
 	}
 

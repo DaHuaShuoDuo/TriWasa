@@ -348,6 +348,12 @@ public final class BigEnderChestClientNetwork
 				return;
 			}
 		}
+		if(SESSION.helloAccepted()
+				&& SESSION.state() != BigEnderChestSessionState.State.HELLO_PENDING)
+		{
+			SESSION.updateCapabilities(ack.capabilities());
+			return;
+		}
 		boolean accepted = SESSION.acceptHello(ack);
 		if(!accepted
 				&& ack.accepted()
