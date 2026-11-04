@@ -30,6 +30,8 @@ Frostor's Carpet Addition（FCA）提供 V2-Extra 轻松放置和大末影箱终
 
 可选依赖：
 
+- [Frostor's Carpet Addition](https://github.com/DaHuaShuoDuo/Frostors-Carpet-Addition)：客户端与
+  FCA 同进程加载时直接复用 FCA 的公开 Payload API。
 - [Roughly Enough Items](https://modrinth.com/mod/rei)：启用 REI 相关界面修复。
 - [Quick Shulker](https://modrinth.com/mod/quick-shulker)：启用手持物品自动补货。
 
@@ -101,8 +103,9 @@ TriWasa 使用服务端发送的完整聚合索引，而不是逐个同步物理
 - 在客户端本地执行搜索、排序、滚动和物品列表分页。
 
 连接专用服务器且客户端未安装 FCA 时，TriWasa 使用自身线兼容的 Payload。
-单人游戏或集成服务器同时加载 FCA 时，TriWasa 通过反射复用 FCA 服务端定义的
-Payload 类型与 Codec，避免同一通道注册两个不同的 Payload 类。FCA 始终是协议和服务端
+单人游戏或集成服务器同时加载 FCA 时，TriWasa 通过 `compileOnly` 的公开 API 直接复用
+FCA 服务端定义的 Payload 类型与 Codec，避免同一通道注册两个不同的 Payload 类。可选
+FCA 类型引用隔离在独立适配器中，未安装 FCA 时不会加载这些类。FCA 始终是协议和服务端
 业务状态的权威方。
 
 ### 界面操作
