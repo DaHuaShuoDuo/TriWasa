@@ -19,6 +19,7 @@ public final class BigEnderChestSessionState
 	private State state = State.DISCONNECTED;
 	private int negotiatedCapabilities;
 	private boolean helloAccepted;
+	private boolean serverRuleEnabled;
 	private long sessionId;
 	private int containerId = -1;
 	private long revision = -1;
@@ -39,6 +40,7 @@ public final class BigEnderChestSessionState
 		this.state = State.DISCONNECTED;
 		this.negotiatedCapabilities = 0;
 		this.helloAccepted = false;
+		this.serverRuleEnabled = false;
 		this.sessionId = 0;
 		this.containerId = -1;
 		this.revision = -1;
@@ -74,6 +76,13 @@ public final class BigEnderChestSessionState
 				);
 		if(this.helloAccepted)
 		{
+			boolean ruleStateAck = BigEnderChestCapabilities.hasAll(
+					ack.capabilities(),
+					BigEnderChestCapabilities.RULE_STATE_ACK
+			);
+			this.serverRuleEnabled = !ruleStateAck
+					|| (ack.capabilities()
+					& BigEnderChestCapabilities.TERMINAL_MENU_ACTIVE) != 0;
 			this.state = State.PROTOCOL_READY;
 			this.errorKey = null;
 		}
@@ -85,6 +94,18 @@ public final class BigEnderChestSessionState
 					: "triwasa.big_ender_chest.error.hello_rejected";
 		}
 		return this.helloAccepted;
+	}
+
+	public void updateCapabilities(int capabilities)
+	{
+		this.negotiatedCapabilities = capabilities;
+		boolean ruleStateAck = BigEnderChestCapabilities.hasAll(
+				capabilities,
+				BigEnderChestCapabilities.RULE_STATE_ACK
+		);
+		this.serverRuleEnabled = !ruleStateAck
+				|| (capabilities
+				& BigEnderChestCapabilities.TERMINAL_MENU_ACTIVE) != 0;
 	}
 
 	public void openSession(BigEnderChestMessages.SessionOpen open)
@@ -277,6 +298,7 @@ public final class BigEnderChestSessionState
 	public boolean canUseTerminal()
 	{
 		return this.helloAccepted
+				&& this.serverRuleEnabled
 				&& BigEnderChestCapabilities.hasAll(
 						this.negotiatedCapabilities,
 						BigEnderChestCapabilities.REQUIRED
@@ -306,6 +328,11 @@ public final class BigEnderChestSessionState
 	public boolean helloAccepted()
 	{
 		return this.helloAccepted;
+	}
+
+	public boolean serverRuleEnabled()
+	{
+		return this.serverRuleEnabled;
 	}
 
 	public int negotiatedCapabilities()

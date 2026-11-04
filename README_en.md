@@ -75,6 +75,11 @@ aggregate menu with its custom terminal. The terminal provides:
   dropping.
 - Capability hot-switching with fallback to the vanilla 6×9 menu.
 
+FCA publishes the live `bigEnderChest` rule state through Carpet rule events. A
+client may complete the protocol handshake while the rule is disabled; enabling
+it later requires no reconnect or world reload, and the first chest opened after
+the change uses the terminal.
+
 The master switch is `bigEnderChestTerminalEnabled`. Terminal size, sorting, and
 search-persistence options are available in the MaLiLib configuration screen.
 
