@@ -524,7 +524,7 @@ public final class BigEnderChestTerminalScreen
 			return null;
 		}
 		int leftPadding = this.computed.sideButtons().stream()
-				.mapToInt(button -> button.hitBounds().x())
+				.mapToInt(button -> button.bounds().x())
 				.min()
 				.orElse(0);
 		return new BigEnderChestLayout.Bounds(
@@ -789,7 +789,7 @@ public final class BigEnderChestTerminalScreen
 	{
 		for(BigEnderChestLayout.SideButtonBounds button : this.computed.sideButtons())
 		{
-			if(button.hitBounds().contains(mouseX, mouseY))
+			if(button.bounds().contains(mouseX, mouseY))
 			{
 				return button.id();
 			}

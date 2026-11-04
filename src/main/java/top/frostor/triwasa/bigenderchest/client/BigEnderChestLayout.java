@@ -187,15 +187,6 @@ public record BigEnderChestLayout(
 
 	public record SideButtonBounds(String id, int index, Bounds bounds)
 	{
-		public Bounds hitBounds()
-		{
-			return new Bounds(
-					this.bounds.x() - 8,
-					this.bounds.y(),
-					this.bounds.w() + 16,
-					this.bounds.h()
-			);
-		}
 	}
 
 	public record Computed(

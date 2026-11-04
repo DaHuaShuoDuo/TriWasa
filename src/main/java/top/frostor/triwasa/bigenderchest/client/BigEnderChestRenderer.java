@@ -127,7 +127,7 @@ public final class BigEnderChestRenderer
 					.filter(candidate -> candidate.id().equals(stateId))
 					.findFirst()
 					.orElse(button.states().getFirst());
-			boolean hovered = buttonBounds.hitBounds().contains(mouseX, mouseY);
+			boolean hovered = buttonBounds.bounds().contains(mouseX, mouseY);
 			drawRegion(
 					graphics,
 					hovered ? state.hover() : state.normal(),
