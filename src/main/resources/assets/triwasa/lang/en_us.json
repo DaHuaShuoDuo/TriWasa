@@ -10,7 +10,7 @@
 	"triwasa.gui.expand_settings": "Expand or collapse sub-options",
 	"triwasa.config.general.name.openConfigGui": "Open TriWasa Config",
 	"triwasa.config.general.prettyName.openConfigGui": "Open TriWasa Config",
-	"triwasa.config.general.comment.openConfigGui": "Opens the main TriWasa configuration screen in game. The default hotkey is T+C.",
+	"triwasa.config.general.comment.openConfigGui": "Opens the main TriWasa configuration screen in game. The default hotkey is C+T.",
 	"triwasa.hotkeys.category.general": "General Hotkeys",
 	"triwasa.config.porting.name.easyPlaceV2ProtocolExtra": "easyPlaceV2ProtocolExtra",
 	"triwasa.config.porting.prettyName.easyPlaceV2ProtocolExtra": "Enable V2-Extra Easy Place Protocol",

@@ -47,7 +47,7 @@ public final class TriWasaConfigs implements IConfigHandler
 	private static final String LEGACY_CONFIG_FILE_NAME = "earlycompat.json";
 
 	public static final ConfigHotkey OPEN_CONFIG_GUI =
-			new ConfigHotkey("openConfigGui", "T,C")
+			new ConfigHotkey("openConfigGui", "C,T")
 					.apply(GENERAL_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_V2_PROTOCOL_EXTRA =
 			new ConfigBoolean("easyPlaceV2ProtocolExtra", true).apply(PORTING_TRANSLATION_PREFIX);

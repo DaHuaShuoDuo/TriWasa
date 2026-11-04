@@ -10,7 +10,7 @@
 	"triwasa.gui.expand_settings": "展开或折叠子配置",
 	"triwasa.config.general.name.openConfigGui": "打开 TriWasa 配置",
 	"triwasa.config.general.prettyName.openConfigGui": "打开 TriWasa 配置",
-	"triwasa.config.general.comment.openConfigGui": "在游戏中打开 TriWasa 配置主界面。默认热键为 T+C。",
+	"triwasa.config.general.comment.openConfigGui": "在游戏中打开 TriWasa 配置主界面。默认热键为 C+T。",
 	"triwasa.hotkeys.category.general": "通用热键",
 	"triwasa.config.porting.name.easyPlaceV2ProtocolExtra": "启用 V2-Extra 轻松放置协议",
 	"triwasa.config.porting.prettyName.easyPlaceV2ProtocolExtra": "V2-Extra 轻松放置协议",
