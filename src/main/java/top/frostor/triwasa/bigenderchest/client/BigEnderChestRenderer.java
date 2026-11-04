@@ -347,9 +347,9 @@ public final class BigEnderChestRenderer
 				graphics,
 				font,
 				BigEnderChestAmountFormatter.compact(entry.totalAmount()),
-				amountFontSize.scale(),
-				bounds.x() + 1,
-				bounds.y() + 1
+				amountFontSize,
+				bounds.x(),
+				bounds.y()
 		);
 	}
 
@@ -357,19 +357,20 @@ public final class BigEnderChestRenderer
 			GuiGraphicsExtractor graphics,
 			Font font,
 			String amount,
-			float scale,
-			int itemX,
-			int itemY
+			BigEnderChestAmountFontSize amountFontSize,
+			int slotX,
+			int slotY
 	)
 	{
-		float rightEdge = itemX + 17.0f;
-		float bottomEdge = itemY + 12.0f;
-		int textX = Math.round((rightEdge - font.width(amount) * scale) / scale);
-		int textY = Math.round(bottomEdge / scale);
+		float scale = amountFontSize.scale();
+		float inverseScale = 1.0f / scale;
+		int offset = amountFontSize.pixelOffset();
+		int textX = (int)((slotX + offset + 18.0f - font.width(amount) * scale) * inverseScale);
+		int textY = (int)((slotY + offset + 16.0f - 5.0f * scale) * inverseScale);
 		graphics.nextStratum();
 		graphics.pose().pushMatrix();
 		graphics.pose().scale(scale);
-		graphics.text(font, amount, textX, textY, 0xffffffff);
+		graphics.text(font, amount, textX, textY, -1);
 		graphics.pose().popMatrix();
 	}
 

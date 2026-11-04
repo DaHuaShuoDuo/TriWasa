@@ -5,21 +5,28 @@ import fi.dy.masa.malilib.util.StringUtils;
 
 public enum BigEnderChestAmountFontSize implements IConfigOptionListEntry
 {
-	LARGE("large", 0.85f),
-	NORMAL("normal", 2.0f / 3.0f);
+	LARGE("large", 0.85f, 0),
+	NORMAL("normal", 2.0f / 3.0f, -1);
 
 	private final String value;
 	private final float scale;
+	private final int pixelOffset;
 
-	BigEnderChestAmountFontSize(String value, float scale)
+	BigEnderChestAmountFontSize(String value, float scale, int pixelOffset)
 	{
 		this.value = value;
 		this.scale = scale;
+		this.pixelOffset = pixelOffset;
 	}
 
 	public float scale()
 	{
 		return this.scale;
+	}
+
+	public int pixelOffset()
+	{
+		return this.pixelOffset;
 	}
 
 	@Override
