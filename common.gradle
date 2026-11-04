@@ -36,6 +36,13 @@ repositories {
 			includeGroup('me.fallenbreath')
 		}
 	}
+	maven {
+		name = 'Shedaniel'
+		url = 'https://maven.shedaniel.me/'
+		content {
+			includeGroupAndSubgroups('me.shedaniel')
+		}
+	}
 }
 
 dependencies {
@@ -61,10 +68,14 @@ dependencies {
 		}
 	}
 
-	// REI is optional at runtime; these dependencies are only needed for client Mixin compilation.
-	compileOnly files(rootProject.file("libs/RoughlyEnoughItems-fabric-${project.rei_version}.jar"))
-	compileOnly files(rootProject.file("libs/cloth-config-fabric-${project.cloth_config_version}.jar"))
-	compileOnly files(rootProject.file('libs/basic-math-0.6.1.jar'))
+	// REI and its config API are optional at runtime; they are only needed for Mixin compilation.
+	compileOnly("me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}") {
+		transitive = false
+	}
+	compileOnly("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}") {
+		transitive = false
+	}
+	compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
 
 	// FCA owns the shared protocol payloads. Their classes are referenced only by adapters that
 	// load when FCA is installed, and this compile-only dependency is never bundled into TriWasa.
