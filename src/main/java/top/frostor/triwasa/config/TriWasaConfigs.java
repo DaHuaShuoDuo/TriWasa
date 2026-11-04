@@ -14,8 +14,8 @@ import fi.dy.masa.malilib.config.options.ConfigStringList;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.data.json.JsonUtils;
 import top.frostor.triwasa.TriWasa;
-import top.frostor.triwasa.bigenderchest.BigEnderChestAmountFontSize;
-import top.frostor.triwasa.bigenderchest.BigEnderChestFeedback;
+import top.frostor.triwasa.bigenderchest.BigEnderChestAmountStyle;
+import top.frostor.triwasa.bigenderchest.BigEnderChestFeedbackMode;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortDirection;
 import top.frostor.triwasa.bigenderchest.BigEnderChestSortField;
 import top.frostor.triwasa.bigenderchest.BigEnderChestTerminalStyle;
@@ -75,7 +75,7 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ConfigOptionList BIG_ENDER_CHEST_FEEDBACK =
 			new ConfigOptionList(
 					"bigEnderChestFeedback",
-					BigEnderChestFeedback.ACTION_BAR
+					BigEnderChestFeedbackMode.ACTION_BAR
 			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
 	public static final ConfigOptionList BIG_ENDER_CHEST_TERMINAL_STYLE =
 			new ConfigOptionList(
@@ -85,7 +85,7 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ConfigOptionList BIG_ENDER_CHEST_TERMINAL_AMOUNT_FONT_SIZE =
 			new ConfigOptionList(
 					"bigEnderChestTerminalAmountFontSize",
-					BigEnderChestAmountFontSize.SMALL
+					BigEnderChestAmountStyle.SMALL
 			).apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
 	public static final ConfigOptionList BIG_ENDER_CHEST_SORT_FIELD =
 			new ConfigOptionList(
@@ -175,12 +175,30 @@ public final class TriWasaConfigs implements IConfigHandler
 			PICKUP_FILTER_FEEDBACK,
 			PICKUP_FILTER_PAUSE_WHILE_SNEAKING
 	);
-	public static final ImmutableList<IConfigBase> EXPANSION_STATE_OPTIONS = ImmutableList.of(
-			EASY_PLACE_EXPANDED,
-			QUICK_SHULKER_HAND_RESTOCK_EXPANDED,
-			BIG_ENDER_CHEST_TERMINAL_EXPANDED,
-			PICKUP_FILTER_EXPANDED
+	private static final ImmutableList<ParentGroup> PARENT_GROUPS = ImmutableList.of(
+			new ParentGroup(
+					EASY_PLACE_V2_PROTOCOL_EXTRA,
+					EASY_PLACE_EXPANDED,
+					EASY_PLACE_CHILDREN
+			),
+			new ParentGroup(
+					QUICK_SHULKER_HAND_RESTOCK,
+					QUICK_SHULKER_HAND_RESTOCK_EXPANDED,
+					QUICK_SHULKER_HAND_RESTOCK_CHILDREN
+			),
+			new ParentGroup(
+					BIG_ENDER_CHEST_TERMINAL_ENABLED,
+					BIG_ENDER_CHEST_TERMINAL_EXPANDED,
+					BIG_ENDER_CHEST_CHILDREN
+			),
+			new ParentGroup(
+					PICKUP_FILTER_ENABLED,
+					PICKUP_FILTER_EXPANDED,
+					PICKUP_FILTER_CHILDREN
+			)
 	);
+	public static final ImmutableList<IConfigBase> EXPANSION_STATE_OPTIONS =
+			createExpansionStateOptions();
 	public static final ImmutableList<IConfigBase> PORTING_OPTIONS = ImmutableList.<IConfigBase>builder()
 			.addAll(EASY_PLACE_OPTIONS)
 			.addAll(PICKUP_FILTER_OPTIONS)
@@ -328,72 +346,67 @@ public final class TriWasaConfigs implements IConfigHandler
 
 	static boolean isChildConfig(IConfigBase config)
 	{
-		return EASY_PLACE_CHILDREN.contains(config)
-				|| QUICK_SHULKER_HAND_RESTOCK_CHILDREN.contains(config)
-				|| BIG_ENDER_CHEST_CHILDREN.contains(config)
-				|| PICKUP_FILTER_CHILDREN.contains(config);
-	}
-
-	static boolean isExpandedParent(IConfigBase config)
-	{
-		if(config == EASY_PLACE_V2_PROTOCOL_EXTRA)
+		for(ParentGroup group : PARENT_GROUPS)
 		{
-			return EASY_PLACE_EXPANDED.getBooleanValue();
-		}
-		if(config == QUICK_SHULKER_HAND_RESTOCK)
-		{
-			return QUICK_SHULKER_HAND_RESTOCK_EXPANDED.getBooleanValue();
-		}
-		if(config == BIG_ENDER_CHEST_TERMINAL_ENABLED)
-		{
-			return BIG_ENDER_CHEST_TERMINAL_EXPANDED.getBooleanValue();
-		}
-		if(config == PICKUP_FILTER_ENABLED)
-		{
-			return PICKUP_FILTER_EXPANDED.getBooleanValue();
+			if(group.children().contains(config))
+			{
+				return true;
+			}
 		}
 		return false;
 	}
 
+	static boolean isExpandedParent(IConfigBase config)
+	{
+		ParentGroup group = findParentGroup(config);
+		return group != null && group.expansion().getBooleanValue();
+	}
+
 	static ConfigBoolean getExpansionState(IConfigBase parent)
 	{
-		if(parent == EASY_PLACE_V2_PROTOCOL_EXTRA)
-		{
-			return EASY_PLACE_EXPANDED;
-		}
-		if(parent == QUICK_SHULKER_HAND_RESTOCK)
-		{
-			return QUICK_SHULKER_HAND_RESTOCK_EXPANDED;
-		}
-		if(parent == BIG_ENDER_CHEST_TERMINAL_ENABLED)
-		{
-			return BIG_ENDER_CHEST_TERMINAL_EXPANDED;
-		}
-		if(parent == PICKUP_FILTER_ENABLED)
-		{
-			return PICKUP_FILTER_EXPANDED;
-		}
-		return null;
+		ParentGroup group = findParentGroup(parent);
+		return group == null ? null : group.expansion();
 	}
 
 	static IConfigBase getParentConfig(IConfigBase child)
 	{
-		if(EASY_PLACE_CHILDREN.contains(child))
+		for(ParentGroup group : PARENT_GROUPS)
 		{
-			return EASY_PLACE_V2_PROTOCOL_EXTRA;
-		}
-		if(QUICK_SHULKER_HAND_RESTOCK_CHILDREN.contains(child))
-		{
-			return QUICK_SHULKER_HAND_RESTOCK;
-		}
-		if(BIG_ENDER_CHEST_CHILDREN.contains(child))
-		{
-			return BIG_ENDER_CHEST_TERMINAL_ENABLED;
-		}
-		if(PICKUP_FILTER_CHILDREN.contains(child))
-		{
-			return PICKUP_FILTER_ENABLED;
+			if(group.children().contains(child))
+			{
+				return group.parent();
+			}
 		}
 		return null;
+	}
+
+	private static ParentGroup findParentGroup(IConfigBase parent)
+	{
+		for(ParentGroup group : PARENT_GROUPS)
+		{
+			if(group.parent() == parent)
+			{
+				return group;
+			}
+		}
+		return null;
+	}
+
+	private static ImmutableList<IConfigBase> createExpansionStateOptions()
+	{
+		ImmutableList.Builder<IConfigBase> builder = ImmutableList.builder();
+		for(ParentGroup group : PARENT_GROUPS)
+		{
+			builder.add(group.expansion());
+		}
+		return builder.build();
+	}
+
+	private record ParentGroup(
+			IConfigBase parent,
+			ConfigBoolean expansion,
+			ImmutableList<IConfigBase> children
+	)
+	{
 	}
 }
