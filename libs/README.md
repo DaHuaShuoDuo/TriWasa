@@ -9,8 +9,8 @@ into the TriWasa artifact.
 
 FCA protocol API compilation:
 
-- `frostors-carpet-addition-fabric-26.2-0.1.0.jar`
-- `frostors-carpet-addition-fabric-26.3-0.1.0.jar`
+- `frostors-carpet-addition-fabric-26.2-0.2.0.jar`
+- `frostors-carpet-addition-fabric-26.3-0.2.0.jar`
 
 These are compile-only inputs for TriWasa's FCA payload adapters. They must match
 `fca_version` in `gradle.properties`; FCA remains optional at runtime and is not bundled.
