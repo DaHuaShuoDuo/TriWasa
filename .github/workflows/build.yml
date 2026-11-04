@@ -114,7 +114,8 @@ jobs:
           MC_VERSION: ${{ matrix.minecraft }}
         run: |
           fca_root=".ci/Frostors-Carpet-Addition"
-          mkdir -p "${fca_root}/libs" "${fca_root}/.ci/carpet" libs
+          mkdir -p "${fca_root}/libs" "${fca_root}/.ci/carpet" \
+            "${fca_root}/.ci/quickshulker" libs
           gh release download "v${MC_VERSION}" \
             --repo gnembon/fabric-carpet \
             --pattern "fabric-carpet-${MC_VERSION}*.jar" \
@@ -123,6 +124,19 @@ jobs:
           carpet_jar="$(find "${fca_root}/.ci/carpet" -maxdepth 1 -name '*.jar' -print -quit)"
           test -n "$carpet_jar"
           cp "$carpet_jar" "${fca_root}/libs/fabric-carpet-${MC_VERSION}.jar"
+          quickshulker_version="$(sed -n 's/^[[:space:]]*quickshulker_version=//p' \
+            "${fca_root}/versions/${MC_VERSION}/gradle.properties")"
+          test -n "$quickshulker_version"
+          gh release download "$quickshulker_version" \
+            --repo MoRanpcy/quickshulker \
+            --pattern "*.jar" \
+            --dir "${fca_root}/.ci/quickshulker" \
+            --clobber
+          quickshulker_jar="$(find "${fca_root}/.ci/quickshulker" \
+            -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' -print -quit)"
+          test -n "$quickshulker_jar"
+          cp "$quickshulker_jar" \
+            "${fca_root}/libs/quickshulker-${MC_VERSION}.jar"
           chmod +x "${fca_root}/gradlew"
           (
             cd "${fca_root}"
