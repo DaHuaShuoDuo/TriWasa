@@ -23,9 +23,11 @@ import java.util.List;
  * Restocks the selected hotbar item from carried shulker boxes.
  *
  * <p>This follows Tweakeroo's hand-restock target semantics: the item already held by
- * the player is replenished when its count reaches the configured low-water mark. It does
- * not consult a schematic material list. Quick Shulker is used only to open a matching
- * carried box; TriWasa owns the menu confirmation, hotbar swap, timeout and recovery.</p>
+ * the player is replenished after a main-hand right-click use reduces it to the configured
+ * low-water mark. Other ways of reducing the stack, such as moving it into a container, do
+ * not trigger a restock. It does not consult a schematic material list. Quick Shulker is
+ * used only to open a matching carried box; TriWasa owns the menu confirmation, hotbar
+ * swap, timeout and recovery.</p>
  */
 public final class QuickShulkerHandRestock
 {
@@ -37,6 +39,7 @@ public final class QuickShulkerHandRestock
 	private static final Minecraft CLIENT = Minecraft.getInstance();
 
 	private static RestockSession session;
+	private static boolean rightClickUseArmed;
 	private static ItemStack previousMainHand = ItemStack.EMPTY;
 	private static int previousHotbarSlot = -1;
 	private static ItemStack pendingTarget = ItemStack.EMPTY;
@@ -62,6 +65,17 @@ public final class QuickShulkerHandRestock
 			abortSession(false);
 			resetTracking();
 		}
+	}
+
+	public static void onRightClickStart()
+	{
+		LocalPlayer player = CLIENT.player;
+		if(player == null || !TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK.getBooleanValue())
+		{
+			rightClickUseArmed = false;
+			return;
+		}
+		rightClickUseArmed = !player.getMainHandItem().isEmpty();
 	}
 
 	public static boolean shouldSuppressScreen(Screen screen)
@@ -108,6 +122,11 @@ public final class QuickShulkerHandRestock
 			pendingHotbarSlot = selectedHotbarSlot;
 			retryDelay = 0;
 			automaticAttempts = 0;
+			rightClickUseArmed = false;
+		}
+		else if(rightClickUseArmed && !player.isUsingItem())
+		{
+			rightClickUseArmed = false;
 		}
 		previousMainHand = current.copy();
 		previousHotbarSlot = selectedHotbarSlot;
@@ -121,7 +140,7 @@ public final class QuickShulkerHandRestock
 
 	private static boolean shouldRestock(ItemStack current, int selectedHotbarSlot, int threshold)
 	{
-		if(previousMainHand.isEmpty() || previousHotbarSlot != selectedHotbarSlot)
+		if(!rightClickUseArmed || previousMainHand.isEmpty() || previousHotbarSlot != selectedHotbarSlot)
 		{
 			return false;
 		}
@@ -718,16 +737,29 @@ public final class QuickShulkerHandRestock
 
 	private static void abortSession(boolean retry)
 	{
+		RestockSession active = session;
 		LocalPlayer player = CLIENT.player;
-		if(session != null && player != null && player.containerMenu != player.inventoryMenu)
+		ItemStack retryResidue = ItemStack.EMPTY;
+
+		// Read the hand before closing the container; closing can replace the active menu.
+		if(retry && active != null && player != null)
+		{
+			ItemStack current = player.getInventory().getItem(active.selectedHotbarSlot);
+			if(!current.isEmpty() && QuickShulkerRestockLogic.isRemainderOf(active.target, current))
+			{
+				retryResidue = current.copy();
+			}
+		}
+
+		if(active != null && player != null && player.containerMenu != player.inventoryMenu)
 		{
 			player.closeContainer();
 		}
-		if(retry && session != null && !session.target.isEmpty())
+		if(retry && active != null && !active.target.isEmpty())
 		{
-			pendingTarget = session.target.copy();
-			pendingResidue = ItemStack.EMPTY;
-			pendingHotbarSlot = session.selectedHotbarSlot;
+			pendingTarget = active.target.copy();
+			pendingResidue = retryResidue;
+			pendingHotbarSlot = active.selectedHotbarSlot;
 			retryDelay = RETRY_DELAY_TICKS;
 			automaticAttempts = Math.max(1, automaticAttempts);
 		}
@@ -750,6 +782,7 @@ public final class QuickShulkerHandRestock
 
 	private static void resetTracking()
 	{
+		rightClickUseArmed = false;
 		previousMainHand = ItemStack.EMPTY;
 		previousHotbarSlot = -1;
 	}
