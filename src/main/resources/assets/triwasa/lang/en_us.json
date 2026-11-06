@@ -35,7 +35,7 @@
 	"triwasa.config.porting.comment.easyPlaceCrafterLockSlot": "Copies disabled crafter slots from the schematic when placing a crafter.",
 	"triwasa.config.utilities.name.quickShulkerHandRestock": "quickShulkerHandRestock",
 	"triwasa.config.utilities.prettyName.quickShulkerHandRestock": "Quick Shulker Hand Restock",
-	"triwasa.config.utilities.comment.quickShulkerHandRestock": "Restocks the item already held in the selected hotbar slot from carried shulker boxes when its count becomes low. This follows the held item and does not use the schematic material list. Requires Quick Shulker on both client and server.",
+	"triwasa.config.utilities.comment.quickShulkerHandRestock": "Restocks the item already held in the selected hotbar slot from carried shulker boxes when its count becomes low or its use leaves a remainder; remainders go to the inventory first, then the shulker box, and are dropped only when neither has room. Requires Quick Shulker on both client and server.",
 	"triwasa.config.utilities.name.quickShulkerHandRestockExpanded": "quickShulkerHandRestockExpanded",
 	"triwasa.config.utilities.prettyName.quickShulkerHandRestockExpanded": "Expand Quick Shulker Hand Restock Sub-options",
 	"triwasa.config.utilities.comment.quickShulkerHandRestockExpanded": "Stores whether the Quick Shulker hand restock sub-options are expanded.",

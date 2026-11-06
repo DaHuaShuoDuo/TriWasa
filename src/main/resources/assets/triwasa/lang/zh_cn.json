@@ -35,7 +35,7 @@
 	"triwasa.config.porting.comment.easyPlaceCrafterLockSlot": "放置合成器时复制投影中的已禁用槽位。",
 	"triwasa.config.utilities.name.quickShulkerHandRestock": "快捷潜影盒手持物品自动补货",
 	"triwasa.config.utilities.prettyName.quickShulkerHandRestock": "快捷潜影盒手持物品自动补货",
-	"triwasa.config.utilities.comment.quickShulkerHandRestock": "当前主手热栏物品数量降低时，从背包内的潜影盒补回同物品、同组件的一组物品。Quick Shulker 需要同时安装在客户端和服务端。",
+	"triwasa.config.utilities.comment.quickShulkerHandRestock": "当前主手热栏物品数量降低或使用后变为残留物时，从背包内的潜影盒补回同物品、同组件的一组物品；残留物优先送入背包，其次潜影盒，均无空间时丢弃。Quick Shulker 需要同时安装在客户端和服务端。",
 	"triwasa.config.utilities.name.quickShulkerHandRestockExpanded": "展开快捷潜影盒补货子配置",
 	"triwasa.config.utilities.prettyName.quickShulkerHandRestockExpanded": "展开快捷潜影盒补货子配置",
 	"triwasa.config.utilities.comment.quickShulkerHandRestockExpanded": "保存快捷潜影盒手持补货子配置是否处于展开状态。",

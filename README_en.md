@@ -109,8 +109,11 @@ button in the mod list opens the same screen.
 
 `quickShulkerHandRestock` can restock the selected hand item from Quick Shulker
 boxes in the player inventory. It tracks only the active hotbar item whose count
-decreases and does not read schematic material lists. Quick Shulker must be
-installed on both the client and server.
+decreases and also handles items whose use leaves a remainder, such as an empty
+bucket after using a water or powder snow bucket or a bowl after eating stew. Remainders use
+available inventory capacity first, then the shulker box, and are dropped only
+when neither has room. It does not read schematic material lists. Quick Shulker
+must be installed on both the client and server.
 
 ### Client Pickup Filter
 

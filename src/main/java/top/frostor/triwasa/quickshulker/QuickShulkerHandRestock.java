@@ -40,6 +40,7 @@ public final class QuickShulkerHandRestock
 	private static ItemStack previousMainHand = ItemStack.EMPTY;
 	private static int previousHotbarSlot = -1;
 	private static ItemStack pendingTarget = ItemStack.EMPTY;
+	private static ItemStack pendingResidue = ItemStack.EMPTY;
 	private static int pendingHotbarSlot = -1;
 	private static int retryDelay;
 	private static int automaticAttempts;
@@ -65,7 +66,7 @@ public final class QuickShulkerHandRestock
 
 	public static boolean shouldSuppressScreen(Screen screen)
 	{
-		return screen != null && session != null;
+		return screen != null && session != null && !session.waitingForBackpackMove;
 	}
 
 	public static boolean isRestocking()
@@ -97,10 +98,13 @@ public final class QuickShulkerHandRestock
 		int selectedHotbarSlot = player.getInventory().getSelectedSlot();
 		int threshold = TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK_THRESHOLD.getIntegerValue();
 		boolean shouldRestock = shouldRestock(current, selectedHotbarSlot, threshold);
-		ItemStack target = current.isEmpty() ? previousMainHand : current;
+		ItemStack target = previousHotbarSlot == selectedHotbarSlot ? previousMainHand : current;
 		if(shouldRestock)
 		{
 			pendingTarget = target.copy();
+			pendingResidue = QuickShulkerRestockLogic.isRemainderOf(target, current)
+					? current.copy()
+					: ItemStack.EMPTY;
 			pendingHotbarSlot = selectedHotbarSlot;
 			retryDelay = 0;
 			automaticAttempts = 0;
@@ -121,9 +125,14 @@ public final class QuickShulkerHandRestock
 		{
 			return false;
 		}
+		boolean reachesThreshold = previousMainHand.getCount() <= threshold;
 		if(current.isEmpty())
 		{
-			return previousMainHand.isStackable() && previousMainHand.getCount() <= threshold;
+			return reachesThreshold;
+		}
+		if(QuickShulkerRestockLogic.isRemainderOf(previousMainHand, current))
+		{
+			return reachesThreshold;
 		}
 		if(!ItemStack.isSameItemSameComponents(previousMainHand, current))
 		{
@@ -151,8 +160,9 @@ public final class QuickShulkerHandRestock
 	private static boolean startRestock(
 			LocalPlayer player,
 			ItemStack target,
-			int currentCount,
-			int selectedHotbarSlot
+			ItemStack slotStack,
+			int selectedHotbarSlot,
+			ItemStack residue
 	)
 	{
 		if(hasMatchingInventoryReserve(player, target, selectedHotbarSlot))
@@ -160,13 +170,48 @@ public final class QuickShulkerHandRestock
 			return false;
 		}
 
+		int currentCount = ItemStack.isSameItemSameComponents(target, slotStack)
+				? slotStack.getCount()
+				: 0;
 		ShulkerCandidate candidate = findShulkerCandidate(
 				player,
 				target,
 				currentCount,
 				selectedHotbarSlot
 		);
-		if(candidate == null || !QuickShulkerBridge.open(candidate.shulkerStack(), candidate.inventoryMenuSlot()))
+		if(candidate == null)
+		{
+			return false;
+		}
+
+		if(!residue.isEmpty() && hasBackpackCapacity(player, residue))
+		{
+			int residueMenuSlot = findInventoryMenuSlot(player.inventoryMenu, selectedHotbarSlot);
+			if(residueMenuSlot < 0)
+			{
+				return false;
+			}
+
+			CLIENT.gameMode.handleContainerInput(
+					player.inventoryMenu.containerId,
+					residueMenuSlot,
+					0,
+					ContainerInput.QUICK_MOVE,
+					player
+			);
+			session = new RestockSession(
+					target.copy(),
+					selectedHotbarSlot,
+					candidate.expectedContents(),
+					residue.copy(),
+					candidate.shulkerStack(),
+					candidate.inventoryMenuSlot(),
+					true
+			);
+			return true;
+		}
+
+		if(!QuickShulkerBridge.open(candidate.shulkerStack(), candidate.inventoryMenuSlot()))
 		{
 			return false;
 		}
@@ -174,7 +219,11 @@ public final class QuickShulkerHandRestock
 		session = new RestockSession(
 				target.copy(),
 				selectedHotbarSlot,
-				candidate.expectedContents()
+				candidate.expectedContents(),
+				residue.copy(),
+				candidate.shulkerStack(),
+				candidate.inventoryMenuSlot(),
+				false
 		);
 		TriWasa.LOGGER.debug(
 				"[QuickShulkerRestock] Opening shulker for {} in hotbar slot {}",
@@ -194,8 +243,11 @@ public final class QuickShulkerHandRestock
 		ItemStack slotStack = player.getInventory().getItem(pendingHotbarSlot);
 		if(!slotStack.isEmpty())
 		{
-			if(!ItemStack.isSameItemSameComponents(pendingTarget, slotStack)
-					|| slotStack.getCount() > threshold)
+			boolean matchesTarget = ItemStack.isSameItemSameComponents(pendingTarget, slotStack);
+			boolean matchesResidue = !pendingResidue.isEmpty()
+					&& ItemStack.isSameItemSameComponents(pendingResidue, slotStack);
+			if((!matchesTarget && !matchesResidue)
+					|| (matchesTarget && slotStack.getCount() > threshold))
 			{
 				clearPendingRestock();
 				return;
@@ -205,8 +257,9 @@ public final class QuickShulkerHandRestock
 		boolean started = startRestock(
 				player,
 				pendingTarget,
-				slotStack.getCount(),
-				pendingHotbarSlot
+				slotStack,
+				pendingHotbarSlot,
+				pendingResidue
 		);
 		if(started)
 		{
@@ -245,6 +298,58 @@ public final class QuickShulkerHandRestock
 			}
 		}
 		return false;
+	}
+
+	private static boolean hasBackpackCapacity(LocalPlayer player, ItemStack residue)
+	{
+		int remaining = residue.getCount();
+		for(Slot slot : player.inventoryMenu.slots)
+		{
+			int inventorySlot = slot.getContainerSlot();
+			if(slot.container == player.getInventory() && inventorySlot >= 9 && inventorySlot < 36)
+			{
+				remaining -= insertionCapacity(slot, residue);
+			}
+			if(remaining <= 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean hasShulkerCapacity(AbstractContainerMenu menu, ItemStack residue)
+	{
+		int remaining = residue.getCount();
+		for(int slot = 0; slot < SHULKER_SLOT_COUNT; slot++)
+		{
+			remaining -= insertionCapacity(menu.slots.get(slot), residue);
+			if(remaining <= 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static int insertionCapacity(Slot slot, ItemStack stack)
+	{
+		if(!slot.mayPlace(stack))
+		{
+			return 0;
+		}
+
+		ItemStack existing = slot.getItem();
+		int maxStackSize = slot.getMaxStackSize(stack);
+		if(existing.isEmpty())
+		{
+			return maxStackSize;
+		}
+		if(!ItemStack.isSameItemSameComponents(existing, stack))
+		{
+			return 0;
+		}
+		return Math.max(0, maxStackSize - existing.getCount());
 	}
 
 	private static ShulkerCandidate findShulkerCandidate(
@@ -340,6 +445,58 @@ public final class QuickShulkerHandRestock
 		return -1;
 	}
 
+	private static void tickBackpackMove(LocalPlayer player, RestockSession active)
+	{
+		if(player.getInventory().getSelectedSlot() != active.selectedHotbarSlot
+				|| player.containerMenu != player.inventoryMenu
+				|| !player.containerMenu.getCarried().isEmpty()
+				|| CLIENT.gui.screen() != null)
+		{
+			abortSession(false);
+			return;
+		}
+
+		// Do not open the shulker in the same tick as the backpack QUICK_MOVE. Otherwise the
+		// first menu can open against unsettled state, fail to restock, and only work on retry.
+		ItemStack selectedStack = player.getInventory().getItem(active.selectedHotbarSlot);
+		if(!selectedStack.isEmpty())
+		{
+			if(!ItemStack.isSameItemSameComponents(active.residue, selectedStack))
+			{
+				abortSession(false);
+				return;
+			}
+			if(++active.ticksWaiting > SWAP_TIMEOUT_TICKS)
+			{
+				abortSession(false);
+				return;
+			}
+			return;
+		}
+
+		if(!QuickShulkerBridge.open(active.shulkerStack, active.shulkerMenuSlot))
+		{
+			queueRestockRetry(active.target, active.selectedHotbarSlot);
+			session = null;
+			return;
+		}
+
+		active.waitingForBackpackMove = false;
+		active.residue = ItemStack.EMPTY;
+		active.residueCleared = true;
+		active.ticksWaiting = 0;
+	}
+
+	private static void queueRestockRetry(ItemStack target, int selectedHotbarSlot)
+	{
+		pendingTarget = target.copy();
+		pendingResidue = ItemStack.EMPTY;
+		pendingHotbarSlot = selectedHotbarSlot;
+		retryDelay = RETRY_DELAY_TICKS;
+		automaticAttempts = Math.max(1, automaticAttempts);
+		resetTracking();
+	}
+
 	private static void tickSession(LocalPlayer player)
 	{
 		RestockSession active = session;
@@ -351,6 +508,12 @@ public final class QuickShulkerHandRestock
 				|| !QuickShulkerBridge.isLoaded())
 		{
 			abortSession(false);
+			return;
+		}
+
+		if(active.waitingForBackpackMove)
+		{
+			tickBackpackMove(player, active);
 			return;
 		}
 
@@ -376,6 +539,11 @@ public final class QuickShulkerHandRestock
 		if(menu.containerId != active.containerId || player.containerMenu != menu)
 		{
 			abortSession(true);
+			return;
+		}
+		if(!active.residue.isEmpty() && !active.residueCleared)
+		{
+			tickResidueInShulker(menu, active);
 			return;
 		}
 
@@ -408,6 +576,45 @@ public final class QuickShulkerHandRestock
 		}
 	}
 
+	private static void tickResidueInShulker(AbstractContainerMenu menu, RestockSession active)
+	{
+		ItemStack current = menu.slots.get(active.targetMenuSlot).getItem();
+		if(current.isEmpty())
+		{
+			active.residueCleared = true;
+			active.ticksWaiting = 0;
+			return;
+		}
+		if(!ItemStack.isSameItemSameComponents(active.residue, current))
+		{
+			abortSession(true);
+			return;
+		}
+
+		if(!active.residueMoveSent)
+		{
+			ContainerInput input = hasShulkerCapacity(menu, active.residue)
+					? ContainerInput.QUICK_MOVE
+					: ContainerInput.THROW;
+			int button = input == ContainerInput.THROW ? 1 : 0;
+			active.residueMoveSent = true;
+			active.ticksWaiting = 0;
+			CLIENT.gameMode.handleContainerInput(
+					menu.containerId,
+					active.targetMenuSlot,
+					button,
+					input,
+					CLIENT.player
+			);
+			return;
+		}
+
+		if(++active.ticksWaiting > SWAP_TIMEOUT_TICKS)
+		{
+			abortSession(true);
+		}
+	}
+
 	private static boolean confirmShulkerMenu(
 			LocalPlayer player,
 			AbstractContainerMenu menu,
@@ -435,15 +642,16 @@ public final class QuickShulkerHandRestock
 		}
 
 		ItemStack targetStack = menu.slots.get(targetMenuSlot).getItem();
-		if(!targetStack.isEmpty() && !ItemStack.isSameItemSameComponents(active.target, targetStack))
+		boolean matchesTarget = ItemStack.isSameItemSameComponents(active.target, targetStack);
+		boolean matchesResidue = !active.residue.isEmpty()
+				&& ItemStack.isSameItemSameComponents(active.residue, targetStack);
+		if(!targetStack.isEmpty() && !matchesTarget && !matchesResidue)
 		{
 			return false;
 		}
 		active.containerId = menu.containerId;
 		active.sourceMenuSlot = sourceMenuSlot;
 		active.targetMenuSlot = targetMenuSlot;
-		active.expectedSourceAfter = targetStack.copy();
-		active.expectedTargetAfter = menu.slots.get(sourceMenuSlot).getItem().copy();
 		active.menuConfirmed = true;
 		active.ticksWaiting = 0;
 		return true;
@@ -480,6 +688,8 @@ public final class QuickShulkerHandRestock
 
 		active.swapSent = true;
 		active.ticksWaiting = 0;
+		active.expectedSourceAfter = slotStack.copy();
+		active.expectedTargetAfter = menu.slots.get(active.sourceMenuSlot).getItem().copy();
 		CLIENT.gameMode.handleContainerInput(
 				menu.containerId,
 				active.sourceMenuSlot,
@@ -516,6 +726,7 @@ public final class QuickShulkerHandRestock
 		if(retry && session != null && !session.target.isEmpty())
 		{
 			pendingTarget = session.target.copy();
+			pendingResidue = ItemStack.EMPTY;
 			pendingHotbarSlot = session.selectedHotbarSlot;
 			retryDelay = RETRY_DELAY_TICKS;
 			automaticAttempts = Math.max(1, automaticAttempts);
@@ -531,6 +742,7 @@ public final class QuickShulkerHandRestock
 	private static void clearPendingRestock()
 	{
 		pendingTarget = ItemStack.EMPTY;
+		pendingResidue = ItemStack.EMPTY;
 		pendingHotbarSlot = -1;
 		retryDelay = 0;
 		automaticAttempts = 0;
@@ -562,24 +774,39 @@ public final class QuickShulkerHandRestock
 		private final ItemStack target;
 		private final int selectedHotbarSlot;
 		private final List<ItemStack> expectedContents;
+		private ItemStack residue;
+		private final ItemStack shulkerStack;
+		private final int shulkerMenuSlot;
 		private int ticksWaiting;
 		private int containerId = -1;
 		private int sourceMenuSlot = -1;
 		private int targetMenuSlot = -1;
 		private ItemStack expectedSourceAfter = ItemStack.EMPTY;
 		private ItemStack expectedTargetAfter = ItemStack.EMPTY;
+		private boolean waitingForBackpackMove;
 		private boolean menuConfirmed;
+		private boolean residueMoveSent;
+		private boolean residueCleared;
 		private boolean swapSent;
 
 		private RestockSession(
 				ItemStack target,
 				int selectedHotbarSlot,
-				List<ItemStack> expectedContents
+				List<ItemStack> expectedContents,
+				ItemStack residue,
+				ItemStack shulkerStack,
+				int shulkerMenuSlot,
+				boolean waitingForBackpackMove
 		)
 		{
 			this.target = target;
 			this.selectedHotbarSlot = selectedHotbarSlot;
 			this.expectedContents = expectedContents;
+			this.residue = residue;
+			this.shulkerStack = shulkerStack;
+			this.shulkerMenuSlot = shulkerMenuSlot;
+			this.waitingForBackpackMove = waitingForBackpackMove;
+			this.residueCleared = residue.isEmpty();
 		}
 	}
 }
