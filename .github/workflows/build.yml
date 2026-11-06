@@ -86,11 +86,18 @@ jobs:
       - name: Checkout TriWasa
         uses: actions/checkout@v7
 
+      - name: Resolve FCA protocol dependency ref
+        id: fca_ref
+        shell: bash
+        run: |
+          configured="$(sed -n 's/^fca_ref=//p' gradle.properties)"
+          echo "ref=${configured:-main}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout FCA protocol dependency
         uses: actions/checkout@v7
         with:
           repository: DaHuaShuoDuo/Frostors-Carpet-Addition
-          ref: ${{ github.event.inputs.fca_ref || 'main' }}
+          ref: ${{ github.event.inputs.fca_ref || steps.fca_ref.outputs.ref }}
           path: .ci/Frostors-Carpet-Addition
 
       - name: Validate Gradle wrappers
