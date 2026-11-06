@@ -3,7 +3,7 @@ package top.frostor.triwasa.bigenderchest.client;
 import net.minecraft.network.chat.Component;
 
 /**
- * Protocol v2 has no authoritative crafting-grid capability. This controller deliberately
+ * Protocol v3 has no authoritative crafting-grid capability. This controller deliberately
  * never creates a local recipe result.
  */
 public final class BigEnderChestRecipeController

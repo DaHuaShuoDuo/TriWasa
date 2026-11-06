@@ -31,7 +31,7 @@ V2-Extra 轻松放置、大末影箱终端、Quick Shulker 手持补货、客户
 
 可选依赖：
 
-- Frostor's Carpet Addition：同进程加载时复用公开协议 API
+- Frostor's Carpet Addition：同进程加载时复用公开协议 API；大末影箱终端需要匹配的 FCA `0.2.0-beta.3`
 - Mod Menu：在模组列表提供 TriWasa 配置按钮
 - Roughly Enough Items：启用 REI 相关界面修复
 - Quick Shulker：启用手持物品自动补货
@@ -65,7 +65,7 @@ Litematica 原理图验证器的每个错误状态行右侧提供“精确选择
 
 ### 大末影箱终端
 
-FCA 返回兼容握手后，TriWasa 使用自定义终端代替原版 6×9 聚合菜单。终端支持：
+FCA 返回兼容的 protocol v3 握手后，服务端使用原版 `GENERIC_9x6` carrier（54 个只读占位槽 + 36 个玩家背包槽），TriWasa 将原版箱子 Screen 替换为自定义终端。TriWasa 不注册自定义 `MenuType`，因此集成服务器或 LAN 中的原版客户端不需要安装 TriWasa。终端支持：
 
 - 完整索引快照、CRC32 校验、连续 Delta 和自动重同步。
 - 本地搜索、排序、滚动和物品列表分页。

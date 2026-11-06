@@ -3,6 +3,7 @@ package top.frostor.triwasa.mixin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,6 +27,10 @@ public abstract class BigEnderChestMenuScreensMixin
 		Screen screen = BigEnderChestClient.createScreen(type, client, syncId, title);
 		if(screen != null)
 		{
+			if(client.player != null && screen instanceof MenuAccess<?> menuAccess)
+			{
+				client.player.containerMenu = menuAccess.getMenu();
+			}
 			client.gui.setScreen(screen);
 			callback.cancel();
 		}
