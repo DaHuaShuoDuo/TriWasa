@@ -422,10 +422,13 @@ public final class BigEnderChestClientNetwork
 				SESSION.completeSnapshot(end);
 		if(!completion.complete())
 		{
-			if(!completion.missingChunks().isEmpty())
+			if(completion.requiresFullResync())
 			{
-				SESSION.errorKey("triwasa.big_ender_chest.error.snapshot_chunk");
+				SESSION.errorKey("triwasa.big_ender_chest.error.snapshot_metadata");
+				requestResync("triwasa.big_ender_chest.error.snapshot_metadata");
+				return;
 			}
+			SESSION.errorKey("triwasa.big_ender_chest.error.snapshot_chunk");
 			sendSnapshotAck(end.sessionId(), end.snapshotId(), completion.missingChunks());
 			return;
 		}

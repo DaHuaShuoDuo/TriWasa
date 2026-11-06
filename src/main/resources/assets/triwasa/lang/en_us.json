@@ -135,6 +135,7 @@
 	"triwasa.big_ender_chest.error.malformed": "Ignored a malformed big ender chest message",
 	"triwasa.big_ender_chest.error.snapshot_checksum": "Snapshot checksum failed; requesting missing chunks",
 	"triwasa.big_ender_chest.error.snapshot_chunk": "Snapshot chunk was invalid; requesting it again",
+	"triwasa.big_ender_chest.error.snapshot_metadata": "Snapshot metadata did not match; requesting a fresh index",
 	"triwasa.big_ender_chest.error.snapshot_decode": "Snapshot could not be decoded; requesting retransmission",
 	"triwasa.big_ender_chest.error.revision_stale": "Storage changed; resynchronizing the index",
 	"triwasa.big_ender_chest.error.session_closed": "Big ender chest terminal session closed",

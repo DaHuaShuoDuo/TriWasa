@@ -135,6 +135,7 @@
 	"triwasa.big_ender_chest.error.malformed": "已忽略格式错误的大末影箱消息",
 	"triwasa.big_ender_chest.error.snapshot_checksum": "快照校验失败，正在请求缺失的分块",
 	"triwasa.big_ender_chest.error.snapshot_chunk": "快照分块无效，正在请求重传",
+	"triwasa.big_ender_chest.error.snapshot_metadata": "快照元数据不一致，正在请求重新发送完整索引",
 	"triwasa.big_ender_chest.error.snapshot_decode": "快照无法解码，正在请求重传",
 	"triwasa.big_ender_chest.error.revision_stale": "存储已变化，正在重新同步索引",
 	"triwasa.big_ender_chest.error.session_closed": "大末影箱终端会话已关闭",
