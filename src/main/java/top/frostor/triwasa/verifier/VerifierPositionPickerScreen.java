@@ -137,6 +137,17 @@ public final class VerifierPositionPickerScreen
 		return Set.copyOf(this.selectedPositions);
 	}
 
+	void copyPosition(BlockPos pos)
+	{
+		String coords = pos.getX() + " " + pos.getY() + " " + pos.getZ();
+		Minecraft.getInstance().keyboardHandler.setClipboard(coords);
+		this.addMessage(
+				MessageType.SUCCESS,
+				"triwasa.gui.verifier_position_picker.copied",
+				coords
+		);
+	}
+
 	private void showAllForMismatch()
 	{
 		getAccess().triwasa$selectAllForMismatch(this.mismatch);

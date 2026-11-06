@@ -3,9 +3,12 @@ package top.frostor.triwasa.verifier;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier.BlockMismatch;
 import fi.dy.masa.litematica.util.ItemUtils;
 import fi.dy.masa.malilib.gui.GuiBase;
+import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.widgets.WidgetListEntryBase;
 import fi.dy.masa.malilib.render.GuiContext;
 import fi.dy.masa.malilib.render.RenderUtils;
+import fi.dy.masa.malilib.util.StringUtils;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,6 +18,7 @@ final class VerifierPositionEntryWidget extends WidgetListEntryBase<BlockPos>
 	private final VerifierPositionPickerScreen screen;
 	private final BlockMismatch mismatch;
 	private final boolean isOdd;
+	private final ButtonGeneric copyButton;
 
 	VerifierPositionEntryWidget(
 			int x,
@@ -32,6 +36,17 @@ final class VerifierPositionEntryWidget extends WidgetListEntryBase<BlockPos>
 		this.screen = screen;
 		this.mismatch = mismatch;
 		this.isOdd = isOdd;
+
+		String copyLabel = StringUtils.translate("triwasa.gui.verifier_position_picker.copy");
+		ButtonGeneric copyButton = new ButtonGeneric(0, y + 1, -1, true, copyLabel);
+		copyButton.setX(x + width - copyButton.getWidth() - 18);
+		copyButton.setHoverStrings(
+				StringUtils.translate("triwasa.gui.verifier_position_picker.copy.tooltip")
+		);
+		this.copyButton = this.addButton(
+				copyButton,
+				(button, mouseButton) -> this.screen.copyPosition(this.getEntry())
+		);
 	}
 
 	@Override
@@ -72,11 +87,20 @@ final class VerifierPositionEntryWidget extends WidgetListEntryBase<BlockPos>
 				+ ", z: " + this.getEntry().getZ();
 
 		this.drawString(ctx, this.x + 23, this.y + 7, 0xFFFFFFFF, type + "  " + states);
-		int coordsX = this.x + this.width - this.getStringWidth(coords) - 18;
+		int coordsX = this.copyButton.getX() - this.getStringWidth(coords) - 6;
 		this.drawString(ctx, coordsX, this.y + 7, 0xFFB0B0B0, coords);
 		if(isSelected)
 		{
 			this.drawString(ctx, this.x + this.width - 12, this.y + 7, 0xFF55FF55, "✓");
 		}
+
+		this.drawSubWidgets(ctx, mouseX, mouseY);
+	}
+
+	@Override
+	public boolean canSelectAt(MouseButtonEvent click)
+	{
+		return !this.copyButton.isMouseOver((int) click.x(), (int) click.y())
+				&& super.canSelectAt(click);
 	}
 }
