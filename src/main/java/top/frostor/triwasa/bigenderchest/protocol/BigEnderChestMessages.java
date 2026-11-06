@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * NBT records mirroring the stable FCA protocol v2 field names.
+ * NBT records mirroring the stable FCA protocol v3 field names.
  */
 public final class BigEnderChestMessages
 {
@@ -72,6 +72,12 @@ public final class BigEnderChestMessages
 			int flags
 	)
 	{
+		public boolean isGenericTerminalCarrier()
+		{
+			return (this.flags
+					& BigEnderChestProtocol.SESSION_FLAG_GENERIC_TERMINAL_CARRIER) != 0;
+		}
+
 		public static SessionOpen fromTag(CompoundTag tag)
 		{
 			return new SessionOpen(

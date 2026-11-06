@@ -159,6 +159,11 @@ public final class BigEnderChestSnapshotAssembler
 			chunks = List.copyOf(chunks);
 			missingChunks = List.copyOf(missingChunks);
 		}
+
+		public boolean requiresFullResync()
+		{
+			return !this.complete && this.missingChunks.isEmpty();
+		}
 	}
 
 	private static final class PendingSnapshot

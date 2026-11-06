@@ -9,11 +9,13 @@ into the TriWasa artifact.
 
 FCA protocol API compilation:
 
-- `frostors-carpet-addition-fabric-26.2-0.2.0-beta.2.jar`
-- `frostors-carpet-addition-fabric-26.3-0.2.0-beta.2.jar`
+- `frostors-carpet-addition-fabric-26.2-0.2.0-beta.3.jar`
+- `frostors-carpet-addition-fabric-26.3-0.2.0-beta.3.jar`
 
 These are compile-only inputs for TriWasa's FCA payload adapters. They must match
 `fca_version` in `gradle.properties`; FCA remains optional at runtime and is not bundled.
+The regular CI workflow builds FCA from the commit pinned by `fca_ref`; the Release
+Build workflow checks out `v${fca_version}` instead.
 
 REI, Cloth Config and basic-math are resolved from the public Shedaniel Maven repository.
 FCA and these optional APIs remain compile-only and are not bundled.

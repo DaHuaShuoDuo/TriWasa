@@ -56,6 +56,18 @@ public final class BigEnderChestSnapshotTest
 						&& java.util.Arrays.equals(complete.chunks().get(1), second),
 				"snapshot chunks must retain server order"
 		);
+		assembler.begin(31, 32, 7, 2, 1);
+		check(
+				assembler.acceptChunk(31, 32, 0, checksum(first), first)
+						== BigEnderChestSnapshotAssembler.ChunkResult.ACCEPTED,
+				"header mismatch test chunk must be accepted"
+		);
+		BigEnderChestSnapshotAssembler.Completion metadataMismatch =
+				assembler.complete(31, 32, 8, 2, 1);
+		check(
+				metadataMismatch.requiresFullResync(),
+				"snapshot header mismatch must be distinguishable from a successful install"
+		);
 		check(
 				!assembler.complete(99, 22, 7, 2, 2).complete(),
 				"a snapshot from another session must be ignored"

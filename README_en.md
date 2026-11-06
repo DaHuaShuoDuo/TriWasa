@@ -36,7 +36,7 @@ Required:
 Optional:
 
 - Frostor's Carpet Addition: reuse its public protocol API when loaded in the
-  same process
+  same process; the big ender chest terminal requires matching FCA `0.2.0-beta.3`
 - Mod Menu: provides a configuration button in the mod list
 - Roughly Enough Items: enables REI interface fixes
 - Quick Shulker: enables hand-item restocking
@@ -73,8 +73,7 @@ This feature only narrows verifier highlighting. It does not change mismatch cou
 
 ### Big Ender Chest Terminal
 
-After FCA accepts a compatible handshake, TriWasa replaces the vanilla 6×9
-aggregate menu with its custom terminal. The terminal provides:
+After FCA accepts a compatible protocol v3 handshake, the server opens a vanilla `GENERIC_9x6` carrier (54 read-only placeholder slots plus 36 player slots), and TriWasa replaces the vanilla chest screen with its terminal. TriWasa does not register a custom `MenuType`, so vanilla clients on an integrated server or LAN do not need TriWasa installed. The terminal provides:
 
 - Complete index snapshots with CRC32 validation, continuous deltas, and
   automatic resynchronization.

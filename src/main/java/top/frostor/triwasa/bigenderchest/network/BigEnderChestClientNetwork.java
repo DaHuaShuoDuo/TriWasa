@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtAccounter;
@@ -15,6 +14,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.bigenderchest.BigEnderChestClient;
 import top.frostor.triwasa.bigenderchest.client.BigEnderChestNotifier;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestCapabilities;
 import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestMessages;
@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * FCA protocol v2 client. Standalone clients use TriWasa's wire-compatible payload;
+ * FCA protocol v3 client. Standalone clients use TriWasa's wire-compatible payload;
  * integrated clients reuse FCA's server-owned payload through its public API.
  */
 public final class BigEnderChestClientNetwork
@@ -241,7 +241,7 @@ public final class BigEnderChestClientNetwork
 		}
 		sendHello(client, BigEnderChestProtocol.CAPABILITIES);
 		helloPending = false;
-		TriWasa.LOGGER.debug("[BigEnderChest] Sent protocol v2 HELLO");
+		TriWasa.LOGGER.debug("[BigEnderChest] Sent protocol v3 HELLO");
 	}
 
 	private static boolean sendHello(Minecraft client, int capabilities)
@@ -279,6 +279,7 @@ public final class BigEnderChestClientNetwork
 						BigEnderChestMessages.HelloAck.fromTag(data)
 				);
 				case BigEnderChestProtocol.SESSION_OPEN -> handleSessionOpen(
+						client,
 						BigEnderChestMessages.SessionOpen.fromTag(data)
 				);
 				case BigEnderChestProtocol.PAGE_CATALOG -> SESSION.applyPageCatalog(
@@ -376,15 +377,7 @@ public final class BigEnderChestClientNetwork
 							BigEnderChestProtocol.MAX_CHUNK_BYTES
 					).toTag()
 			);
-			if(client.player != null
-					&& BigEnderChestProtocol.TERMINAL_MENU_ID.equals(
-							BuiltInRegistries.MENU.getKey(
-									client.player.containerMenu.getType()
-							)
-					))
-			{
-				client.player.closeContainer();
-			}
+
 		}
 		if(!accepted && SESSION.errorKey() != null)
 		{
@@ -392,30 +385,20 @@ public final class BigEnderChestClientNetwork
 		}
 	}
 
-	private static void handleSessionOpen(BigEnderChestMessages.SessionOpen open)
+	private static void handleSessionOpen(
+			Minecraft client,
+			BigEnderChestMessages.SessionOpen open
+	)
 	{
 		SESSION.openSession(open);
 		ACTIONS.clear();
 		pendingResyncReason = null;
 		lastResyncRequestTick = Long.MIN_VALUE;
-		if(open.sessionId() == SESSION.sessionId()
-				&& open.terminalMenuId() < 0
-				&& BigEnderChestCapabilities.hasAll(
-						SESSION.negotiatedCapabilities(),
-						BigEnderChestCapabilities.TERMINAL_MENU
-				))
+		if(SESSION.isCurrentSession(open.sessionId()))
 		{
-			send(
-					BigEnderChestProtocol.OPEN_TERMINAL_REQUEST,
-					new BigEnderChestMessages.OpenTerminalRequest(
-							SESSION.allocateRequestId(),
-							SESSION.sessionId(),
-							0
-					).toTag()
-			);
+			BigEnderChestClient.tryReplaceCarrierScreen(client);
 		}
 	}
-
 	private static void handleSnapshotChunk(BigEnderChestMessages.SnapshotChunk chunk)
 	{
 		BigEnderChestSnapshotAssembler.ChunkResult result =
@@ -439,10 +422,13 @@ public final class BigEnderChestClientNetwork
 				SESSION.completeSnapshot(end);
 		if(!completion.complete())
 		{
-			if(!completion.missingChunks().isEmpty())
+			if(completion.requiresFullResync())
 			{
-				SESSION.errorKey("triwasa.big_ender_chest.error.snapshot_chunk");
+				SESSION.errorKey("triwasa.big_ender_chest.error.snapshot_metadata");
+				requestResync("triwasa.big_ender_chest.error.snapshot_metadata");
+				return;
 			}
+			SESSION.errorKey("triwasa.big_ender_chest.error.snapshot_chunk");
 			sendSnapshotAck(end.sessionId(), end.snapshotId(), completion.missingChunks());
 			return;
 		}
