@@ -51,14 +51,7 @@ final class VerifierPositionListWidget
 		);
 		this.browserEntriesOffsetY = this.widgetSearchBar.getHeight() + 3;
 
-		Set<BlockPos> pinnedPositions = screen.getPinnedPositions();
-		for(BlockPos pos : positions)
-		{
-			if(pinnedPositions.contains(pos))
-			{
-				this.selectedEntries.add(pos);
-			}
-		}
+		this.selectedEntries.addAll(screen.getPinnedPositions());
 	}
 
 	@Override

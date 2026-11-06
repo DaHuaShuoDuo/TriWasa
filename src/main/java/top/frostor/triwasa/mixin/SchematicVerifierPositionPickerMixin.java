@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -101,15 +100,7 @@ public abstract class SchematicVerifierPositionPickerMixin
 	@Override
 	public void triwasa$selectAllForMismatch(BlockMismatch mismatch)
 	{
-		if(mismatch.mismatchType() == MismatchType.CORRECT_STATE)
-		{
-			return;
-		}
-
-		this.triwasa$pinnedSelections.remove(mismatch);
-		this.selectedCategories.remove(mismatch.mismatchType());
-		this.selectedEntries.put(mismatch.mismatchType(), mismatch);
-		this.triwasa$invoker().triwasa$invokeUpdateMismatchOverlays();
+		this.triwasa$setSelectedPositions(mismatch, this.triwasa$getPositionsFor(mismatch));
 	}
 
 	@Override
@@ -154,7 +145,7 @@ public abstract class SchematicVerifierPositionPickerMixin
 	private boolean triwasa$isCoarseSelected(BlockMismatch mismatch)
 	{
 		return this.selectedCategories.contains(mismatch.mismatchType())
-				|| this.selectedEntries.containsValue(mismatch);
+				|| this.selectedEntries.containsEntry(mismatch.mismatchType(), mismatch);
 	}
 
 	@Unique
@@ -200,7 +191,7 @@ public abstract class SchematicVerifierPositionPickerMixin
 			return;
 		}
 
-		Map<BlockPos, MismatchType> combinedPositions = new LinkedHashMap<>();
+		Map<BlockPos, MismatchType> combinedPositions = new HashMap<>();
 		for(MismatchRenderPos entry : this.mismatchPositionsForRender)
 		{
 			BlockMismatch current = this.blockMismatches.get(entry.pos());

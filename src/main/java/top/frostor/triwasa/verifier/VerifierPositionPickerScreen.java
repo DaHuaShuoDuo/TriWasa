@@ -127,11 +127,6 @@ public final class VerifierPositionPickerScreen
 		getAccess().triwasa$setSelectedPositions(this.mismatch, positions);
 	}
 
-	public BlockMismatch getMismatch()
-	{
-		return this.mismatch;
-	}
-
 	public boolean isPositionSelected(BlockPos pos)
 	{
 		return this.selectedPositions.contains(pos);
@@ -140,11 +135,6 @@ public final class VerifierPositionPickerScreen
 	Set<BlockPos> getPinnedPositions()
 	{
 		return Set.copyOf(this.selectedPositions);
-	}
-
-	List<BlockPos> getPositions()
-	{
-		return this.positions;
 	}
 
 	private void showAllForMismatch()
