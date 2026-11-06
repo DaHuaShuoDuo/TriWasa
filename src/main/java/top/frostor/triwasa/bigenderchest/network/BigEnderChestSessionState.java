@@ -29,6 +29,8 @@ public final class BigEnderChestSessionState
 	private int totalSlots;
 	private int occupiedSlots;
 	private boolean readOnly;
+	private boolean terminalCarrier;
+	private boolean carrierScreenReplaced;
 	private Map<Long, BigEnderChestMessages.EntryRecord> entriesBySerial = Map.of();
 	private List<BigEnderChestMessages.PageInfo> pages = List.of();
 	private long nextRequestId = 1;
@@ -50,6 +52,8 @@ public final class BigEnderChestSessionState
 		this.totalSlots = 0;
 		this.occupiedSlots = 0;
 		this.readOnly = false;
+		this.terminalCarrier = false;
+		this.carrierScreenReplaced = false;
 		this.entriesBySerial = Map.of();
 		this.pages = List.of();
 		this.nextRequestId = 1;
@@ -99,6 +103,14 @@ public final class BigEnderChestSessionState
 	public void updateCapabilities(int capabilities)
 	{
 		this.negotiatedCapabilities = capabilities;
+		if(!BigEnderChestCapabilities.hasAll(
+				capabilities,
+				BigEnderChestCapabilities.GENERIC_TERMINAL_CARRIER
+		))
+		{
+			this.terminalCarrier = false;
+			this.carrierScreenReplaced = false;
+		}
 		boolean ruleStateAck = BigEnderChestCapabilities.hasAll(
 				capabilities,
 				BigEnderChestCapabilities.RULE_STATE_ACK
@@ -128,6 +140,8 @@ public final class BigEnderChestSessionState
 		this.pageCount = open.pageCount();
 		this.pageRevision = open.pageRevision();
 		this.readOnly = open.readOnly();
+		this.terminalCarrier = open.isGenericTerminalCarrier() && canUseTerminal();
+		this.carrierScreenReplaced = false;
 		this.pages = List.of();
 		this.totalSlots = 0;
 		this.occupiedSlots = 0;
@@ -305,6 +319,27 @@ public final class BigEnderChestSessionState
 				);
 	}
 
+	public boolean isTerminalCarrier()
+	{
+		return this.terminalCarrier;
+	}
+
+	public boolean isTerminalCarrierContainer(int candidateContainerId)
+	{
+		return this.terminalCarrier
+				&& this.containerId == candidateContainerId
+				&& canUseTerminal();
+	}
+
+	public boolean carrierScreenReplaced()
+	{
+		return this.carrierScreenReplaced;
+	}
+
+	public void markCarrierScreenReplaced(boolean replaced)
+	{
+		this.carrierScreenReplaced = replaced;
+	}
 	public long allocateRequestId()
 	{
 		return this.nextRequestId++;
@@ -421,6 +456,8 @@ public final class BigEnderChestSessionState
 		this.totalSlots = 0;
 		this.occupiedSlots = 0;
 		this.readOnly = false;
+		this.terminalCarrier = false;
+		this.carrierScreenReplaced = false;
 		this.entriesBySerial = Map.of();
 		this.pages = List.of();
 		this.nextRequestId = 1;

@@ -18,6 +18,26 @@ public final class BigEnderChestProtocolTest
 
 	public static void run()
 	{
+		check(BigEnderChestProtocol.VERSION == 3, "protocol version must be 3");
+		check(
+				BigEnderChestCapabilities.GENERIC_TERMINAL_CARRIER == 1 << 14,
+				"generic terminal carrier must use the next capability bit"
+		);
+		check(
+				BigEnderChestCapabilities.hasAll(
+						BigEnderChestCapabilities.REQUIRED,
+						BigEnderChestCapabilities.GENERIC_TERMINAL_CARRIER
+				),
+				"generic terminal carrier must be required by protocol v3"
+		);
+		check(
+				BigEnderChestProtocol.TERMINAL_CARRIER_CONTAINER_SLOTS == 54
+						&& BigEnderChestProtocol.TERMINAL_PLAYER_SLOT_START == 54
+						&& BigEnderChestProtocol.TERMINAL_CARRIER_MAIN_SLOT_START == 54
+						&& BigEnderChestProtocol.TERMINAL_CARRIER_HOTBAR_SLOT_START == 81,
+				"generic carrier player slots must follow the 54 container slots"
+		);
+
 		BigEnderChestMessages.Hello hello = new BigEnderChestMessages.Hello(
 				BigEnderChestProtocol.VERSION,
 				BigEnderChestCapabilities.REQUIRED,
@@ -28,7 +48,7 @@ public final class BigEnderChestProtocolTest
 				"HELLO must round trip through protocol field names"
 		);
 		CompoundTag ackTag = new CompoundTag();
-		ackTag.putInt("protocol_version", 2);
+		ackTag.putInt("protocol_version", 3);
 		ackTag.putInt("capabilities", BigEnderChestCapabilities.REQUIRED);
 		ackTag.putInt("chunk_byte_limit", 8192);
 		ackTag.putBoolean("accepted", true);
@@ -40,7 +60,7 @@ public final class BigEnderChestProtocolTest
 						ack.capabilities(),
 						BigEnderChestCapabilities.REQUIRED
 				),
-				"all required protocol v2 capabilities must be present"
+				"all required protocol v3 capabilities must be present"
 		);
 
 		BigEnderChestMessages.ActionRequest action =
@@ -66,14 +86,33 @@ public final class BigEnderChestProtocolTest
 		check(action.actionSequence() > 0, "action sequence must be positive");
 		check(
 				BigEnderChestCapabilities.names(BigEnderChestCapabilities.REQUIRED).size()
-						== 12,
-				"all 12 required capabilities must be represented"
+						== 13,
+				"all 13 required capabilities must be represented"
 		);
 		check(
 				BigEnderChestCapabilities.names(BigEnderChestCapabilities.CAPABILITIES).size()
-						== 14,
+						== 15,
 				"optional rule-state capabilities must be advertised"
 		);
+
+		BigEnderChestMessages.SessionOpen carrierOpen =
+				new BigEnderChestMessages.SessionOpen(
+						41,
+						3,
+						7,
+						64,
+						1,
+						7,
+						false,
+						BigEnderChestCapabilities.CAPABILITIES,
+						-1,
+						BigEnderChestProtocol.SESSION_FLAG_GENERIC_TERMINAL_CARRIER
+				);
+		check(
+				carrierOpen.isGenericTerminalCarrier(),
+				"SESSION_OPEN must expose the generic carrier flag"
+		);
+
 		BigEnderChestSessionState session = new BigEnderChestSessionState();
 		session.helloPending();
 		int inactiveCapabilities = BigEnderChestCapabilities.CAPABILITIES
@@ -94,6 +133,62 @@ public final class BigEnderChestProtocolTest
 		);
 		check(session.serverRuleEnabled(), "rule-state ACK must reactivate the terminal");
 		check(session.canUseTerminal(), "updated capabilities must permit terminal use");
+
+		session.openSession(carrierOpen);
+		check(session.isTerminalCarrier(), "carrier flag must be retained by session state");
+		check(
+				session.isTerminalCarrierContainer(3),
+				"matching carrier container id must permit screen replacement"
+		);
+		check(
+				!session.isTerminalCarrierContainer(4),
+				"mismatched container id must not permit screen replacement"
+		);
+		session.markCarrierScreenReplaced(true);
+		check(session.carrierScreenReplaced(), "screen replacement must be deduplicated");
+
+		BigEnderChestMessages.SessionOpen vanillaOpen =
+				new BigEnderChestMessages.SessionOpen(
+						42,
+						4,
+						8,
+						64,
+						1,
+						8,
+						false,
+						BigEnderChestCapabilities.CAPABILITIES,
+						-1,
+						0
+				);
+		session.openSession(vanillaOpen);
+		check(!session.isTerminalCarrier(), "flags-free session must stay vanilla");
+		check(
+				!session.isTerminalCarrierContainer(4),
+				"flags-free session must never replace a generic chest screen"
+		);
+
+		session.openSession(carrierOpen);
+		int downgradedCapabilities = inactiveCapabilities
+				| BigEnderChestCapabilities.TERMINAL_MENU_ACTIVE;
+		downgradedCapabilities &= ~BigEnderChestCapabilities.GENERIC_TERMINAL_CARRIER;
+		session.updateCapabilities(downgradedCapabilities);
+		check(
+				!session.isTerminalCarrier(),
+				"capability downgrade must clear carrier screen state"
+		);
+
+		BigEnderChestSessionState legacy = new BigEnderChestSessionState();
+		legacy.helloPending();
+		check(
+				!legacy.acceptHello(new BigEnderChestMessages.HelloAck(
+						2,
+						BigEnderChestCapabilities.CAPABILITIES,
+						8192,
+						true
+				)),
+				"protocol v2 servers must be rejected instead of starting a terminal rewrite"
+		);
+
 		System.out.println("BigEnderChestProtocolTest passed " + checks + " checks");
 	}
 

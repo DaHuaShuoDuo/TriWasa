@@ -3,7 +3,7 @@ package top.frostor.triwasa.bigenderchest.protocol;
 import java.util.List;
 
 /**
- * Capabilities understood by TriWasa's independent FCA protocol v2 client.
+ * Capabilities understood by TriWasa's independent FCA protocol v3 client.
  */
 public final class BigEnderChestCapabilities
 {
@@ -21,6 +21,7 @@ public final class BigEnderChestCapabilities
 	public static final int SESSION_CLOSE = 1 << 11;
 	public static final int RULE_STATE_ACK = 1 << 12;
 	public static final int TERMINAL_MENU_ACTIVE = 1 << 13;
+	public static final int GENERIC_TERMINAL_CARRIER = 1 << 14;
 
 	public static final int REQUIRED = SNAPSHOT
 			| DELTA
@@ -33,7 +34,8 @@ public final class BigEnderChestCapabilities
 			| DROP_ACTIONS
 			| SEQUENCED_ACTIONS
 			| SNAPSHOT_ACK
-			| SESSION_CLOSE;
+			| SESSION_CLOSE
+			| GENERIC_TERMINAL_CARRIER;
 	public static final int CAPABILITIES = REQUIRED
 			| RULE_STATE_ACK
 			| TERMINAL_MENU_ACTIVE;
@@ -64,6 +66,7 @@ public final class BigEnderChestCapabilities
 		append(supported, capabilities, SESSION_CLOSE, "session_close");
 		append(supported, capabilities, RULE_STATE_ACK, "rule_state_ack");
 		append(supported, capabilities, TERMINAL_MENU_ACTIVE, "terminal_menu_active");
+		append(supported, capabilities, GENERIC_TERMINAL_CARRIER, "generic_terminal_carrier");
 		return List.copyOf(supported);
 	}
 

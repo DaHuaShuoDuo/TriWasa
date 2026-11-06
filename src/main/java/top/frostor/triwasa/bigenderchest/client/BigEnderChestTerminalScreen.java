@@ -551,6 +551,7 @@ public final class BigEnderChestTerminalScreen
 				this.layout.layoutPolicy().verticalInset(),
 				(this.height - this.computed.windowHeight()) / 2
 		);
+		this.positionCarrierSlots();
 		this.positionPlayerSlots();
 		this.view.setViewportRows(this.computed.rowCount());
 	}
@@ -573,12 +574,29 @@ public final class BigEnderChestTerminalScreen
 		);
 	}
 
+	private void positionCarrierSlots()
+	{
+		int end = Math.min(
+				BigEnderChestProtocol.TERMINAL_PLAYER_SLOT_START,
+				this.menu.slots.size()
+		);
+		for(int index = 0; index < end; index++)
+		{
+			Slot slot = this.menu.slots.get(index);
+			((SlotPositionAccessor)slot).triwasa$setX(-10000);
+			((SlotPositionAccessor)slot).triwasa$setY(-10000);
+		}
+	}
 	private void positionPlayerSlots()
 	{
-		int slotIndex = 0;
+		int slotIndex = BigEnderChestProtocol.TERMINAL_PLAYER_SLOT_START;
+		int playerSlotEnd = Math.min(
+				slotIndex + BigEnderChestProtocol.TERMINAL_CARRIER_PLAYER_SLOT_COUNT,
+				this.menu.slots.size()
+		);
 		for(BigEnderChestLayout.SlotHitbox hitbox : this.computed.playerSlots())
 		{
-			if(slotIndex >= Math.min(36, this.menu.slots.size())) return;
+			if(slotIndex >= playerSlotEnd) return;
 			Slot current = this.menu.slots.get(slotIndex);
 			((SlotPositionAccessor)current).triwasa$setX(
 					hitbox.bounds().x() + 1
@@ -590,7 +608,7 @@ public final class BigEnderChestTerminalScreen
 		}
 		for(BigEnderChestLayout.SlotHitbox hitbox : this.computed.hotbarSlots())
 		{
-			if(slotIndex >= Math.min(36, this.menu.slots.size())) return;
+			if(slotIndex >= playerSlotEnd) return;
 			Slot current = this.menu.slots.get(slotIndex);
 			((SlotPositionAccessor)current).triwasa$setX(
 					hitbox.bounds().x() + 1

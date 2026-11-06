@@ -1,28 +1,20 @@
 package top.frostor.triwasa.bigenderchest;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import top.frostor.triwasa.TriWasa;
 import top.frostor.triwasa.bigenderchest.client.BigEnderChestTerminalScreen;
-import top.frostor.triwasa.bigenderchest.menu.BigEnderChestTerminalMenu;
 import top.frostor.triwasa.bigenderchest.network.BigEnderChestClientNetwork;
-import top.frostor.triwasa.bigenderchest.protocol.BigEnderChestProtocol;
-
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import top.frostor.triwasa.bigenderchest.network.BigEnderChestSessionState;
 
 /**
- * Registration entry point for the optional FCA terminal client.
+ * Registration and screen selection for the optional FCA terminal client.
  */
 public final class BigEnderChestClient
 {
-	private static MenuType<? extends AbstractContainerMenu> terminalMenuType;
-	private static Object terminalScreenConstructor;
 	private static boolean initialized;
 
 	private BigEnderChestClient()
@@ -37,124 +29,78 @@ public final class BigEnderChestClient
 		}
 		initialized = true;
 		BigEnderChestClientNetwork.register();
-		registerCompatibleMenuType();
 	}
 
-	public static MenuType<? extends AbstractContainerMenu> terminalMenuType()
-	{
-		return terminalMenuType;
-	}
-
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public static Screen createScreen(
 			MenuType<?> type,
-			net.minecraft.client.Minecraft client,
+			Minecraft client,
 			int syncId,
-			net.minecraft.network.chat.Component title
+			Component title
 	)
 	{
-		if(!isTerminalMenuType(type) || client.player == null)
+		BigEnderChestSessionState session = BigEnderChestClientNetwork.state();
+		if(type != MenuType.GENERIC_9x6
+				|| client.player == null
+				|| !session.isTerminalCarrierContainer(syncId))
 		{
 			return null;
 		}
 		MenuType rawType = type;
-		AbstractContainerMenu menu = rawType.create(syncId, client.player.getInventory());
-		return new BigEnderChestTerminalScreen(
+		AbstractContainerMenu menu = rawType.create(
+				syncId,
+				client.player.getInventory()
+		);
+		BigEnderChestTerminalScreen screen = new BigEnderChestTerminalScreen(
 				menu,
 				client.player.getInventory(),
 				title
 		);
+		session.markCarrierScreenReplaced(true);
+		return screen;
 	}
 
-	/**
-	 * The dynamic proxy is deliberate: Fabric opens extended menus through package-private
-	 * {@code MenuScreens.getConstructor}, bypassing {@code MenuScreens.create}. TriWasa cannot
-	 * implement or lambda-target the package-private {@code ScreenConstructor}; this proxy is
-	 * the adapter that supplies TriWasa's terminal screen to that otherwise inaccessible hook.
-	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static Object screenConstructor(MenuType<?> type)
+	public static boolean tryReplaceCarrierScreen(Minecraft client)
 	{
-		if(!isTerminalMenuType(type))
+		if(client.player == null)
 		{
-			return null;
+			return false;
 		}
-		if(terminalScreenConstructor != null)
+		AbstractContainerMenu menu = client.player.containerMenu;
+		BigEnderChestSessionState session = BigEnderChestClientNetwork.state();
+		if(menu.getType() != MenuType.GENERIC_9x6
+				|| !session.isTerminalCarrierContainer(menu.containerId))
 		{
-			return terminalScreenConstructor;
+			return false;
+		}
+		if(client.gui.screen() instanceof BigEnderChestTerminalScreen terminalScreen
+				&& terminalScreen.getMenu() == menu)
+		{
+			session.markCarrierScreenReplaced(true);
+			return true;
+		}
+		if(session.carrierScreenReplaced())
+		{
+			return false;
 		}
 		try
 		{
-			Class<?> constructorType = Class.forName(
-					"net.minecraft.client.gui.screens.MenuScreens$ScreenConstructor"
+			BigEnderChestTerminalScreen screen = new BigEnderChestTerminalScreen(
+					menu,
+					client.player.getInventory(),
+					Component.translatable("big_ender_chest.menu.title")
 			);
-			InvocationHandler handler = (proxy, method, args) -> {
-				if(method.getName().equals("create"))
-				{
-					AbstractContainerMenu menu = (AbstractContainerMenu)args[0];
-					Inventory inventory = (Inventory)args[1];
-					Component title = (Component)args[2];
-					return new BigEnderChestTerminalScreen(menu, inventory, title);
-				}
-				if(method.isDefault())
-				{
-					return InvocationHandler.invokeDefault(proxy, method, args);
-				}
-				if(method.getName().equals("toString"))
-				{
-					return "TriWasa BigEnderChest terminal screen constructor";
-				}
-				if(method.getName().equals("hashCode"))
-				{
-					return System.identityHashCode(proxy);
-				}
-				if(method.getName().equals("equals"))
-				{
-					return proxy == args[0];
-				}
-				throw new UnsupportedOperationException(method.toString());
-			};
-			terminalScreenConstructor = Proxy.newProxyInstance(
-					constructorType.getClassLoader(),
-					new Class<?>[]{constructorType},
-					handler
-			);
-			return terminalScreenConstructor;
+			session.markCarrierScreenReplaced(true);
+			client.gui.setScreen(screen);
+			return true;
 		}
-		catch(ReflectiveOperationException | IllegalArgumentException exception)
+		catch(RuntimeException exception)
 		{
 			TriWasa.LOGGER.error(
-					"Unable to create TriWasa terminal ScreenConstructor",
+					"Failed to create the big ender chest terminal screen; keeping vanilla",
 					exception
 			);
-			return null;
+			return false;
 		}
-	}
-
-	private static boolean isTerminalMenuType(MenuType<?> type)
-	{
-		return type == terminalMenuType
-				|| BigEnderChestProtocol.TERMINAL_MENU_ID.equals(
-						BuiltInRegistries.MENU.getKey(type)
-				);
-	}
-
-	private static void registerCompatibleMenuType()
-	{
-		MenuType<?> existing = BuiltInRegistries.MENU.getValue(
-				BigEnderChestProtocol.TERMINAL_MENU_ID
-		);
-		if(existing != null)
-		{
-			terminalMenuType = existing;
-			TriWasa.LOGGER.info(
-					"[BigEnderChest] Reusing {} menu registration",
-					BigEnderChestProtocol.MOD_ID
-			);
-			return;
-		}
-		terminalMenuType = BigEnderChestTerminalMenu.createMenuType();
-		TriWasa.LOGGER.info(
-				"[BigEnderChest] Registered standalone compatible terminal menu"
-		);
 	}
 }

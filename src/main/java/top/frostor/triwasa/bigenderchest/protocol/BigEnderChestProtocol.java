@@ -3,7 +3,7 @@ package top.frostor.triwasa.bigenderchest.protocol;
 import net.minecraft.resources.Identifier;
 
 /**
- * Wire constants shared with FCA protocol v2.
+ * Wire constants shared with FCA protocol v3.
  */
 public final class BigEnderChestProtocol
 {
@@ -12,15 +12,24 @@ public final class BigEnderChestProtocol
 			MOD_ID,
 			"big_ender_chest"
 	);
-	public static final int VERSION = 2;
+	public static final int VERSION = 3;
 	public static final int MAX_CHUNK_BYTES = 256 * 1024;
+	/** Legacy terminal menu id retained only for protocol-v2 wire compatibility. */
+	@Deprecated(forRemoval = false)
 	public static final Identifier TERMINAL_MENU_ID = Identifier.fromNamespaceAndPath(
 			MOD_ID,
 			"big_ender_chest_terminal"
 	);
+	/** Legacy custom-menu player slot offsets; v3 uses the generic carrier offsets below. */
+	@Deprecated(forRemoval = false)
 	public static final int PLAYER_SLOT_COUNT = 36;
 	public static final int MAIN_INVENTORY_SLOT_COUNT = 27;
 	public static final int HOTBAR_SLOT_COUNT = 9;
+	public static final int TERMINAL_CARRIER_CONTAINER_SLOTS = 54;
+	public static final int TERMINAL_CARRIER_PLAYER_SLOT_COUNT = 36;
+	public static final int TERMINAL_PLAYER_SLOT_START = TERMINAL_CARRIER_CONTAINER_SLOTS;
+	public static final int TERMINAL_CARRIER_MAIN_SLOT_START = TERMINAL_PLAYER_SLOT_START;
+	public static final int TERMINAL_CARRIER_HOTBAR_SLOT_START = TERMINAL_CARRIER_MAIN_SLOT_START + 27;
 
 	public static final int CAPABILITY_SNAPSHOT = BigEnderChestCapabilities.SNAPSHOT;
 	public static final int CAPABILITY_DELTA = BigEnderChestCapabilities.DELTA;
@@ -37,6 +46,8 @@ public final class BigEnderChestProtocol
 	public static final int CAPABILITY_RULE_STATE_ACK = BigEnderChestCapabilities.RULE_STATE_ACK;
 	public static final int CAPABILITY_TERMINAL_MENU_ACTIVE =
 			BigEnderChestCapabilities.TERMINAL_MENU_ACTIVE;
+	public static final int CAPABILITY_GENERIC_TERMINAL_CARRIER =
+			BigEnderChestCapabilities.GENERIC_TERMINAL_CARRIER;
 	public static final int CAPABILITIES = BigEnderChestCapabilities.CAPABILITIES;
 
 	public static final int HELLO = 1;
@@ -53,6 +64,7 @@ public final class BigEnderChestProtocol
 	public static final int SNAPSHOT_ACK = 12;
 	public static final int REQUEST_RESYNC = 13;
 	public static final int OPEN_TERMINAL_REQUEST = 14;
+	public static final int SESSION_FLAG_GENERIC_TERMINAL_CARRIER = 1 << 0;
 
 	public static final int ACTION_TAKE_ONE = 1;
 	public static final int ACTION_TAKE_STACK = 2;
