@@ -11,6 +11,12 @@ import top.frostor.triwasa.quickshulker.QuickShulkerHandRestock;
 @Mixin(Minecraft.class)
 public abstract class QuickShulkerRestockScreenMixin
 {
+	@Inject(method = "startUseItem", at = @At("HEAD"))
+	private void triwasa$trackRightClickUse(CallbackInfo ci)
+	{
+		QuickShulkerHandRestock.onRightClickStart();
+	}
+
 	@Inject(method = "setScreenAndShow", at = @At("HEAD"), cancellable = true)
 	private void triwasa$suppressTransientShulkerScreen(Screen screen, CallbackInfo ci)
 	{
