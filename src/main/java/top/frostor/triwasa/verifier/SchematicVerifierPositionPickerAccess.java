@@ -15,5 +15,5 @@ public interface SchematicVerifierPositionPickerAccess
 
 	void triwasa$selectAllForMismatch(BlockMismatch mismatch);
 
-	Set<BlockPos> triwasa$getPinnedPositions();
+	Set<BlockPos> triwasa$getPinnedPositions(BlockMismatch mismatch);
 }

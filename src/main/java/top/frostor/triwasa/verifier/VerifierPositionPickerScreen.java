@@ -14,6 +14,7 @@ import net.minecraft.core.BlockPos;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +26,7 @@ public final class VerifierPositionPickerScreen
 	private final SchematicVerifier verifier;
 	private final BlockMismatch mismatch;
 	private final List<BlockPos> positions;
+	private final Set<BlockPos> selectedPositions = new HashSet<>();
 
 	public VerifierPositionPickerScreen(
 			GuiSchematicVerifier parent,
@@ -38,6 +40,7 @@ public final class VerifierPositionPickerScreen
 		this.mismatch = mismatch;
 		this.positions = new ArrayList<>(getAccess().triwasa$getPositionsFor(mismatch));
 		this.positions.sort(createDistanceComparator());
+		this.selectedPositions.addAll(getAccess().triwasa$getPinnedPositions(mismatch));
 		this.title = StringUtils.translate(
 				"triwasa.gui.verifier_position_picker.title",
 				this.positions.size()
@@ -118,8 +121,10 @@ public final class VerifierPositionPickerScreen
 			return;
 		}
 
-		Set<BlockPos> selectedPositions = this.getListWidget().getSelectedPositions();
-		getAccess().triwasa$setSelectedPositions(this.mismatch, selectedPositions);
+		Set<BlockPos> positions = this.getListWidget().getSelectedPositions();
+		this.selectedPositions.clear();
+		this.selectedPositions.addAll(positions);
+		getAccess().triwasa$setSelectedPositions(this.mismatch, positions);
 	}
 
 	public BlockMismatch getMismatch()
@@ -129,12 +134,12 @@ public final class VerifierPositionPickerScreen
 
 	public boolean isPositionSelected(BlockPos pos)
 	{
-		return getAccess().triwasa$getPinnedPositions().contains(pos);
+		return this.selectedPositions.contains(pos);
 	}
 
 	Set<BlockPos> getPinnedPositions()
 	{
-		return getAccess().triwasa$getPinnedPositions();
+		return Set.copyOf(this.selectedPositions);
 	}
 
 	List<BlockPos> getPositions()
@@ -145,8 +150,9 @@ public final class VerifierPositionPickerScreen
 	private void showAllForMismatch()
 	{
 		getAccess().triwasa$selectAllForMismatch(this.mismatch);
-		this.getListWidget().clearAllSelections();
-		this.getListWidget().refreshEntries();
+		this.selectedPositions.clear();
+		this.selectedPositions.addAll(this.positions);
+		this.getListWidget().selectAllPositions();
 	}
 
 	private void openParent()

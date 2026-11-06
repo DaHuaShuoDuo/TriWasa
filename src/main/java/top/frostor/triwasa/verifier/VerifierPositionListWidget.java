@@ -106,6 +106,13 @@ final class VerifierPositionListWidget
 		return Set.copyOf(this.selectedEntries);
 	}
 
+	void selectAllPositions()
+	{
+		this.selectedEntries.clear();
+		this.selectedEntries.addAll(this.positions);
+		this.refreshEntries();
+	}
+
 	private static void addStateStrings(List<String> strings, BlockState state)
 	{
 		strings.add(state.toString().toLowerCase(Locale.ROOT));
