@@ -1,5 +1,6 @@
 package top.frostor.triwasa.easyplace;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -26,7 +27,9 @@ public final class EasyPlaceClientEncoder
 			return null;
 		}
 
-		int rawValue = EasyPlaceStateCodec.encode(state);
+		Minecraft client = Minecraft.getInstance();
+		BlockState currentState = client.level == null ? null : client.level.getBlockState(pos);
+		int rawValue = EasyPlaceStateCodec.encode(state, currentState);
 		if(rawValue < 0 || rawValue > 0x7f)
 		{
 			return null;

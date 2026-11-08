@@ -43,6 +43,34 @@ public final class TriWasaConfigMetadataTest
 				TriWasaConfigs.PICKUP_FILTER_EXPANDED,
 				TriWasaConfigs.PICKUP_FILTER_CHILDREN
 		);
+		check(
+				TriWasaConfigs.UTILITY_OPTIONS.contains(TriWasaConfigs.BETTER_EASY_PLACE)
+						&& TriWasaConfigs.UTILITY_FILE_OPTIONS.contains(TriWasaConfigs.BETTER_EASY_PLACE),
+				"betterEasyPlace must remain in the auxiliary feature list and file section"
+		);
+		check(
+				TriWasaConfigs.BETTER_EASY_PLACE.getBooleanValue(),
+				"betterEasyPlace must default to enabled"
+		);
+		check(
+				!TriWasaConfigs.isChildConfig(TriWasaConfigs.BETTER_EASY_PLACE)
+						&& TriWasaConfigs.getExpansionState(TriWasaConfigs.BETTER_EASY_PLACE) == null,
+				"betterEasyPlace must remain a standalone parent switch"
+		);
+		check(
+				TriWasaConfigs.UTILITY_OPTIONS.contains(TriWasaConfigs.BETTER_PRINTER)
+						&& TriWasaConfigs.UTILITY_FILE_OPTIONS.contains(TriWasaConfigs.BETTER_PRINTER),
+				"betterPrinter must remain in the auxiliary feature list and file section"
+		);
+		check(
+				TriWasaConfigs.BETTER_PRINTER.getBooleanValue(),
+				"betterPrinter must default to enabled"
+		);
+		check(
+				!TriWasaConfigs.isChildConfig(TriWasaConfigs.BETTER_PRINTER)
+						&& TriWasaConfigs.getExpansionState(TriWasaConfigs.BETTER_PRINTER) == null,
+				"betterPrinter must remain a standalone parent switch"
+		);
 		System.out.println("TriWasaConfigMetadataTest passed " + checks + " checks");
 	}
 

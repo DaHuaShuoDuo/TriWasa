@@ -36,6 +36,14 @@ public final class TriWasaMixinPlugin implements IMixinConfigPlugin
 		{
 			return FabricLoader.getInstance().isModLoaded("litematica-printer");
 		}
+		if(mixinClassName.endsWith(".BetterPrinterPlacementValidationMixin")
+				|| mixinClassName.endsWith(".BetterPrinterSchematicBlockContextAccessor")
+				|| mixinClassName.endsWith(".BetterPrinterGuideMixin")
+				|| mixinClassName.endsWith(".BetterPrinterGuideAccessor")
+				|| mixinClassName.endsWith(".BetterPrinterSignGuideMixin"))
+		{
+			return FabricLoader.getInstance().isModLoaded("litematica-printer");
+		}
 		if(mixinClassName.endsWith(".InventoryProfilesNextContainerScreenMixin"))
 		{
 			return FabricLoader.getInstance().isModLoaded("inventoryprofilesnext");

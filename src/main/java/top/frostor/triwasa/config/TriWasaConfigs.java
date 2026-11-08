@@ -60,6 +60,10 @@ public final class TriWasaConfigs implements IConfigHandler
 
 	public static final ConfigBoolean QUICK_SHULKER_HAND_RESTOCK =
 			new ConfigBoolean("quickShulkerHandRestock", false).apply(UTILITIES_TRANSLATION_PREFIX);
+	public static final ConfigBoolean BETTER_EASY_PLACE =
+			new ConfigBoolean("betterEasyPlace", true).apply(UTILITIES_TRANSLATION_PREFIX);
+	public static final ConfigBoolean BETTER_PRINTER =
+			new ConfigBoolean("betterPrinter", true).apply(UTILITIES_TRANSLATION_PREFIX);
 	public static final ConfigBoolean QUICK_SHULKER_HAND_RESTOCK_EXPANDED =
 			new ConfigBoolean("quickShulkerHandRestockExpanded", false).apply(UTILITIES_TRANSLATION_PREFIX);
 	public static final ConfigInteger QUICK_SHULKER_HAND_RESTOCK_THRESHOLD =
@@ -206,6 +210,8 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ImmutableList<IConfigBase> PORTING_FILE_OPTIONS = EASY_PLACE_OPTIONS;
 	public static final ImmutableList<IConfigBase> UTILITY_OPTIONS =
 			ImmutableList.<IConfigBase>builder()
+					.add(BETTER_EASY_PLACE)
+					.add(BETTER_PRINTER)
 					.addAll(QUICK_SHULKER_HAND_RESTOCK_OPTIONS)
 					.addAll(BIG_ENDER_CHEST_OPTIONS)
 					.build();
@@ -216,7 +222,11 @@ public final class TriWasaConfigs implements IConfigHandler
 					.addAll(UTILITY_OPTIONS)
 					.build();
 	public static final ImmutableList<IConfigBase> UTILITY_FILE_OPTIONS =
-			QUICK_SHULKER_HAND_RESTOCK_OPTIONS;
+			ImmutableList.<IConfigBase>builder()
+					.add(BETTER_EASY_PLACE)
+					.add(BETTER_PRINTER)
+					.addAll(QUICK_SHULKER_HAND_RESTOCK_OPTIONS)
+					.build();
 
 	static
 	{

@@ -11,7 +11,11 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CopperBulbBlock;
 import net.minecraft.world.level.block.CopperGolemStatueBlock;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.LeafLitterBlock;
+import net.minecraft.world.level.block.MultifaceBlock;
+import net.minecraft.world.level.block.SegmentableBlock;
 import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.ChestType;
@@ -156,6 +160,133 @@ public final class EasyPlaceProtocolTest
 		check(
 				((chestProtocol >>> 4) & 0x3) == 1,
 				"chest LEFT type must use protocol value one"
+		);
+
+		Direction[] multifaceDirections = {
+				Direction.DOWN, Direction.UP, Direction.NORTH,
+				Direction.SOUTH, Direction.WEST, Direction.EAST
+		};
+		for(int index = 0; index < multifaceDirections.length; index++)
+		{
+			BlockState glowLichen = Blocks.GLOW_LICHEN.defaultBlockState()
+					.setValue(MultifaceBlock.getFaceProperty(multifaceDirections[index]), true);
+			check(
+					EasyPlaceStateCodec.encode(glowLichen, Blocks.AIR.defaultBlockState()) == index,
+					"glow lichen " + multifaceDirections[index]
+							+ " must use the canonical six-face index"
+			);
+		}
+		BlockState glowLichenUp = Blocks.GLOW_LICHEN.defaultBlockState()
+				.setValue(BlockStateProperties.UP, true);
+		check(
+				EasyPlaceStateCodec.encode(glowLichenUp, glowLichenUp) == -1,
+				"an already attached glow lichen face must not be sent again"
+		);
+
+		Direction[] vineDirections = {
+				Direction.UP, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST
+		};
+		for(int index = 0; index < vineDirections.length; index++)
+		{
+			BlockState vine = Blocks.VINE.defaultBlockState()
+					.setValue(VineBlock.getPropertyForFace(vineDirections[index]), true);
+			check(
+					EasyPlaceStateCodec.encode(vine, Blocks.AIR.defaultBlockState()) == index,
+					"vine " + vineDirections[index] + " must use the canonical five-face index"
+			);
+		}
+		BlockState vineNorth = Blocks.VINE.defaultBlockState()
+				.setValue(VineBlock.NORTH, true);
+		BlockState vineNorthEast = vineNorth.setValue(VineBlock.EAST, true);
+		check(
+				EasyPlaceStateCodec.encode(vineNorthEast, vineNorth) == 4,
+				"vine encoding must select the next missing projected face"
+		);
+		check(
+				EasyPlaceStateCodec.encode(vineNorth, vineNorth) == -1,
+				"an already attached vine face must not be sent again"
+		);
+		check(
+				EasyPlaceStateCodec.encode(Blocks.VINE.defaultBlockState(), Blocks.AIR.defaultBlockState()) == -1,
+				"faceless projected vines must not fall back to the UP face"
+		);
+
+		BlockState leafLitter = Blocks.LEAF_LITTER.defaultBlockState()
+				.setValue(LeafLitterBlock.FACING, Direction.EAST)
+				.setValue(SegmentableBlock.AMOUNT, 3);
+		check(
+				EasyPlaceStateCodec.encode(leafLitter, Blocks.AIR.defaultBlockState()) == 0xe,
+				"leaf litter must encode facing and segment amount"
+		);
+		BlockState leafLitterOne = Blocks.LEAF_LITTER.defaultBlockState();
+		check(
+				EasyPlaceStateCodec.validateIncremental(
+						leafLitterOne,
+						SegmentableBlock.AMOUNT,
+						3
+				) != null,
+				"leaf litter must allow incremental placement below the target amount"
+		);
+		check(
+				EasyPlaceStateCodec.validateIncremental(
+						leafLitter,
+						SegmentableBlock.AMOUNT,
+						2
+				) == null,
+				"leaf litter must reject placement beyond the projected amount"
+		);
+
+		BlockState wallHangingSign = Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState()
+				.setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST);
+		int wallHangingSignValue = EasyPlaceStateCodec.encode(wallHangingSign, null);
+		BlockState wallHangingSignResult = EasyPlaceStateCodec.applyStandingOrWall(
+				Blocks.OAK_HANGING_SIGN,
+				Blocks.OAK_WALL_HANGING_SIGN,
+				wallHangingSign,
+				null,
+				wallHangingSignValue
+		);
+		check(
+				wallHangingSignValue == 0x7
+						&& wallHangingSignResult.getValue(BlockStateProperties.HORIZONTAL_FACING)
+						== Direction.EAST,
+				"wall hanging signs must encode and restore facing without attachment support"
+		);
+		check(
+				EasyPlaceStateCodec.apply(Blocks.OAK_WALL_HANGING_SIGN, wallHangingSign, null, 0x10)
+						.getValue(BlockStateProperties.HORIZONTAL_FACING) == Direction.EAST,
+				"wall hanging signs must not receive ceiling-only properties"
+		);
+		BlockState attachedCeilingHangingSign = Blocks.OAK_HANGING_SIGN.defaultBlockState()
+				.setValue(BlockStateProperties.ROTATION_16, 11)
+				.setValue(BlockStateProperties.ATTACHED, true);
+		int attachedCeilingValue = EasyPlaceStateCodec.encode(attachedCeilingHangingSign, null);
+		BlockState attachedCeilingResult = EasyPlaceStateCodec.applyStandingOrWall(
+				Blocks.OAK_HANGING_SIGN,
+				Blocks.OAK_WALL_HANGING_SIGN,
+				attachedCeilingHangingSign,
+				null,
+				attachedCeilingValue
+		);
+		check(
+				attachedCeilingValue == 0x5c
+						&& attachedCeilingResult.getValue(BlockStateProperties.ROTATION_16) == 11
+						&& attachedCeilingResult.getValue(BlockStateProperties.ATTACHED),
+				"attached ceiling hanging signs must encode and restore rotation and attachment"
+		);
+		BlockState ceilingHangingSign = Blocks.OAK_HANGING_SIGN.defaultBlockState()
+				.setValue(BlockStateProperties.ROTATION_16, 2)
+				.setValue(BlockStateProperties.ATTACHED, false);
+		BlockState ceilingResult = EasyPlaceStateCodec.apply(
+				Blocks.OAK_HANGING_SIGN,
+				ceilingHangingSign,
+				null,
+				0x13
+		);
+		check(
+				ceilingResult.getValue(BlockStateProperties.ROTATION_16) == 3
+						&& ceilingResult.getValue(BlockStateProperties.ATTACHED),
+				"ceiling hanging signs must retain rotation and attachment decoding"
 		);
 
 		System.out.println("EasyPlaceProtocolTest passed " + checks + " checks");

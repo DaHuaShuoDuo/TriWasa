@@ -3,9 +3,9 @@
 English | [简体中文](https://github.com/DaHuaShuoDuo/TriWasa/blob/main/README.md)
 
 TriWasa is a Masa client add-on for Minecraft Java. It currently provides FCA
-V2-Extra easy-place support, a big ender chest terminal, Quick Shulker hand
-restocking, a client pickup filter, and several optional client compatibility
-fixes.
+V2-Extra easy-place support, Better Easy Place fixes, Better Printer fixes, a big ender chest
+terminal, Quick Shulker hand restocking, a client pickup filter, and several
+optional client compatibility fixes.
 
 > **AI-assisted development disclosure:** Some code, tests, and documentation
 > were produced with generative AI assistance and reviewed by the maintainer.
@@ -64,6 +64,28 @@ validation.
 
 The master switch is `easyPlaceV2ProtocolExtra`.
 
+### Better Easy Place
+
+`betterEasyPlace` is enabled by default and groups TriWasa's corrections for the
+Litematica hand-placement path. It does not depend on the FCA protocol handshake.
+It fixes support-block and click-face selection for hanging signs and allows
+unsupported wall hanging signs to use a virtual target-position click.
+Ceiling signs with `attached=true` still require a vertical chain above and will
+not send an invalid placement while that dependency is missing. Future generic
+hand-placement or vanilla Mixin fixes should remain under
+`mixin/bettereasyplace` and be controlled by this switch.
+
+### Better Printer
+
+`betterPrinter` is enabled by default and groups all Mixins that directly modify
+`litematica-printer`. It is loaded only when `litematica-printer` is installed.
+It allows unsupported wall hanging signs to use the printer's existing
+target-position click path and retains the vertical-chain dependency check for
+ceiling signs with `attached=true`. Printer-specific corrections are inactive
+when this switch is off. The feature does not change later `updateShape`
+behavior. The server must still accept the final state; a vanilla server without
+FCA may reject unsupported wall-sign placement. Shared client placement-state
+bridges remain active when either feature is enabled.
 
 ### Schematic Verifier Position Picker
 
@@ -136,7 +158,8 @@ TriWasa stores configuration in `config/triwasa.json` through MaLiLib:
 - **All**: the configuration hotkey, every feature option, and fix information
   in one searchable list.
 - **Porting**: V2-Extra easy place and pickup filtering.
-- **Utilities**: Quick Shulker and the big ender chest terminal.
+- **Auxiliary Features**: Better Easy Place, Better Printer, Quick Shulker, and the big ender
+  chest terminal.
 - **Other Mod Fixes**: optional fixes that change another mod's own behavior.
 
 The `[+]` / `[-]` control on a parent only expands or collapses child options;
