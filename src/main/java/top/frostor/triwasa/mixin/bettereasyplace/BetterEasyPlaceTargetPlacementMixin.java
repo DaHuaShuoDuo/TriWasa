@@ -6,6 +6,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CandleBlock;
 import net.minecraft.world.level.block.HangingSignBlock;
 import net.minecraft.world.level.block.WallHangingSignBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,28 +15,39 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import top.frostor.triwasa.easyplace.CandleRules;
+import top.frostor.triwasa.easyplace.EasyPlaceRules;
 import top.frostor.triwasa.easyplace.HangingSignRules;
-import top.frostor.triwasa.config.TriWasaConfigs;
 
 @Mixin(EasyPlaceUtils.class)
-public abstract class BetterEasyPlaceHangingSignMixin
+public abstract class BetterEasyPlaceTargetPlacementMixin
 {
 	@Inject(method = "applyPlacementProtocolAll", at = @At("RETURN"))
-	private static void triwasa$fixHangingSignSupport(
+	private static void triwasa$useTargetPositionForUnsupportedBlock(
 			BlockPos pos,
 			BlockState state,
 			Vec3 hitVec,
 			CallbackInfoReturnable<Object> cir
 	)
 	{
-		if(!TriWasaConfigs.BETTER_EASY_PLACE.getBooleanValue()
-				|| !(cir.getReturnValue() instanceof BetterEasyPlacePlacementProtocolDataAccessor data))
+		if(!(cir.getReturnValue() instanceof BetterEasyPlacePlacementProtocolDataAccessor data))
 		{
 			return;
 		}
 
 		Block block = state.getBlock();
-		if(!(block instanceof HangingSignBlock))
+		if(block instanceof CandleBlock)
+		{
+			if(!EasyPlaceRules.isEnabled())
+			{
+				return;
+			}
+			triwasa$useTargetPosition(data, pos, Direction.UP);
+			return;
+		}
+
+		if(!(block instanceof HangingSignBlock)
+				|| !EasyPlaceRules.isEnabled())
 		{
 			return;
 		}
@@ -48,12 +60,12 @@ public abstract class BetterEasyPlaceHangingSignMixin
 
 		if(block instanceof WallHangingSignBlock)
 		{
-			Direction clickFace = state.getValue(WallHangingSignBlock.FACING).getOpposite();
-			data.triwasa$setHandled(true);
-			data.triwasa$setMustFail(false);
-			data.triwasa$setPos(pos);
-			data.triwasa$setSide(clickFace);
-			data.triwasa$setHitVec(Vec3.atCenterOf(pos));
+			HangingSignRules.ClickTarget clickTarget =
+					HangingSignRules.getForcedWallClickTarget(pos, state);
+			if(clickTarget != null)
+			{
+				triwasa$useTargetPosition(data, clickTarget.pos(), clickTarget.side());
+			}
 			return;
 		}
 
@@ -72,5 +84,18 @@ public abstract class BetterEasyPlaceHangingSignMixin
 		data.triwasa$setHitVec(
 				Vec3.atCenterOf(supportPos).relative(Direction.DOWN, 0.5)
 		);
+	}
+
+	private static void triwasa$useTargetPosition(
+			BetterEasyPlacePlacementProtocolDataAccessor data,
+			BlockPos pos,
+			Direction side
+	)
+	{
+		data.triwasa$setHandled(true);
+		data.triwasa$setMustFail(false);
+		data.triwasa$setPos(pos);
+		data.triwasa$setSide(side);
+		data.triwasa$setHitVec(Vec3.atCenterOf(pos));
 	}
 }

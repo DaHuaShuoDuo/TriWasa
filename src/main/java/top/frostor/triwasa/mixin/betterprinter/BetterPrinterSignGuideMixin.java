@@ -2,57 +2,45 @@ package top.frostor.triwasa.mixin.betterprinter;
 
 import net.minecraft.world.level.block.WallHangingSignBlock;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import top.frostor.triwasa.TriWasa;
-import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.betterprinter.BetterPrinterSupportOverride;
+import top.frostor.triwasa.easyplace.EasyPlaceRules;
 
 @Mixin(targets = "me.aleksilassila.litematica.printer.guide.guides.SignGuide")
 public abstract class BetterPrinterSignGuideMixin
 {
-	private static boolean reflectionWarningLogged;
+	@Unique
+	private boolean triwasa$overrideRequiresSupport;
 
-	@Inject(method = "onBuildActionMissingBlock", at = @At("RETURN"))
-	private void triwasa$disableWallHangingSignSupportRequirement(
+	@Inject(method = "onBuildActionMissingBlock", at = @At("HEAD"))
+	private void triwasa$beginSupportOverride(
 			@Coerce Object matchResult,
 			CallbackInfoReturnable<Object> cir
 	)
 	{
-		if(!TriWasaConfigs.BETTER_PRINTER.getBooleanValue()
-				|| !(((BetterPrinterGuideAccessor) (Object) this)
-				.triwasa$getRequiredBlock() instanceof WallHangingSignBlock))
+		if(EasyPlaceRules.isPrinterEnabled()
+				&& ((BetterPrinterGuideAccessor) (Object) this)
+				.triwasa$getRequiredBlock() instanceof WallHangingSignBlock)
 		{
-			return;
+			BetterPrinterSupportOverride.begin();
+			triwasa$overrideRequiresSupport = true;
 		}
+	}
 
-		Object result = cir.getReturnValue();
-		if(result == null)
+	@Inject(method = "onBuildActionMissingBlock", at = @At("RETURN"))
+	private void triwasa$endSupportOverride(
+			@Coerce Object matchResult,
+			CallbackInfoReturnable<Object> cir
+	)
+	{
+		if(triwasa$overrideRequiresSupport)
 		{
-			return;
-		}
-
-		try
-		{
-			Object action = result.getClass().getMethod("action").invoke(result);
-			if(action != null)
-			{
-				action.getClass()
-						.getMethod("setRequiresSupport", boolean.class)
-						.invoke(action, false);
-			}
-		}
-		catch(ReflectiveOperationException exception)
-		{
-			if(!reflectionWarningLogged)
-			{
-				reflectionWarningLogged = true;
-				TriWasa.LOGGER.warn(
-						"Printer guide/action API changed; unsupported wall signs will not be forced",
-						exception
-				);
-			}
+			BetterPrinterSupportOverride.end();
+			triwasa$overrideRequiresSupport = false;
 		}
 	}
 }

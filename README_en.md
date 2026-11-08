@@ -37,6 +37,7 @@ Optional:
 
 - Frostor's Carpet Addition: reuse its public protocol API when loaded in the
   same process; the big ender chest terminal requires matching FCA `0.2.0-beta.3`
+- Hana's Fourth-Revision Printer (the Hana `litematica-printer` branch): enables Better Printer
 - Mod Menu: provides a configuration button in the mod list
 - Roughly Enough Items: enables REI interface fixes
 - Quick Shulker: enables hand-item restocking
@@ -57,7 +58,8 @@ Enable the required rules on the FCA server when needed:
 ### V2-Extra Easy Place
 
 TriWasa encodes FCA V2-Extra block states at Litematica's actual placement call
-sites. It supports normal easy place and `litematica-printer`, including rail
+sites. It supports normal easy place and Hana's Fourth-Revision Printer
+(the Hana `litematica-printer` branch), including rail
 shape preservation, crafter slot locks, and Litematica V2/V3 hit-position
 handling. FCA remains authoritative for final block state and placement
 validation.
@@ -66,26 +68,40 @@ The master switch is `easyPlaceV2ProtocolExtra`.
 
 ### Better Easy Place
 
-`betterEasyPlace` is enabled by default and groups TriWasa's corrections for the
-Litematica hand-placement path. It does not depend on the FCA protocol handshake.
+`betterEasyPlace` is enabled by default and is the master switch for TriWasa's
+shared Litematica placement corrections. It does not depend on the FCA protocol handshake.
 It fixes support-block and click-face selection for hanging signs and allows
-unsupported wall hanging signs to use a virtual target-position click.
+unsupported wall hanging signs and candles to use a virtual target-position click.
+Candle support is bypassed only during placement and does not change later
+`updateShape` behavior.
 Ceiling signs with `attached=true` still require a vertical chain above and will
-not send an invalid placement while that dependency is missing. Future generic
+not send an invalid placement while that dependency is missing. Easy Place also
+suppresses vanilla wall-sign chaining so repeated clicks cannot place extra signs
+in adjacent directions. Future generic
 hand-placement or vanilla Mixin fixes should remain under
-`mixin/bettereasyplace` and be controlled by this switch.
+`mixin/bettereasyplace` and be controlled by this switch. Quantity-state blocks can continue incrementing after their first placement until they reach the projected amount. Candles, flower beds, leaf litter, sea pickles, snow layers, and turtle eggs are supported; each interaction adds one level and consumes one item.
+Glow lichen, sculk veins, resin clumps, and other multiface blocks increment one face at a time at the same position until the projected face set is complete.
+Vines use the same same-position incremental path for missing faces while retaining valid-attachment checks.
 
-### Better Printer
+### Better Printer (Child Option)
 
-`betterPrinter` is enabled by default and groups all Mixins that directly modify
-`litematica-printer`. It is loaded only when `litematica-printer` is installed.
-It allows unsupported wall hanging signs to use the printer's existing
+`betterPrinter` is enabled by default and is a child option of `betterEasyPlace`.
+It groups the Guide/Action-level Mixins that directly modify Hana's
+Fourth-Revision Printer (the Hana `litematica-printer` branch) and is active only when
+that printer is installed and the parent switch is enabled.
+It allows unsupported wall hanging signs and candles to use the printer's existing
 target-position click path and retains the vertical-chain dependency check for
-ceiling signs with `attached=true`. Printer-specific corrections are inactive
-when this switch is off. The feature does not change later `updateShape`
+ceiling signs with `attached=true`. Turtle eggs no longer receive the printer guide's synthetic below-support requirement, matching vanilla placement semantics. Printer-specific corrections are inactive
+when this switch is off. Glow lichen, sculk veins, resin clumps, and other
+`MultifaceBlock` variants share the same face-by-face printer guidance. Vines only try missing faces that have valid support, preventing repeated attempts against unsupported faces. Quantity blocks including flower beds, leaf litter, sea pickles, snow layers, candles, and turtle eggs increment until their target amount is reached; leaf litter reuses the flower-bed guide while reading `SegmentableBlock.AMOUNT`. The feature does not change later `updateShape`
 behavior. The server must still accept the final state; a vanilla server without
-FCA may reject unsupported wall-sign placement. Shared client placement-state
-bridges remain active when either feature is enabled.
+FCA may reject unsupported wall-sign or candle placement. Shared client placement-state
+bridges are enabled by the Better Easy Place master switch.
+
+Better Printer supports only Hana's Fourth-Revision Printer
+(the Hana `litematica-printer` branch), not the upstream original printer. Their Guide,
+task-scheduling, and placement-confirmation chains differ, so the corresponding
+Mixins are not interchangeable.
 
 ### Schematic Verifier Position Picker
 
@@ -173,6 +189,8 @@ disabled parent do not permanently discard recoverable child settings.
   together.
 - FCA owns the big ender chest, protocol, and final placement validation; TriWasa
   does not store authoritative server state.
+- Better Printer supports only Hana's Fourth-Revision Printer
+  (the Hana `litematica-printer` branch), not the upstream original `litematica-printer`.
 - REI, Quick Shulker, and Inventory Profiles Next are optional compatibility
   targets.
 

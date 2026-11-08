@@ -3,7 +3,6 @@ package top.frostor.triwasa.mixin.bettereasyplace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.HangingSignItem;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.WallHangingSignBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,8 +21,7 @@ public abstract class BetterEasyPlaceHangingSignItemMixin
 			CallbackInfoReturnable<Boolean> cir
 	)
 	{
-		if(HangingSignRules.isForcedPlacementEnabled()
-				&& state.getBlock() instanceof WallHangingSignBlock)
+		if(HangingSignRules.shouldAllowUnsupportedWallPlacement(state))
 		{
 			cir.setReturnValue(true);
 		}

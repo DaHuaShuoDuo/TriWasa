@@ -32,6 +32,7 @@ V2-Extra 轻松放置、更好的轻松放置、更好的打印机、大末影�
 可选依赖：
 
 - Frostor's Carpet Addition：同进程加载时复用公开协议 API；大末影箱终端需要匹配的 FCA `0.2.0-beta.3`
+- Hana 的四改打印机（Hana 版 `litematica-printer` 分支）：启用更好的打印机功能
 - Mod Menu：在模组列表提供 TriWasa 配置按钮
 - Roughly Enough Items：启用 REI 相关界面修复
 - Quick Shulker：启用手持物品自动补货
@@ -51,27 +52,37 @@ V2-Extra 轻松放置、更好的轻松放置、更好的打印机、大末影�
 ### V2-Extra 轻松放置
 
 TriWasa 在 Litematica 的真实放置入口编码 FCA V2-Extra 方块状态，兼容普通
-轻松放置和 `litematica-printer`。支持铁轨形状保留、合成器锁槽和 Litematica
+轻松放置和 Hana 的四改打印机（Hana 版 `litematica-printer` 分支）。支持铁轨形状保留、合成器锁槽和 Litematica
 V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端校验。
 
 配置总开关为 `easyPlaceV2ProtocolExtra`。
 
 ### 更好的轻松放置
 
-`betterEasyPlace` 默认开启，集中管理 TriWasa 对 Litematica 手放路径的通用修正，
-不依赖 FCA 协议握手。当前会修正悬挂牌手放时的支撑方块与点击面选择，并允许无侧向
-支撑的墙挂悬挂牌通过目标位置虚拟点击放置。`attached=true` 的天花板悬挂牌仍要求
-上方为竖向锁链，依赖未满足时不会发送无效放置。后续新增的通用手放或原版 Mixin
-修正仍放在 `mixin/bettereasyplace` 包并受此开关控制。
+`betterEasyPlace` 默认开启，是 TriWasa 更好的放置功能总开关，集中管理共享的
+Litematica 放置链修正，不依赖 FCA 协议握手。当前会修正悬挂牌手放时的支撑方块与点击面选择，允许无侧向
+支撑的墙挂悬挂牌以及无下方支撑的蜡烛通过目标位置虚拟点击放置；蜡烛仅绕过放置阶段
+的支撑校验，不影响放置后的 `updateShape` 行为。`attached=true` 的天花板悬挂牌仍要求
+上方为竖向锁链，依赖未满足时不会发送无效放置。Easy Place 交互期间还会抑制墙挂牌的
+原版链式追加，避免重复点击向相邻方向多放。后续新增的通用手放或原版 Mixin
+修正仍放在 `mixin/bettereasyplace` 包并受此开关控制。数量类方块可在首次放置后继续递增到投影数量，支持蜡烛、花床、落叶堆、海泡菜、雪层和海龟蛋，每次交互只增加一级并消耗一个物品。
+发光地衣、幽匿脉络、树脂团等多面方块也会在同一位置逐面递增，直到达到投影中的完整面状态。
+藤蔓同样会按缺失方向在同一位置逐面递增，并继续受有效附着面校验约束。
 
-### 更好的打印机
+### 更好的打印机（子选项）
 
-`betterPrinter` 默认开启，集中管理所有直接修改 `litematica-printer` 的 Mixin，
-仅在安装 `litematica-printer` 时加载。当前允许无侧向支撑的墙挂悬挂牌通过打印机
+`betterPrinter` 默认开启，是 `betterEasyPlace` 的子选项，集中管理所有直接修改
+打印机的 Guide/Action 层 Mixin，仅在安装 Hana 的四改打印机（Hana 版 `litematica-printer` 分支）且
+父开关开启时生效。当前允许无侧向支撑的墙挂悬挂牌通过打印机
 原有目标位置点击路径放置，并对 `attached=true` 的天花板悬挂牌保留上方竖向锁链
-依赖校验。打印机关闭时不会应用这些打印机专属修正。该功能不会改写方块后续的
-`updateShape` 行为；无支撑墙挂牌仍须由服务端接受最终状态，未安装 FCA 的原版服务端
-可能拒绝该放置。共享的客户端放置状态桥接在两个功能任一开启时可用。
+依赖校验；蜡烛移除 Guide 前置的放置支撑门禁并进入目标位置点击路径，海龟蛋移除
+`TurtleEggGuide` 人为添加的下方支撑要求，与原版放置语义一致。发光地衣、幽匿脉络、
+树脂团等 `MultifaceBlock` 统一复用逐面放置逻辑；藤蔓只尝试当前缺失且有有效附着面的方向，避免对无支撑面反复尝试。花簇、落叶堆、海泡菜、雪层、蜡烛和海龟蛋等数量方块会逐级递增到目标数量，其中落叶堆复用花簇 Guide 并读取 `SegmentableBlock.AMOUNT`。打印机关闭时不会应用这些打印机专属修正。该功能不会改写方块后续的
+`updateShape` 行为；无支撑墙挂牌和蜡烛仍须由服务端接受最终状态，未安装 FCA 的原版服务端
+可能拒绝该放置。共享的客户端放置状态桥接由更好的轻松放置总开关统一启用。
+
+更好的打印机只适配 Hana 的四改打印机（Hana 版 `litematica-printer` 分支），不适配
+上游原始打印机。两者的 Guide、任务调度和放置确认链路不同，不能混用相应 Mixin。
 
 ### 原理图验证器精确选择
 
@@ -138,6 +149,8 @@ Inventory Profiles Next 向大末影箱终端注入整理按钮。IPN 兼容属�
 - TriWasa 只应安装在客户端。
 - TriWasa 与 EarlyCompat 都接管轻松放置流程，不能同时安装。
 - FCA 服务端负责大末影箱、协议和最终放置判定；TriWasa 不保存权威服务端状态。
+- 更好的打印机只支持 Hana 的四改打印机（Hana 版 `litematica-printer` 分支），不支持
+  上游原始 `litematica-printer`。
 - REI、Quick Shulker 和 Inventory Profiles Next 都是可选兼容对象。
 
 ## 构建

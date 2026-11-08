@@ -29,7 +29,7 @@ public final class EasyPlaceClientEncoder
 
 		Minecraft client = Minecraft.getInstance();
 		BlockState currentState = client.level == null ? null : client.level.getBlockState(pos);
-		int rawValue = EasyPlaceStateCodec.encode(state, currentState);
+		int rawValue = EasyPlaceStateCodec.encode(state, currentState, client.level, pos);
 		if(rawValue < 0 || rawValue > 0x7f)
 		{
 			return null;

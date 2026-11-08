@@ -118,8 +118,10 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   MixinExtras `Operation` 保留原行为，避免无必要 `@Overwrite`。
 - 保持 `defaultRequire: 1`。可选模组 Mixin 应由插件条件控制，不要为绕过失败静默
   降低 required。
-- Litematica 放置入口同时覆盖普通轻松放置和 `litematica-printer`；MasaGadget、
-  EarlyCompat、REI、IPN 或 Quick Shulker 兼容不得改变 TriWasa 的核心容器语义。
+- Litematica 放置入口同时覆盖普通轻松放置和 Hana 的四改打印机
+  （Hana 版 `litematica-printer` 分支）；MasaGadget、EarlyCompat、REI、IPN 或 Quick
+  Shulker 兼容不得改变 TriWasa 的核心容器语义。更好的打印机只适配该 Hana 分支，
+  不为上游原始打印机复用同一套 Mixin。
 - REI/Cloth Config 仅用于可选编译。终端浮空交互区通过 REI exclusion/display bounds
   标注；大末影箱实际容器仍由原版 `AbstractContainerMenu`、`Slot` 和
   `SlotPositionAccessor` 实现。

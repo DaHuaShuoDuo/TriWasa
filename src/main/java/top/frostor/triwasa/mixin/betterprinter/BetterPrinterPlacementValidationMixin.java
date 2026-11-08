@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.easyplace.EasyPlaceRules;
 import top.frostor.triwasa.easyplace.HangingSignRules;
 
 import java.lang.reflect.InvocationTargetException;
@@ -27,7 +27,7 @@ public abstract class BetterPrinterPlacementValidationMixin
 			CallbackInfoReturnable<Object> cir
 	)
 	{
-		if(!TriWasaConfigs.BETTER_PRINTER.getBooleanValue()
+		if(!EasyPlaceRules.isPrinterEnabled()
 				|| !(context instanceof BetterPrinterSchematicBlockContextAccessor accessor))
 		{
 			return;

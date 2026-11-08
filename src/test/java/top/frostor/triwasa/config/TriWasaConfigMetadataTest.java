@@ -1,6 +1,7 @@
 package top.frostor.triwasa.config;
 
 import fi.dy.masa.malilib.config.IConfigBase;
+import top.frostor.triwasa.easyplace.EasyPlaceRules;
 
 import java.util.List;
 
@@ -16,12 +17,18 @@ public final class TriWasaConfigMetadataTest
 	{
 		check(
 				TriWasaConfigs.EXPANSION_STATE_OPTIONS.equals(List.of(
+						TriWasaConfigs.BETTER_EASY_PLACE_EXPANDED,
 						TriWasaConfigs.EASY_PLACE_EXPANDED,
 						TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK_EXPANDED,
 						TriWasaConfigs.BIG_ENDER_CHEST_TERMINAL_EXPANDED,
 						TriWasaConfigs.PICKUP_FILTER_EXPANDED
 				)),
 				"expansion-state ordering changed"
+		);
+		checkParent(
+				TriWasaConfigs.BETTER_EASY_PLACE,
+				TriWasaConfigs.BETTER_EASY_PLACE_EXPANDED,
+				TriWasaConfigs.BETTER_EASY_PLACE_CHILDREN
 		);
 		checkParent(
 				TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
@@ -45,8 +52,9 @@ public final class TriWasaConfigMetadataTest
 		);
 		check(
 				TriWasaConfigs.UTILITY_OPTIONS.contains(TriWasaConfigs.BETTER_EASY_PLACE)
-						&& TriWasaConfigs.UTILITY_FILE_OPTIONS.contains(TriWasaConfigs.BETTER_EASY_PLACE),
-				"betterEasyPlace must remain in the auxiliary feature list and file section"
+						&& TriWasaConfigs.UTILITY_FILE_OPTIONS.contains(TriWasaConfigs.BETTER_EASY_PLACE)
+						&& TriWasaConfigs.BETTER_EASY_PLACE_OPTIONS.contains(TriWasaConfigs.BETTER_PRINTER),
+				"betterEasyPlace must remain the better-placement parent option"
 		);
 		check(
 				TriWasaConfigs.BETTER_EASY_PLACE.getBooleanValue(),
@@ -54,8 +62,9 @@ public final class TriWasaConfigMetadataTest
 		);
 		check(
 				!TriWasaConfigs.isChildConfig(TriWasaConfigs.BETTER_EASY_PLACE)
-						&& TriWasaConfigs.getExpansionState(TriWasaConfigs.BETTER_EASY_PLACE) == null,
-				"betterEasyPlace must remain a standalone parent switch"
+						&& TriWasaConfigs.getExpansionState(TriWasaConfigs.BETTER_EASY_PLACE)
+						== TriWasaConfigs.BETTER_EASY_PLACE_EXPANDED,
+				"betterEasyPlace must remain an expandable parent switch"
 		);
 		check(
 				TriWasaConfigs.UTILITY_OPTIONS.contains(TriWasaConfigs.BETTER_PRINTER)
@@ -66,11 +75,32 @@ public final class TriWasaConfigMetadataTest
 				TriWasaConfigs.BETTER_PRINTER.getBooleanValue(),
 				"betterPrinter must default to enabled"
 		);
+		check(TriWasaConfigs.isChildConfig(TriWasaConfigs.BETTER_PRINTER),
+				"betterPrinter must be a child of betterEasyPlace");
 		check(
-				!TriWasaConfigs.isChildConfig(TriWasaConfigs.BETTER_PRINTER)
-						&& TriWasaConfigs.getExpansionState(TriWasaConfigs.BETTER_PRINTER) == null,
-				"betterPrinter must remain a standalone parent switch"
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.BETTER_PRINTER)
+						== TriWasaConfigs.BETTER_EASY_PLACE,
+				"betterPrinter parent changed"
 		);
+
+		boolean easyPlace = TriWasaConfigs.BETTER_EASY_PLACE.getBooleanValue();
+		boolean printer = TriWasaConfigs.BETTER_PRINTER.getBooleanValue();
+		try
+		{
+			TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(false);
+			check(!EasyPlaceRules.isEnabled(), "betterEasyPlace master switch is not authoritative");
+			check(!EasyPlaceRules.isPrinterEnabled(), "betterPrinter must be inactive when its parent is off");
+
+			TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(true);
+			TriWasaConfigs.BETTER_PRINTER.setBooleanValue(false);
+			check(EasyPlaceRules.isEnabled(), "betterEasyPlace master switch must remain active");
+			check(!EasyPlaceRules.isPrinterEnabled(), "betterPrinter child switch is not authoritative");
+		}
+		finally
+		{
+			TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(easyPlace);
+			TriWasaConfigs.BETTER_PRINTER.setBooleanValue(printer);
+		}
 		System.out.println("TriWasaConfigMetadataTest passed " + checks + " checks");
 	}
 

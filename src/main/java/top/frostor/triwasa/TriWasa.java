@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import top.frostor.triwasa.bigenderchest.BigEnderChestClient;
 import top.frostor.triwasa.config.TriWasaConfigGui;
 import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.devtools.MixinPreflight;
 import top.frostor.triwasa.event.TriWasaHotkeys;
 import top.frostor.triwasa.easyplace.EasyPlaceClientNetwork;
 import top.frostor.triwasa.pickupfilter.ItemPickupFilter;
@@ -27,6 +28,12 @@ public final class TriWasa implements ClientModInitializer
 	@Override
 	public void onInitializeClient()
 	{
+		if(Boolean.getBoolean("triwasa.mixinPreflight"))
+		{
+			MixinPreflight.run();
+			return;
+		}
+
 		BigEnderChestClient.initialize();
 		EasyPlaceClientNetwork.register();
 		ItemPickupFilter.register();

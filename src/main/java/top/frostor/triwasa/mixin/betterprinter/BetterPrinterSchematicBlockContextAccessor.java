@@ -17,4 +17,7 @@ public interface BetterPrinterSchematicBlockContextAccessor
 
 	@Accessor("requiredState")
 	BlockState triwasa$getRequiredState();
+
+	@Accessor("currentState")
+	BlockState triwasa$getCurrentState();
 }

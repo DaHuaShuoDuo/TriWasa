@@ -1,4 +1,4 @@
-package top.frostor.triwasa.mixin;
+package top.frostor.triwasa.mixin.betterprinter;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -8,6 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import top.frostor.triwasa.easyplace.EasyPlaceClientEncoder;
+import top.frostor.triwasa.easyplace.EasyPlaceRules;
 
 @Mixin(targets = "me.aleksilassila.litematica.printer.utils.mods.LitematicaUtils")
 public abstract class LitematicaPrinterMixin
@@ -25,6 +26,10 @@ public abstract class LitematicaPrinterMixin
 			@Local(argsOnly = true) BlockState state
 	)
 	{
+		if(!EasyPlaceRules.isPrinterEnabled())
+		{
+			return original;
+		}
 		Vec3 encoded = EasyPlaceClientEncoder.encode(pos, state, original);
 		return encoded == null ? original : encoded;
 	}
