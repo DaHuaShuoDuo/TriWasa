@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.WallSide;
 import net.minecraft.world.phys.Vec3;
+import top.frostor.triwasa.config.TriWasaConfigs;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceEncodedState;
 
 public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
@@ -25,6 +26,7 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 		test.checkWaterloggedStateIsPreserved();
 		test.checkServerFacingValues();
 		test.checkCrafterAuxiliaryIsolation();
+		test.checkDisabledToggleUsesVanillaPath();
 		return test.checks();
 	}
 
@@ -167,5 +169,34 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 						== FrontAndTop.values()[1],
 				"crafter slot-mask bits must not affect crafter orientation decoding"
 		);
+	}
+
+	private void checkDisabledToggleUsesVanillaPath()
+	{
+		boolean previousWall = TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
+		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
+		try
+		{
+			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
+			EasyPlaceEncodedState encoded = EasyPlaceStateCodec.encodeState(
+					Blocks.STONE_BRICK_WALL.defaultBlockState()
+			);
+			check(
+					encoded.rawValue() == -1,
+					"disabling wall protection must disable projected wall state encoding"
+			);
+			check(
+					encoded.auxiliaryValue() == 0,
+					"disabling wall protection must clear wall auxiliary state"
+			);
+			check(
+					EasyPlaceUpdateFlags.current() == EasyPlaceUpdateFlags.encode(rail, false),
+					"disabling wall protection must remove only the wall suppression flag"
+			);
+		}
+		finally
+		{
+			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(previousWall);
+		}
 	}
 }

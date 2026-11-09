@@ -36,6 +36,18 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				EasyPlaceExtraProtocol.decodeZ(encodedCrafter, pos) == 0x1ab,
 				"crafter slot masks must survive the hit Z encoding"
 		);
+		int updateFlags = EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
+				| EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION;
+		test.check(
+				(updateFlags & EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK) == 0,
+				"update-suppression flags must not overlap crafter slot bits"
+		);
+		int combinedAuxiliary = updateFlags | 0x1ab;
+		Vec3 encodedFlags = EasyPlaceExtraProtocol.encodeZ(pos, encoded, combinedAuxiliary);
+		test.check(
+				EasyPlaceExtraProtocol.decodeZ(encodedFlags, pos) == combinedAuxiliary,
+				"update flags and crafter masks must survive the Z channel together"
+		);
 		CompoundTag legacyCapability = new CompoundTag();
 		test.check(
 				EasyPlaceClientNetwork.acceptsCapability(legacyCapability),

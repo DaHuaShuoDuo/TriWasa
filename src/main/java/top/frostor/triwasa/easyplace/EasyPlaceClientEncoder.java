@@ -49,9 +49,12 @@ public final class EasyPlaceClientEncoder
 		EasyPlaceCrafterSlotLock.capture(protocolPos, state);
 		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(protocolPos, hitVec, rawValue);
 		int crafterDisabledMask = EasyPlaceCrafterSlotLock.getPendingMask();
-		int auxiliaryValue = crafterDisabledMask != 0
-				? crafterDisabledMask
-				: encodedState.auxiliaryValue();
+		int auxiliaryValue = encodedState.auxiliaryValue() | EasyPlaceUpdateFlags.current();
+		if(crafterDisabledMask != 0)
+		{
+			auxiliaryValue = (auxiliaryValue & ~EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK)
+					| crafterDisabledMask;
+		}
 		if(auxiliaryValue != 0)
 		{
 			encodedHitVec = EasyPlaceExtraProtocol.encodeZ(pos, encodedHitVec, auxiliaryValue);

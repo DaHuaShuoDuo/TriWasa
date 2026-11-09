@@ -56,6 +56,10 @@ TriWasa 在 Litematica 的真实放置入口编码 FCA V2-Extra 方块状态，�
 V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端校验。
 
 配置总开关为 `easyPlaceV2ProtocolExtra`。
+其下与铁轨保护同级提供 `easyPlaceWallBlockNoShapeUpdate`；两个保护开关默认开启，
+分别控制本次轻松放置期间 FCA 对邻近铁轨和墙体的更新抑制。
+关闭墙体开关后，墙体不再发送 V2-Extra 投影状态或墙保护标志，放置与后续更新回到原版
+语义。
 
 客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
@@ -66,7 +70,8 @@ quantity、container、sign、redstone 和 special 等适配器，通用纯状�
 所有原版墙方块将四侧连接编码为 base-3 raw，并用 Z 通道 bit0 传递 `UP`；
 `WATERLOGGED` 不写入编码，仍由 FCA 服务端放置状态决定。
 旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
-仍为 1，其余字段布局未改变。多面方块的面索引顺序固定为
+仍为 1；辅助 Z 通道低 9 位继续用于 crafter slot mask，bit9/bit10 分别表示
+rail/wall 更新保护请求。多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
 匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的

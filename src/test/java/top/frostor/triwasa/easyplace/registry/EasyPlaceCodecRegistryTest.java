@@ -19,6 +19,7 @@ public final class EasyPlaceCodecRegistryTest
 		checkDuplicateRegistration();
 		checkFreeze();
 		checkNotFrozenLookup();
+		checkNegativeRawClearsAuxiliary();
 		System.out.println("EasyPlaceCodecRegistryTest passed " + checks + " checks");
 	}
 
@@ -115,6 +116,25 @@ public final class EasyPlaceCodecRegistryTest
 				() -> registry.encode(context()),
 				"lookups before freezing must be rejected"
 		);
+	}
+
+	private static void checkNegativeRawClearsAuxiliary()
+	{
+		EasyPlaceCodecRegistry registry = new EasyPlaceCodecRegistry();
+		registry.register(
+				"disabled",
+				0,
+				context -> true,
+				context -> -1,
+				context -> {
+					throw new AssertionError("auxiliary encoding must not run for rejected states");
+				}
+		);
+		registry.freeze();
+
+		EasyPlaceEncodedState encoded = registry.encode(context());
+		check(encoded.rawValue() == -1, "negative raw values must remain rejected");
+		check(encoded.auxiliaryValue() == 0, "rejected states must clear auxiliary data");
 	}
 
 	private static EasyPlaceCodecContext context()

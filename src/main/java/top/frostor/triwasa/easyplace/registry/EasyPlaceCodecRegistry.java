@@ -63,10 +63,15 @@ public final class EasyPlaceCodecRegistry
 	public EasyPlaceEncodedState encode(EasyPlaceCodecContext context)
 	{
 		Entry entry = resolve(context);
-		return entry == null
+		if(entry == null)
+		{
+			return new EasyPlaceEncodedState(-1, 0);
+		}
+		int rawValue = entry.encoder().encode(context);
+		return rawValue < 0
 				? new EasyPlaceEncodedState(-1, 0)
 				: new EasyPlaceEncodedState(
-						entry.encoder().encode(context),
+						rawValue,
 						entry.encoder().encodeAuxiliary(context)
 				);
 	}

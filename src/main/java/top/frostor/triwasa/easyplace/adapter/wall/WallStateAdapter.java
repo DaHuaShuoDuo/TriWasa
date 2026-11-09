@@ -4,6 +4,7 @@ import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.WallSide;
 import org.jetbrains.annotations.Nullable;
+import top.frostor.triwasa.config.TriWasaConfigs;
 import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
@@ -21,6 +22,10 @@ public final class WallStateAdapter implements EasyPlaceStateEncoder, EasyPlaceS
 	@Override
 	public int encode(EasyPlaceCodecContext context)
 	{
+		if(!TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
+		{
+			return -1;
+		}
 		BlockState state = context.state();
 		return state.getValue(WallBlock.NORTH).ordinal()
 				+ state.getValue(WallBlock.EAST).ordinal() * 3

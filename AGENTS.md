@@ -101,6 +101,13 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   辅助值的 bit0；编码结果通过 `EasyPlaceEncodedState(rawValue, auxiliaryValue)` 携带。
   `WATERLOGGED` 不得进入编码。无辅助状态的 adapter 默认返回 `auxiliaryValue=0`，
   且 Z 通道仍须保持合成器锁槽行为不变。
+- Z 通道 bit9 和 bit10 分别表示 `easyPlaceRailBlockNoShapeUpdate` 与
+  `easyPlaceWallBlockNoShapeUpdate` 请求的邻域更新保护；低 9 位继续属于 crafter
+  slot mask。两个子开关与 `easyPlaceV2ProtocolExtra` 父子关系同级、默认开启，并在每次
+  V2-Extra 编码时写入标志，不能只在放置 wall/rail 本身时写入。
+- 关闭 `easyPlaceWallBlockNoShapeUpdate` 时，`WallStateAdapter.encode(...)` 必须返回
+  `-1`，不得发送 wall raw/UP 投影或 wall 邻域保护标志，使墙体放置回到原版状态与更新
+  语义；不能只关闭 bit10 而继续恢复投影状态。
 - 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
   Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
   `logicTest` 入口，并扩展对应 family suite 与集成矩阵。

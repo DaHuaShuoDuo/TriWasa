@@ -55,6 +55,8 @@ public final class TriWasaConfigs implements IConfigHandler
 			new ConfigBoolean("easyPlaceExpanded", false).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE =
 			new ConfigBoolean("easyPlaceRailBlockNoShapeUpdate", true).apply(PORTING_TRANSLATION_PREFIX);
+	public static final ConfigBoolean EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE =
+			new ConfigBoolean("easyPlaceWallBlockNoShapeUpdate", true).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_CRAFTER_LOCK_SLOT =
 			new ConfigBoolean("easyPlaceCrafterLockSlot", true).apply(PORTING_TRANSLATION_PREFIX);
 
@@ -133,10 +135,12 @@ public final class TriWasaConfigs implements IConfigHandler
 			EASY_PLACE_V2_PROTOCOL_EXTRA,
 			EASY_PLACE_EXPANDED,
 			EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE,
+			EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE,
 			EASY_PLACE_CRAFTER_LOCK_SLOT
 	);
 	public static final ImmutableList<IConfigBase> EASY_PLACE_CHILDREN = ImmutableList.of(
 			EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE,
+			EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE,
 			EASY_PLACE_CRAFTER_LOCK_SLOT
 	);
 	public static final ImmutableList<IConfigBase> BETTER_EASY_PLACE_OPTIONS = ImmutableList.of(

@@ -65,6 +65,12 @@ handling. FCA remains authoritative for final block state and placement
 validation.
 
 The master switch is `easyPlaceV2ProtocolExtra`.
+Its rail and wall protection children,
+`easyPlaceRailBlockNoShapeUpdate` and `easyPlaceWallBlockNoShapeUpdate`, both
+default to enabled and independently control FCA's nearby rail and wall update
+suppression during each easy-place operation.
+Disabling the wall switch omits wall V2-Extra state and wall-protection flags,
+returning wall placement and subsequent updates to vanilla behavior.
 
 Client-side state encoding and decoding uses explicit behavior-family registries
 that freeze after initialization. The stable
@@ -80,8 +86,9 @@ connections as base-3 raw data and use bit zero of the Z channel for `UP`;
 `WATERLOGGED` is omitted and remains authoritative from FCA's server-side
 placement state. The old monolithic
 `LegacyEasyPlaceStateCodec` mapping has been removed. The V2-Extra payload
-marker and protocol version remain 1, and the rest of the field layout is
-unchanged. Multiface wire indices use the fixed order
+marker and protocol version remain 1. In the auxiliary Z channel, the low nine
+bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
+update protection. Multiface wire indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical
 face order must be upgraded to a matching release, because mixed versions can

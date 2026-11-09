@@ -35,6 +35,16 @@ public final class TriWasaConfigMetadataTest
 				TriWasaConfigs.EASY_PLACE_EXPANDED,
 				TriWasaConfigs.EASY_PLACE_CHILDREN
 		);
+		check(
+				TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue()
+						&& TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue(),
+				"rail and wall update protection must default to enabled"
+		);
+		check(
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE)
+						== TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
+				"wall update protection must be an Easy Place child"
+		);
 		checkParent(
 				TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK,
 				TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK_EXPANDED,
