@@ -66,6 +66,19 @@ validation.
 
 The master switch is `easyPlaceV2ProtocolExtra`.
 
+Client-side state encoding and decoding uses explicit behavior-family registries
+that freeze after initialization. The stable
+`EasyPlaceStateCodec.encode(...)` / `apply(...)` entry points select the owning
+adapter; concrete codecs live under `easyplace/adapter` in directional,
+attachment, rail, multiface, quantity, container, sign, redstone, and special
+families, with shared pure state operations in `EasyPlaceStateSupport`.
+Target-position and click-face transforms for wall bells, hanging signs,
+candles, and similar placement cases remain in dedicated rules and client
+placement entry points rather than state adapters. Mixins only bridge the
+required Litematica call paths. The old monolithic
+`LegacyEasyPlaceStateCodec` mapping has been removed. The wire protocol and
+V2-Extra version are unchanged.
+
 ### Better Easy Place
 
 `betterEasyPlace` is enabled by default and is the master switch for TriWasa's
@@ -214,6 +227,10 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 Prepare the matching FCA API described in
 [`libs/README.md`](https://github.com/DaHuaShuoDuo/TriWasa/blob/main/libs/README.md).
 Shared source, resource, or Mixin changes must be built for both 26.2 and 26.3.
+`logicTest` runs the protocol and state tests through the stable
+`EasyPlaceProtocolTest` entry point, which aggregates suites split across wire,
+directional, attachment, rail, multiface, quantity, container, hanging-sign,
+special-block, and printer/config behavior families.
 
 Every PR runs change classification and `CI Gate`; the full two-version build
 runs only when build-related files change.

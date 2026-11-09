@@ -93,6 +93,13 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   协议为准。缺少能力或握手失败时回退到 FCA 原版 6×9 菜单。
 - 修改 FCA 协议时先更新并验证 FCA 公共 API，再更新 TriWasa 的 `compileOnly` 适配。
   不要用反射桥接掩盖两边 Payload/字段不一致。
+- Easy Place 状态编解码以 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 为稳定
+  facade，由初始化后冻结的 `EasyPlaceCodecRegistry` 选择 behavior-family adapter；
+  通用纯状态操作放入 `EasyPlaceStateSupport`。不要把已删除的
+  `LegacyEasyPlaceStateCodec` 单体分支或每方块第二套状态表重新引回。
+- 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
+  Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
+  `logicTest` 入口，并扩展对应 family suite 与集成矩阵。
 - 涉及 FCA 兼容的 PR 必须记录所使用的 `fca_ref` 或提交，并至少验证回退 Payload 与
   复用 FCA Payload 两条路径。
 

@@ -57,6 +57,14 @@ V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端
 
 配置总开关为 `easyPlaceV2ProtocolExtra`。
 
+客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
+`EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
+和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、multiface、
+quantity、container、sign、redstone 和 special 等适配器，通用纯状态操作集中在
+`EasyPlaceStateSupport`。墙钟、悬挂牌、蜡烛等目标位置或点击面转换继续留在独立规则与
+客户端放置入口中，不写入状态适配器；Mixin 只负责必要的 Litematica 调用链桥接。
+旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除，线协议和 V2-Extra 版本未改变。
+
 ### 更好的轻松放置
 
 `betterEasyPlace` 默认开启，是 TriWasa 更好的放置功能总开关，集中管理共享的
@@ -174,6 +182,9 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 [`libs/README.md`](https://github.com/DaHuaShuoDuo/TriWasa/blob/main/libs/README.md)
 准备与 `fca_version` 匹配的 FCA API。共享源码、资源或 Mixin 修改后必须构建
 26.2 和 26.3。
+`logicTest` 会执行以 `EasyPlaceProtocolTest` 为稳定入口的协议与状态测试；该入口
+聚合按 wire、方向、附着、轨道、多面、数量、容器、悬挂牌、特殊方块和 printer/config
+等行为族拆分的测试。
 
 PR 始终运行变更分类和 `CI Gate`；只有构建相关文件变化时才执行双版本完整构建。
 
