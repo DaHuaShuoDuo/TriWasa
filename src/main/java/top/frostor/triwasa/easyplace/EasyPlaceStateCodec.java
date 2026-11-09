@@ -18,8 +18,12 @@ import top.frostor.triwasa.easyplace.adapter.directional.GenericDirectionalState
 import top.frostor.triwasa.easyplace.adapter.directional.StairStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.directional.TrapDoorStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.attachment.FaceAttachedStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.container.ChestStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.legacy.LegacyStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.multiface.MultiFaceStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.mushroom.MushroomStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.quantity.QuantityStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.rail.RailStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.sign.HangingSignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.sign.SignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.special.AdministrativeStateAdapter;
@@ -187,6 +191,10 @@ public final class EasyPlaceStateCodec
 		HangingSignStateAdapter hangingSign = new HangingSignStateAdapter();
 		FaceAttachedStateAdapter faceAttached = new FaceAttachedStateAdapter();
 		MultiFaceStateAdapter multiFace = new MultiFaceStateAdapter();
+		QuantityStateAdapter quantity = new QuantityStateAdapter();
+		RailStateAdapter rail = new RailStateAdapter();
+		MushroomStateAdapter mushroom = new MushroomStateAdapter();
+		ChestStateAdapter chest = new ChestStateAdapter();
 		AdministrativeStateAdapter administrative = new AdministrativeStateAdapter();
 		GenericDirectionalStateAdapter generic = new GenericDirectionalStateAdapter();
 		LegacyStateAdapter legacy = new LegacyStateAdapter();
@@ -216,6 +224,22 @@ public final class EasyPlaceStateCodec
 				multiFace,
 				multiFace
 		);
+		registry.register(
+				"quantity",
+				656,
+				QuantityStateAdapter::matches,
+				quantity,
+				quantity
+		);
+		registry.register("rail", 655, RailStateAdapter::matches, rail, rail);
+		registry.register(
+				"mushroom",
+				654,
+				MushroomStateAdapter::matches,
+				mushroom,
+				mushroom
+		);
+		registry.register("container", 653, ChestStateAdapter::matches, chest, chest);
 		registry.register(
 				"administrative",
 				650,

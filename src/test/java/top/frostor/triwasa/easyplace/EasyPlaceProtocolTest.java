@@ -18,6 +18,8 @@ import net.minecraft.world.level.block.HugeMushroomBlock;
 import net.minecraft.world.level.block.LeafLitterBlock;
 import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.MultifaceBlock;
+import net.minecraft.world.level.block.PoweredRailBlock;
+import net.minecraft.world.level.block.RailBlock;
 import net.minecraft.world.level.block.SegmentableBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.VineBlock;
@@ -27,6 +29,7 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.phys.Vec3;
 
@@ -165,6 +168,8 @@ public final class EasyPlaceProtocolTest
 		);
 		checkHugeMushroomStates();
 		checkFaceAttachedStates();
+		checkRailStates();
+		checkQuantityAdapterParity();
 		checkSegmentableFacingRetention();
 
 		BlockState leftChest = Blocks.CHEST.defaultBlockState()
@@ -695,6 +700,96 @@ public final class EasyPlaceProtocolTest
 				appliedPoweredLever != null && appliedPoweredLever.getValue(LeverBlock.POWERED),
 				"lever protocol must preserve powered state"
 		);
+	}
+
+	private static void checkRailStates()
+	{
+		boolean previous = TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
+		try
+		{
+			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(true);
+			RailShape shape = RailShape.SOUTH_EAST;
+			BlockState rail = Blocks.RAIL.defaultBlockState().setValue(RailBlock.SHAPE, shape);
+			int railValue = EasyPlaceStateCodec.encode(rail);
+			check(
+					(railValue & 0x10) != 0 && (railValue & 0xf) == (shape.ordinal() & 0xf),
+					"normal rails must encode shape and no-update bits"
+			);
+			BlockState appliedRail = EasyPlaceStateCodec.apply(
+					Blocks.RAIL,
+					Blocks.RAIL.defaultBlockState(),
+					null,
+					railValue
+			);
+			check(
+					appliedRail != null && appliedRail.getValue(RailBlock.SHAPE) == shape,
+					"normal rail wire values must round trip"
+			);
+
+			RailShape poweredRailShape = RailShape.NORTH_SOUTH;
+			BlockState poweredRail = Blocks.POWERED_RAIL.defaultBlockState()
+					.setValue(PoweredRailBlock.SHAPE, poweredRailShape);
+			int poweredValue = EasyPlaceStateCodec.encode(poweredRail);
+			check(
+					(poweredValue & 0x8) != 0
+							&& (poweredValue & 0x7) == (poweredRailShape.ordinal() & 0x7),
+					"powered rails must encode shape and no-update bits"
+			);
+			BlockState appliedPoweredRail = EasyPlaceStateCodec.apply(
+					Blocks.POWERED_RAIL,
+					Blocks.POWERED_RAIL.defaultBlockState(),
+					null,
+					poweredValue
+			);
+			check(
+					appliedPoweredRail != null
+							&& appliedPoweredRail.getValue(PoweredRailBlock.SHAPE)
+							== poweredRailShape,
+					"powered rail wire values must round trip"
+			);
+		}
+		finally
+		{
+			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(previous);
+		}
+	}
+
+	private static void checkQuantityAdapterParity()
+	{
+		Block[] blocks = {Blocks.PINK_PETALS, Blocks.LEAF_LITTER};
+		for(Block block : blocks)
+		{
+			for(Direction facing : new Direction[]{
+					Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST
+			})
+			{
+				for(int amount = 1; amount <= 4; amount++)
+				{
+					IntegerProperty property = IncrementalBlockRules.getCountProperty(block);
+					BlockState state = block.defaultBlockState()
+							.setValue(FlowerBedBlock.FACING, facing)
+							.setValue(property, amount);
+					int currentEncoded = EasyPlaceStateCodec.encode(state, Blocks.AIR.defaultBlockState());
+					int legacyEncoded = LegacyEasyPlaceStateCodec.encodeRegular(
+							state,
+							Blocks.AIR.defaultBlockState()
+					);
+					check(
+							currentEncoded == legacyEncoded,
+							"client quantity adapters must preserve legacy wire values"
+					);
+					for(int rawValue = 0; rawValue < 0x80; rawValue++)
+					{
+						BlockState currentResult = EasyPlaceStateCodec.apply(block, state, null, rawValue);
+						BlockState legacyResult = LegacyEasyPlaceStateCodec.apply(block, state, null, rawValue);
+						check(
+								java.util.Objects.equals(currentResult, legacyResult),
+								"client quantity adapters must match legacy state restoration"
+						);
+					}
+				}
+			}
+		}
 	}
 	private static void checkSegmentableFacingRetention()
 	{
