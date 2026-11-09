@@ -70,12 +70,15 @@ Client-side state encoding and decoding uses explicit behavior-family registries
 that freeze after initialization. The stable
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` entry points select the owning
 adapter; concrete codecs live under `easyplace/adapter` in directional,
-attachment, rail, multiface, quantity, container, sign, redstone, and special
+attachment, rail, wall, multiface, quantity, container, sign, redstone, and special
 families, with shared pure state operations in `EasyPlaceStateSupport`.
 Target-position and click-face transforms for wall bells, hanging signs,
 candles, and similar placement cases remain in dedicated rules and client
 placement entry points rather than state adapters. Mixins only bridge the
-required Litematica call paths. The old monolithic
+required Litematica call paths. All vanilla wall blocks encode their four side
+connections as base-3 raw data and use bit zero of the Z channel for `UP`;
+`WATERLOGGED` is omitted and remains authoritative from FCA's server-side
+placement state. The old monolithic
 `LegacyEasyPlaceStateCodec` mapping has been removed. The V2-Extra payload
 marker and protocol version remain 1, and the rest of the field layout is
 unchanged. Multiface wire indices use the fixed order

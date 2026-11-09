@@ -59,10 +59,12 @@ V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端
 
 客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
-和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、multiface、
+和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、wall、multiface、
 quantity、container、sign、redstone 和 special 等适配器，通用纯状态操作集中在
 `EasyPlaceStateSupport`。墙钟、悬挂牌、蜡烛等目标位置或点击面转换继续留在独立规则与
 客户端放置入口中，不写入状态适配器；Mixin 只负责必要的 Litematica 调用链桥接。
+所有原版墙方块将四侧连接编码为 base-3 raw，并用 Z 通道 bit0 传递 `UP`；
+`WATERLOGGED` 不写入编码，仍由 FCA 服务端放置状态决定。
 旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
 仍为 1，其余字段布局未改变。多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到

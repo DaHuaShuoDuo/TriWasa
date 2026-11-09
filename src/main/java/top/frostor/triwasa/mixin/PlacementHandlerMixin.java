@@ -63,6 +63,14 @@ public abstract class PlacementHandlerMixin
 		}
 
 		int rawValue = EasyPlaceExtraProtocol.toRawValue(protocolValue);
-		cir.setReturnValue(EasyPlaceStateCodec.applyPlacementState(state, context, rawValue));
+		int auxiliaryValue = EasyPlaceExtraProtocol.decodeZ(context.hitVec(), context.pos());
+		cir.setReturnValue(
+				EasyPlaceStateCodec.applyPlacementState(
+						state,
+						context,
+						rawValue,
+						auxiliaryValue
+				)
+		);
 	}
 }

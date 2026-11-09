@@ -97,6 +97,10 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   facade，由初始化后冻结的 `EasyPlaceCodecRegistry` 选择 behavior-family adapter；
   通用纯状态操作放入 `EasyPlaceStateSupport`。不要把已删除的
   `LegacyEasyPlaceStateCodec` 单体分支或每方块第二套状态表重新引回。
+- `WallBlock` 四侧按 `NORTH + EAST*3 + SOUTH*9 + WEST*27` 编码为 raw，`UP` 使用
+  辅助值的 bit0；编码结果通过 `EasyPlaceEncodedState(rawValue, auxiliaryValue)` 携带。
+  `WATERLOGGED` 不得进入编码。无辅助状态的 adapter 默认返回 `auxiliaryValue=0`，
+  且 Z 通道仍须保持合成器锁槽行为不变。
 - 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
   Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
   `logicTest` 入口，并扩展对应 family suite 与集成矩阵。

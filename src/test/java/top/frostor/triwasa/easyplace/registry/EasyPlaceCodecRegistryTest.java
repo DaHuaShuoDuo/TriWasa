@@ -49,7 +49,9 @@ public final class EasyPlaceCodecRegistryTest
 		registry.freeze();
 
 		EasyPlaceCodecContext context = context();
-		check(registry.encode(context) == 3, "higher-priority exact encoders must win");
+		EasyPlaceEncodedState encoded = registry.encode(context);
+		check(encoded.rawValue() == 3, "higher-priority exact encoders must win");
+		check(encoded.auxiliaryValue() == 0, "adapters without auxiliary state must encode zero");
 		BlockState result = registry.decode(context);
 		check(result != null, "a matching decoder must produce a state");
 		check(
@@ -123,6 +125,7 @@ public final class EasyPlaceCodecRegistryTest
 				null,
 				null,
 				null,
+				0,
 				0
 		);
 	}

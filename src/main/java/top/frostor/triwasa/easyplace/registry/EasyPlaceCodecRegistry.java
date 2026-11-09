@@ -60,10 +60,15 @@ public final class EasyPlaceCodecRegistry
 		frozen = true;
 	}
 
-	public int encode(EasyPlaceCodecContext context)
+	public EasyPlaceEncodedState encode(EasyPlaceCodecContext context)
 	{
 		Entry entry = resolve(context);
-		return entry == null ? -1 : entry.encoder().encode(context);
+		return entry == null
+				? new EasyPlaceEncodedState(-1, 0)
+				: new EasyPlaceEncodedState(
+						entry.encoder().encode(context),
+						entry.encoder().encodeAuxiliary(context)
+				);
 	}
 
 	public @Nullable BlockState decode(EasyPlaceCodecContext context)

@@ -6,6 +6,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.easyplace.registry.EasyPlaceEncodedState;
 
 public final class EasyPlaceClientEncoder
 {
@@ -32,7 +33,13 @@ public final class EasyPlaceClientEncoder
 				? pos
 				: BellRules.resolveProtocolTarget(client.level, pos, state);
 		BlockState currentState = client.level == null ? null : client.level.getBlockState(protocolPos);
-		int rawValue = EasyPlaceStateCodec.encode(state, currentState, client.level, protocolPos);
+		EasyPlaceEncodedState encodedState = EasyPlaceStateCodec.encodeState(
+				state,
+				currentState,
+				client.level,
+				protocolPos
+		);
+		int rawValue = encodedState.rawValue();
 		if(rawValue < 0 || rawValue > 0x7f)
 		{
 			return null;
@@ -42,9 +49,12 @@ public final class EasyPlaceClientEncoder
 		EasyPlaceCrafterSlotLock.capture(protocolPos, state);
 		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(protocolPos, hitVec, rawValue);
 		int crafterDisabledMask = EasyPlaceCrafterSlotLock.getPendingMask();
-		if(crafterDisabledMask != 0)
+		int auxiliaryValue = crafterDisabledMask != 0
+				? crafterDisabledMask
+				: encodedState.auxiliaryValue();
+		if(auxiliaryValue != 0)
 		{
-			encodedHitVec = EasyPlaceExtraProtocol.encodeZ(pos, encodedHitVec, crafterDisabledMask);
+			encodedHitVec = EasyPlaceExtraProtocol.encodeZ(pos, encodedHitVec, auxiliaryValue);
 		}
 		return encodedHitVec;
 	}

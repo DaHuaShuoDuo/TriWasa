@@ -13,7 +13,8 @@ public record EasyPlaceCodecContext(
 		@Nullable BlockGetter level,
 		@Nullable BlockPos pos,
 		@Nullable BlockPlaceContext placementContext,
-		int rawValue
+		int rawValue,
+		int auxiliaryValue
 )
 {
 	public Block block()
