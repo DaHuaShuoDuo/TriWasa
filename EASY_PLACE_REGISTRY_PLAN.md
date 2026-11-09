@@ -18,5 +18,6 @@ Fixed TriWasa constraints from the canonical plan:
 - printer-specific hooks are limited to target/click transforms that cannot be
   expressed through the common Litematica protocol entry points.
 
-Current TriWasa baseline: branch `codex/fix-multiface-vine-placement`,
-commit `c7b6448`.
+Current TriWasa baseline: branch `codex/easy-place-registry`, commit `2ac269a`.
+The canonical plan records the completed family test split and dual-version
+runtime verification.
