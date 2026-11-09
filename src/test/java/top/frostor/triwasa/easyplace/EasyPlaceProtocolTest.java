@@ -30,6 +30,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Arrays;
 import top.frostor.triwasa.betterprinter.BetterPrinterGuideRules;
 import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecRegistryTest;
 
 public final class EasyPlaceProtocolTest
 {
@@ -43,6 +44,7 @@ public final class EasyPlaceProtocolTest
 	{
 		SharedConstants.tryDetectVersion();
 		Bootstrap.bootStrap();
+		EasyPlaceCodecRegistryTest.run();
 
 		for(int rawValue = 0; rawValue <= 0x7f; rawValue++)
 		{
