@@ -7,6 +7,8 @@ public final class MixinPreflight
 	private static final String[] TARGETS = {
 			"net.minecraft.world.item.BlockItem",
 			"net.minecraft.world.item.HangingSignItem",
+			"net.minecraft.world.level.block.BaseRailBlock",
+			"net.minecraft.world.level.block.FenceGateBlock",
 			"net.minecraft.world.level.block.WallHangingSignBlock",
 			"fi.dy.masa.litematica.util.EasyPlaceUtils",
 			"fi.dy.masa.litematica.util.WorldUtils",

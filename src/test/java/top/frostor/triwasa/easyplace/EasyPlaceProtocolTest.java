@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CopperBulbBlock;
 import net.minecraft.world.level.block.CopperGolemStatueBlock;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FlowerBedBlock;
+import net.minecraft.world.level.block.HugeMushroomBlock;
 import net.minecraft.world.level.block.LeafLitterBlock;
 import net.minecraft.world.level.block.MultifaceBlock;
 import net.minecraft.world.level.block.SegmentableBlock;
@@ -156,6 +158,9 @@ public final class EasyPlaceProtocolTest
 						&& appliedCopperBulb.getValue(CopperBulbBlock.POWERED),
 				"copper bulb lit and powered states must round trip"
 		);
+		checkHugeMushroomStates();
+		checkSegmentableFacingRetention();
+
 		BlockState leftChest = Blocks.CHEST.defaultBlockState()
 				.setValue(ChestBlock.FACING, Direction.NORTH)
 				.setValue(ChestBlock.TYPE, ChestType.LEFT);
@@ -597,6 +602,80 @@ public final class EasyPlaceProtocolTest
 		}
 	}
 
+	private static void checkHugeMushroomStates()
+	{
+		Block[] hugeMushroomBlocks = {Blocks.BROWN_MUSHROOM_BLOCK, Blocks.RED_MUSHROOM_BLOCK};
+		for(Block block : hugeMushroomBlocks)
+		{
+			check(block instanceof HugeMushroomBlock, block + " must use HugeMushroomBlock");
+			for(int mask = 0; mask < 64; mask++)
+			{
+				BlockState expected = block.defaultBlockState()
+						.setValue(BlockStateProperties.NORTH, (mask & 0x01) != 0)
+						.setValue(BlockStateProperties.EAST, (mask & 0x02) != 0)
+						.setValue(BlockStateProperties.SOUTH, (mask & 0x04) != 0)
+						.setValue(BlockStateProperties.WEST, (mask & 0x08) != 0)
+						.setValue(BlockStateProperties.UP, (mask & 0x10) != 0)
+						.setValue(BlockStateProperties.DOWN, (mask & 0x20) != 0);
+				check(EasyPlaceStateCodec.encode(expected) == mask, "huge mushroom masks must use all six bits");
+				BlockState applied = EasyPlaceStateCodec.apply(
+						block,
+						block.defaultBlockState(),
+						null,
+						mask
+				);
+				check(applied != null, "huge mushroom protocol state must apply");
+				check(
+						applied.getValue(BlockStateProperties.NORTH) == expected.getValue(BlockStateProperties.NORTH)
+								&& applied.getValue(BlockStateProperties.EAST) == expected.getValue(BlockStateProperties.EAST)
+								&& applied.getValue(BlockStateProperties.SOUTH) == expected.getValue(BlockStateProperties.SOUTH)
+								&& applied.getValue(BlockStateProperties.WEST) == expected.getValue(BlockStateProperties.WEST)
+								&& applied.getValue(BlockStateProperties.UP) == expected.getValue(BlockStateProperties.UP)
+								&& applied.getValue(BlockStateProperties.DOWN) == expected.getValue(BlockStateProperties.DOWN),
+						"huge mushroom six-face state must round trip"
+				);
+			}
+		}
+
+		BlockState smallMushroom = Blocks.BROWN_MUSHROOM.defaultBlockState();
+		check(EasyPlaceStateCodec.encode(smallMushroom) == 0, "small mushrooms must not use huge mushroom masks");
+		check(
+				EasyPlaceStateCodec.apply(Blocks.BROWN_MUSHROOM, smallMushroom, null, 0) == smallMushroom,
+				"small mushrooms must retain their placement state"
+		);
+	}
+	private static void checkSegmentableFacingRetention()
+	{
+		BlockState flowerBedPlacement = Blocks.PINK_PETALS.defaultBlockState()
+				.setValue(FlowerBedBlock.FACING, Direction.NORTH)
+				.setValue(FlowerBedBlock.AMOUNT, 1);
+		BlockState flowerBedResult = EasyPlaceStateCodec.apply(
+				Blocks.PINK_PETALS,
+				flowerBedPlacement,
+				null,
+				0x9
+		);
+		check(
+				flowerBedResult != null
+						&& flowerBedResult.getValue(FlowerBedBlock.FACING) == Direction.WEST,
+				"flower bed increments must apply the projected facing"
+		);
+
+		BlockState leafLitterPlacement = Blocks.LEAF_LITTER.defaultBlockState()
+				.setValue(LeafLitterBlock.FACING, Direction.NORTH)
+				.setValue(SegmentableBlock.AMOUNT, 1);
+		BlockState leafLitterResult = EasyPlaceStateCodec.apply(
+				Blocks.LEAF_LITTER,
+				leafLitterPlacement,
+				null,
+				0x9
+		);
+		check(
+				leafLitterResult != null
+						&& leafLitterResult.getValue(LeafLitterBlock.FACING) == Direction.WEST,
+				"leaf litter increments must apply the projected facing"
+		);
+	}
 	private static void checkQuantityIncrement(Block block)
 	{
 		IntegerProperty property = IncrementalBlockRules.getCountProperty(block);
