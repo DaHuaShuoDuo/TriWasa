@@ -36,7 +36,7 @@ Required:
 Optional:
 
 - Frostor's Carpet Addition: reuse its public protocol API when loaded in the
-  same process; the big ender chest terminal requires matching FCA `0.2.0-beta.3`
+  same process; the big ender chest terminal requires matching FCA `0.2.1-beta.1`
 - Hana's Fourth-Revision Printer (the Hana `litematica-printer` branch): enables Better Printer
 - Mod Menu: provides a configuration button in the mod list
 - Roughly Enough Items: enables REI interface fixes
@@ -82,7 +82,9 @@ unchanged. Multiface wire indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical
 face order must be upgraded to a matching release, because mixed versions can
-decode multiface and vine faces in the wrong direction.
+decode multiface and vine faces in the wrong direction. The old `main` snapshot
+is preserved by the `legacy` tag in both repositories for historical
+compatibility only and is no longer maintained.
 
 ### Better Easy Place
 

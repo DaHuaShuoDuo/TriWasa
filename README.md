@@ -31,7 +31,7 @@ V2-Extra 轻松放置、更好的轻松放置、更好的打印机、大末影�
 
 可选依赖：
 
-- Frostor's Carpet Addition：同进程加载时复用公开协议 API；大末影箱终端需要匹配的 FCA `0.2.0-beta.3`
+- Frostor's Carpet Addition：同进程加载时复用公开协议 API；大末影箱终端需要匹配的 FCA `0.2.1-beta.1`
 - Hana 的四改打印机（Hana 版 `litematica-printer` 分支）：启用更好的打印机功能
 - Mod Menu：在模组列表提供 TriWasa 配置按钮
 - Roughly Enough Items：启用 REI 相关界面修复
@@ -67,7 +67,8 @@ quantity、container、sign、redstone 和 special 等适配器，通用纯状�
 仍为 1，其余字段布局未改变。多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
-匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。
+匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的
+`legacy` 标签中，仅用于历史兼容，不再维护。
 
 ### 更好的轻松放置
 
