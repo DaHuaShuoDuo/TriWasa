@@ -7,6 +7,7 @@ public final class MixinPreflight
 	private static final String[] TARGETS = {
 			"net.minecraft.world.item.BlockItem",
 			"net.minecraft.world.item.HangingSignItem",
+			"net.minecraft.client.multiplayer.MultiPlayerGameMode",
 			"net.minecraft.world.level.block.BaseRailBlock",
 			"net.minecraft.world.level.block.FenceGateBlock",
 			"net.minecraft.world.level.block.WallHangingSignBlock",

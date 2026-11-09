@@ -6,6 +6,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BellBlock;
 import net.minecraft.world.level.block.CandleBlock;
 import net.minecraft.world.level.block.HangingSignBlock;
 import net.minecraft.world.level.block.WallHangingSignBlock;
@@ -15,9 +16,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import top.frostor.triwasa.easyplace.BellRules;
 import top.frostor.triwasa.easyplace.CandleRules;
 import top.frostor.triwasa.easyplace.EasyPlaceRules;
 import top.frostor.triwasa.easyplace.HangingSignRules;
+import top.frostor.triwasa.mixin.EasyPlaceUtilsInvoker;
 
 @Mixin(EasyPlaceUtils.class)
 public abstract class BetterEasyPlaceTargetPlacementMixin
@@ -36,6 +39,42 @@ public abstract class BetterEasyPlaceTargetPlacementMixin
 		}
 
 		Block block = state.getBlock();
+		if(block instanceof BellBlock)
+		{
+			if(!EasyPlaceRules.isEnabled())
+			{
+				return;
+			}
+
+			BellRules.BellPlacementPlan plan = BellRules.getPlacementPlan(pos, state);
+			if(plan == null)
+			{
+				return;
+			}
+
+			ClientLevel level = Minecraft.getInstance().level;
+			if(level == null)
+			{
+				return;
+			}
+
+			if(!BellRules.hasRequiredWallSupport(level, plan))
+			{
+				data.triwasa$setHandled(true);
+				data.triwasa$setMustFail(true);
+				return;
+			}
+
+			EasyPlaceUtilsInvoker.triwasa$cacheEasyPlacePosition(pos);
+			BellRules.activatePlan(plan);
+			data.triwasa$setHandled(true);
+			data.triwasa$setMustFail(false);
+			data.triwasa$setPos(plan.supportPos());
+			data.triwasa$setSide(plan.side());
+			data.triwasa$setHitVec(plan.hitVec());
+			return;
+		}
+
 		if(block instanceof CandleBlock)
 		{
 			if(!EasyPlaceRules.isEnabled())

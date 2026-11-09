@@ -7,6 +7,8 @@
 		"BigEnderChestMenuScreensMixin",
 		"BigEnderChestSlotHighlightMixin",
 		"EasyPlaceCallSiteMixin",
+		"EasyPlaceMultiPlayerGameModeMixin",
+		"EasyPlaceUtilsInvoker",
 		"betterprinter.LitematicaPrinterMixin",
 		"betterprinter.BetterPrinterActionSupportMixin",
 		"betterprinter.BetterPrinterGuideAccessor",

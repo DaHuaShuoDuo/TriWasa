@@ -10,28 +10,34 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HangingSignBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
 import org.jetbrains.annotations.Nullable;
 import top.frostor.triwasa.easyplace.adapter.directional.DoorStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.directional.FenceGateStateAdapter;
-import top.frostor.triwasa.easyplace.adapter.directional.GenericDirectionalStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.directional.StairStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.directional.TrapDoorStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.attachment.FaceAttachedStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.cake.CakeStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.campfire.CampfireStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.container.ChestStateAdapter;
-import top.frostor.triwasa.easyplace.adapter.legacy.LegacyStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.copper.CopperBulbStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.copper.CopperGolemStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.crafter.CrafterStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.daylight.DaylightDetectorStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.generic.GenericFallbackStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.lantern.LanternStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.multiface.MultiFaceStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.mushroom.MushroomStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.quantity.QuantityStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.rail.DetectorRailStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.rail.RailStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.redstone.RedstoneStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.special.BellStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.sign.HangingSignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.sign.SignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.special.AdministrativeStateAdapter;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecRegistry;
 import top.frostor.triwasa.mixin.StandingAndWallBlockItemAccessor;
-
-import java.util.Optional;
 
 public final class EasyPlaceStateCodec
 {
@@ -74,7 +80,9 @@ public final class EasyPlaceStateCodec
 			}
 
 			boolean wall = state.getBlock() != standingAndWallItem.getBlock();
-			int facingIndex = verticalDirectionIndex(getFirstDirection(state));
+			int facingIndex = EasyPlaceStateSupport.verticalDirectionIndex(
+					EasyPlaceStateSupport.getFirstDirection(state)
+			);
 			int encoded = ((stateValue & 0xf) << 3) | (facingIndex << 1) | (wall ? 1 : 0);
 			if(hangingSign && (stateValue & 0x10) != 0)
 			{
@@ -162,13 +170,13 @@ public final class EasyPlaceStateCodec
 		{
 			state = wallBlock.defaultBlockState();
 		}
-		state = setFirstDirection(state, facing);
+		state = EasyPlaceStateSupport.setFirstDirection(state, facing);
 		return apply(block, state, context, stateValue);
 	}
 
 	static BlockState applyGeneric(BlockState state, int protocolValue, BlockPlaceContext context)
 	{
-		return LegacyEasyPlaceStateCodec.applyGeneric(state, protocolValue, context);
+		return EasyPlaceStateSupport.applyGeneric(state, protocolValue, context);
 	}
 
 	static @Nullable BlockState validateIncremental(
@@ -177,7 +185,7 @@ public final class EasyPlaceStateCodec
 			int requestedMaximum
 	)
 	{
-		return LegacyEasyPlaceStateCodec.validateIncremental(state, property, requestedMaximum);
+		return EasyPlaceStateSupport.validateIncremental(state, property, requestedMaximum);
 	}
 
 	private static EasyPlaceCodecRegistry createRegistry()
@@ -195,9 +203,18 @@ public final class EasyPlaceStateCodec
 		RailStateAdapter rail = new RailStateAdapter();
 		MushroomStateAdapter mushroom = new MushroomStateAdapter();
 		ChestStateAdapter chest = new ChestStateAdapter();
+		RedstoneStateAdapter redstone = new RedstoneStateAdapter();
+		BellStateAdapter bell = new BellStateAdapter();
+		CampfireStateAdapter campfire = new CampfireStateAdapter();
+		CakeStateAdapter cake = new CakeStateAdapter();
+		CopperBulbStateAdapter copperBulb = new CopperBulbStateAdapter();
+		CopperGolemStateAdapter copperGolem = new CopperGolemStateAdapter();
+		CrafterStateAdapter crafter = new CrafterStateAdapter();
+		DaylightDetectorStateAdapter daylight = new DaylightDetectorStateAdapter();
+		DetectorRailStateAdapter detectorRail = new DetectorRailStateAdapter();
+		LanternStateAdapter lantern = new LanternStateAdapter();
+		GenericFallbackStateAdapter genericFallback = new GenericFallbackStateAdapter();
 		AdministrativeStateAdapter administrative = new AdministrativeStateAdapter();
-		GenericDirectionalStateAdapter generic = new GenericDirectionalStateAdapter();
-		LegacyStateAdapter legacy = new LegacyStateAdapter();
 		registry.register("door", 700, DoorStateAdapter::matches, door, door);
 		registry.register("trapdoor", 690, TrapDoorStateAdapter::matches, trapdoor, trapdoor);
 		registry.register("fence_gate", 680, FenceGateStateAdapter::matches, fenceGate, fenceGate);
@@ -240,6 +257,46 @@ public final class EasyPlaceStateCodec
 				mushroom
 		);
 		registry.register("container", 653, ChestStateAdapter::matches, chest, chest);
+		registry.register("redstone", 649, RedstoneStateAdapter::matches, redstone, redstone);
+		registry.register("bell", 648, BellStateAdapter::matches, bell, bell);
+		registry.register(
+				"campfire",
+				647,
+				CampfireStateAdapter::matches,
+				campfire,
+				campfire
+		);
+		registry.register("cake", 646, CakeStateAdapter::matches, cake, cake);
+		registry.register(
+				"copper_bulb",
+				645,
+				CopperBulbStateAdapter::matches,
+				copperBulb,
+				copperBulb
+		);
+		registry.register(
+				"copper_golem",
+				644,
+				CopperGolemStateAdapter::matches,
+				copperGolem,
+				copperGolem
+		);
+		registry.register("crafter", 643, CrafterStateAdapter::matches, crafter, crafter);
+		registry.register(
+				"daylight_detector",
+				642,
+				DaylightDetectorStateAdapter::matches,
+				daylight,
+				daylight
+		);
+		registry.register(
+				"detector_rail",
+				641,
+				DetectorRailStateAdapter::matches,
+				detectorRail,
+				detectorRail
+		);
+		registry.register("lantern", 640, LanternStateAdapter::matches, lantern, lantern);
 		registry.register(
 				"administrative",
 				650,
@@ -248,13 +305,12 @@ public final class EasyPlaceStateCodec
 				administrative
 		);
 		registry.register(
-				"generic_directional",
-				100,
-				GenericDirectionalStateAdapter::matches,
-				generic,
-				generic
+				"generic_fallback",
+				50,
+				GenericFallbackStateAdapter::matches,
+				genericFallback,
+				genericFallback
 		);
-		registry.register("legacy", 0, context -> true, legacy, legacy);
 		registry.freeze();
 		return registry;
 	}
@@ -269,52 +325,4 @@ public final class EasyPlaceStateCodec
 		return new EasyPlaceCodecContext(state, currentState, level, pos, null, 0);
 	}
 
-	private static int verticalDirectionIndex(Direction direction)
-	{
-		for(int index = 0; index < VERTICAL_DIRECTIONS.length; index++)
-		{
-			if(VERTICAL_DIRECTIONS[index] == direction)
-			{
-				return index;
-			}
-		}
-		return 0;
-	}
-
-	private static Direction getFirstDirection(BlockState state)
-	{
-		return getFirstDirectionProperty(state)
-				.map(state::getValue)
-				.filter(direction -> direction.getAxis().isHorizontal())
-				.orElse(Direction.NORTH);
-	}
-
-	private static Optional<EnumProperty<Direction>> getFirstDirectionProperty(BlockState state)
-	{
-		for(net.minecraft.world.level.block.state.properties.Property<?> property : state.getProperties())
-		{
-			if(property instanceof EnumProperty<?> enumProperty
-					&& enumProperty.getValueClass() == Direction.class)
-			{
-				@SuppressWarnings("unchecked")
-				EnumProperty<Direction> directionProperty = (EnumProperty<Direction>) enumProperty;
-				return Optional.of(directionProperty);
-			}
-		}
-		return Optional.empty();
-	}
-
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private static BlockState setFirstDirection(BlockState state, Direction direction)
-	{
-		for(net.minecraft.world.level.block.state.properties.Property<?> property : state.getProperties())
-		{
-			if(property.getPossibleValues().stream().anyMatch(value -> value instanceof Direction)
-					&& property.getPossibleValues().contains(direction))
-			{
-				return state.setValue((net.minecraft.world.level.block.state.properties.Property) property, direction);
-			}
-		}
-		return state;
-	}
 }

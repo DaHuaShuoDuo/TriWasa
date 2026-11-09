@@ -3,7 +3,7 @@ package top.frostor.triwasa.easyplace.adapter.sign;
 import net.minecraft.world.level.block.HangingSignBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import top.frostor.triwasa.easyplace.LegacyEasyPlaceStateCodec;
+import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateEncoder;
@@ -35,7 +35,7 @@ public final class HangingSignStateAdapter implements EasyPlaceStateEncoder, Eas
 		BlockState result = context.state();
 		if(result.hasProperty(BlockStateProperties.ROTATION_16))
 		{
-			result = LegacyEasyPlaceStateCodec.replaceSlot(
+			result = EasyPlaceStateSupport.replaceSlot(
 					result,
 					BlockStateProperties.ROTATION_16,
 					context.rawValue() & 0xf

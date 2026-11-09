@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.SkullBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
-import top.frostor.triwasa.easyplace.LegacyEasyPlaceStateCodec;
+import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateEncoder;
@@ -41,11 +41,11 @@ public final class SignStateAdapter implements EasyPlaceStateEncoder, EasyPlaceS
 		if(context.block() instanceof SkullBlock)
 		{
 			return state.hasProperty(SkullBlock.ROTATION)
-					? LegacyEasyPlaceStateCodec.replaceSlot(state, SkullBlock.ROTATION, rawValue)
+					? EasyPlaceStateSupport.replaceSlot(state, SkullBlock.ROTATION, rawValue)
 					: state;
 		}
 		return state.hasProperty(BlockStateProperties.ROTATION_16)
-				? LegacyEasyPlaceStateCodec.replaceSlot(
+				? EasyPlaceStateSupport.replaceSlot(
 				state,
 				BlockStateProperties.ROTATION_16,
 				rawValue

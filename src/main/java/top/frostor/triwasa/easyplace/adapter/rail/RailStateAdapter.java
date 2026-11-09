@@ -6,7 +6,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import top.frostor.triwasa.config.TriWasaConfigs;
-import top.frostor.triwasa.easyplace.LegacyEasyPlaceStateCodec;
+import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateEncoder;
@@ -47,7 +47,7 @@ public final class RailStateAdapter implements EasyPlaceStateEncoder, EasyPlaceS
 	public BlockState decode(EasyPlaceCodecContext context)
 	{
 		int mask = context.block() instanceof PoweredRailBlock ? 0x7 : 0xf;
-		return LegacyEasyPlaceStateCodec.replaceSlot(
+		return EasyPlaceStateSupport.replaceSlot(
 				context.state(),
 				railShapeProperty(context.state()),
 				railShape(context.state(), context.rawValue() & mask)

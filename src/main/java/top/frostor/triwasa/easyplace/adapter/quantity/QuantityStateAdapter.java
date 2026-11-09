@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import org.jetbrains.annotations.Nullable;
 import top.frostor.triwasa.easyplace.IncrementalBlockRules;
-import top.frostor.triwasa.easyplace.LegacyEasyPlaceStateCodec;
+import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateEncoder;
@@ -91,7 +91,7 @@ public final class QuantityStateAdapter implements EasyPlaceStateEncoder, EasyPl
 		{
 			requestedAmount = (rawValue & 0x3) + 1;
 		}
-		return LegacyEasyPlaceStateCodec.validateIncremental(state, property, requestedAmount);
+		return EasyPlaceStateSupport.validateIncremental(state, property, requestedAmount);
 	}
 
 	private static int verticalDirectionIndex(Direction direction)
