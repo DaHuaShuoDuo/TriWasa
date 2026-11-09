@@ -17,7 +17,10 @@ import top.frostor.triwasa.easyplace.adapter.directional.FenceGateStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.directional.GenericDirectionalStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.directional.StairStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.directional.TrapDoorStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.attachment.FaceAttachedStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.legacy.LegacyStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.multiface.MultiFaceStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.sign.HangingSignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.sign.SignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.special.AdministrativeStateAdapter;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
@@ -55,23 +58,11 @@ public final class EasyPlaceStateCodec
 	)
 	{
 		Block block = state.getBlock();
-		if(MultiFaceBlockRules.isMultiFaceBlock(block))
-		{
-			Direction direction = level != null && pos != null
-					? MultiFaceBlockRules.findAttachableMissingFace(
-							currentState,
-							state,
-							level,
-							pos
-					)
-					: MultiFaceBlockRules.findNextFace(currentState, state);
-			return direction == null ? -1 : MultiFaceBlockRules.wireDirectionIndex(block, direction);
-		}
 
 		BlockItem item = state.getBlock().asItem() instanceof BlockItem blockItem ? blockItem : null;
 		if(item instanceof StandingAndWallBlockItem standingAndWallItem)
 		{
-			int stateValue = LegacyEasyPlaceStateCodec.encodeRegular(state, currentState);
+			int stateValue = REGISTRY.encode(codecContext(state, currentState, level, pos));
 			boolean hangingSign = state.getBlock() instanceof HangingSignBlock;
 			if(stateValue < 0 || stateValue > (hangingSign ? 0x1f : 0xf))
 			{
@@ -193,6 +184,9 @@ public final class EasyPlaceStateCodec
 		FenceGateStateAdapter fenceGate = new FenceGateStateAdapter();
 		StairStateAdapter stair = new StairStateAdapter();
 		SignStateAdapter sign = new SignStateAdapter();
+		HangingSignStateAdapter hangingSign = new HangingSignStateAdapter();
+		FaceAttachedStateAdapter faceAttached = new FaceAttachedStateAdapter();
+		MultiFaceStateAdapter multiFace = new MultiFaceStateAdapter();
 		AdministrativeStateAdapter administrative = new AdministrativeStateAdapter();
 		GenericDirectionalStateAdapter generic = new GenericDirectionalStateAdapter();
 		LegacyStateAdapter legacy = new LegacyStateAdapter();
@@ -201,6 +195,27 @@ public final class EasyPlaceStateCodec
 		registry.register("fence_gate", 680, FenceGateStateAdapter::matches, fenceGate, fenceGate);
 		registry.register("stair", 670, StairStateAdapter::matches, stair, stair);
 		registry.register("sign", 660, SignStateAdapter::matches, sign, sign);
+		registry.register(
+				"hanging_sign",
+				659,
+				HangingSignStateAdapter::matches,
+				hangingSign,
+				hangingSign
+		);
+		registry.register(
+				"face_attached",
+				658,
+				FaceAttachedStateAdapter::matches,
+				faceAttached,
+				faceAttached
+		);
+		registry.register(
+				"multiface",
+				657,
+				MultiFaceStateAdapter::matches,
+				multiFace,
+				multiFace
+		);
 		registry.register(
 				"administrative",
 				650,
@@ -218,6 +233,16 @@ public final class EasyPlaceStateCodec
 		registry.register("legacy", 0, context -> true, legacy, legacy);
 		registry.freeze();
 		return registry;
+	}
+
+	private static EasyPlaceCodecContext codecContext(
+			BlockState state,
+			@Nullable BlockState currentState,
+			@Nullable BlockGetter level,
+			@Nullable BlockPos pos
+	)
+	{
+		return new EasyPlaceCodecContext(state, currentState, level, pos, null, 0);
 	}
 
 	private static int verticalDirectionIndex(Direction direction)

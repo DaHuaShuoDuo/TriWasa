@@ -12,15 +12,18 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CopperBulbBlock;
 import net.minecraft.world.level.block.CopperGolemStatueBlock;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FaceAttachedHorizontalDirectionalBlock;
 import net.minecraft.world.level.block.FlowerBedBlock;
 import net.minecraft.world.level.block.HugeMushroomBlock;
 import net.minecraft.world.level.block.LeafLitterBlock;
+import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.MultifaceBlock;
 import net.minecraft.world.level.block.SegmentableBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -161,6 +164,7 @@ public final class EasyPlaceProtocolTest
 				"copper bulb lit and powered states must round trip"
 		);
 		checkHugeMushroomStates();
+		checkFaceAttachedStates();
 		checkSegmentableFacingRetention();
 
 		BlockState leftChest = Blocks.CHEST.defaultBlockState()
@@ -644,6 +648,52 @@ public final class EasyPlaceProtocolTest
 		check(
 				EasyPlaceStateCodec.apply(Blocks.BROWN_MUSHROOM, smallMushroom, null, 0) == smallMushroom,
 				"small mushrooms must retain their placement state"
+		);
+	}
+
+	private static void checkFaceAttachedStates()
+	{
+		Direction[] directions = {
+				Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST
+		};
+		for(int faceIndex = 0; faceIndex < AttachFace.values().length; faceIndex++)
+		{
+			for(Direction direction : directions)
+			{
+				BlockState lever = Blocks.LEVER.defaultBlockState()
+						.setValue(FaceAttachedHorizontalDirectionalBlock.FACE, AttachFace.values()[faceIndex])
+						.setValue(FaceAttachedHorizontalDirectionalBlock.FACING, direction);
+				int encoded = EasyPlaceStateCodec.encode(lever);
+				BlockState applied = EasyPlaceStateCodec.apply(
+						Blocks.LEVER,
+						Blocks.LEVER.defaultBlockState(),
+						null,
+						encoded
+				);
+				check(
+						applied != null
+								&& applied.getValue(FaceAttachedHorizontalDirectionalBlock.FACE)
+								== AttachFace.values()[faceIndex]
+								&& applied.getValue(FaceAttachedHorizontalDirectionalBlock.FACING) == direction,
+						"face-attached buttons and levers must round trip every face/facing combination"
+				);
+			}
+		}
+
+		BlockState poweredLever = Blocks.LEVER.defaultBlockState()
+				.setValue(FaceAttachedHorizontalDirectionalBlock.FACE, AttachFace.CEILING)
+				.setValue(FaceAttachedHorizontalDirectionalBlock.FACING, Direction.EAST)
+				.setValue(LeverBlock.POWERED, true);
+		check(EasyPlaceStateCodec.encode(poweredLever) == 0x65, "lever powered state must use bit six");
+		BlockState appliedPoweredLever = EasyPlaceStateCodec.apply(
+				Blocks.LEVER,
+				Blocks.LEVER.defaultBlockState(),
+				null,
+				EasyPlaceStateCodec.encode(poweredLever)
+		);
+		check(
+				appliedPoweredLever != null && appliedPoweredLever.getValue(LeverBlock.POWERED),
+				"lever protocol must preserve powered state"
 		);
 	}
 	private static void checkSegmentableFacingRetention()
