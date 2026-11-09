@@ -93,15 +93,7 @@ public final class IncrementalBlockRules
 
 	public static int multifaceDirectionIndex(Direction direction)
 	{
-		Direction[] directions = Direction.values();
-		for(int index = 0; index < directions.length; index++)
-		{
-			if(directions[index] == direction)
-			{
-				return index;
-			}
-		}
-		return -1;
+		return MultiFaceBlockRules.multifaceDirectionIndex(direction);
 	}
 
 	public static @Nullable IntegerProperty getCountProperty(Block block)

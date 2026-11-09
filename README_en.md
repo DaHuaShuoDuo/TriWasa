@@ -76,8 +76,13 @@ Target-position and click-face transforms for wall bells, hanging signs,
 candles, and similar placement cases remain in dedicated rules and client
 placement entry points rather than state adapters. Mixins only bridge the
 required Litematica call paths. The old monolithic
-`LegacyEasyPlaceStateCodec` mapping has been removed. The wire protocol and
-V2-Extra version are unchanged.
+`LegacyEasyPlaceStateCodec` mapping has been removed. The V2-Extra payload
+marker and protocol version remain 1, and the rest of the field layout is
+unchanged. Multiface wire indices use the fixed order
+`DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
+EAST` by filtering out `DOWN`. Clients or servers built with the historical
+face order must be upgraded to a matching release, because mixed versions can
+decode multiface and vine faces in the wrong direction.
 
 ### Better Easy Place
 

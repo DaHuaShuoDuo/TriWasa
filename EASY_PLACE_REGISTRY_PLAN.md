@@ -20,4 +20,5 @@ Fixed TriWasa constraints from the canonical plan:
 
 Current TriWasa baseline: branch `codex/easy-place-registry`; registry migration
 commit `2ac269a`, family test split commit `f3dc45f`. The canonical plan records
-the completed family split and dual-version runtime verification.
+the completed family split, canonical multiface/vine wire order, and
+dual-version runtime verification.

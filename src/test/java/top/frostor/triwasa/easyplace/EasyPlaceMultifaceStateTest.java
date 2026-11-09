@@ -32,6 +32,14 @@ public final class EasyPlaceMultifaceStateTest extends EasyPlaceTestSupport
 					"glow lichen " + multifaceDirections[index]
 							+ " must use the canonical six-face index"
 			);
+			test.check(
+					MultiFaceBlockRules.wireDirectionIndex(
+							Blocks.GLOW_LICHEN,
+							multifaceDirections[index]
+					) == index,
+					"glow lichen " + multifaceDirections[index]
+							+ " must encode back to the canonical six-face index"
+			);
 		}
 		BlockState glowLichenUp = Blocks.GLOW_LICHEN.defaultBlockState()
 				.setValue(BlockStateProperties.UP, true);
@@ -88,6 +96,12 @@ public final class EasyPlaceMultifaceStateTest extends EasyPlaceTestSupport
 			test.check(
 					EasyPlaceStateCodec.encode(vine, Blocks.AIR.defaultBlockState()) == index,
 					"vine " + vineDirections[index] + " must use the canonical five-face index"
+			);
+			test.check(
+					MultiFaceBlockRules.wireDirectionIndex(Blocks.VINE, vineDirections[index])
+							== index,
+					"vine " + vineDirections[index]
+							+ " must encode back to the canonical five-face index"
 			);
 		}
 		BlockState vineNorth = Blocks.VINE.defaultBlockState()

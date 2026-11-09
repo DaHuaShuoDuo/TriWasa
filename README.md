@@ -63,7 +63,11 @@ V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端
 quantity、container、sign、redstone 和 special 等适配器，通用纯状态操作集中在
 `EasyPlaceStateSupport`。墙钟、悬挂牌、蜡烛等目标位置或点击面转换继续留在独立规则与
 客户端放置入口中，不写入状态适配器；Mixin 只负责必要的 Litematica 调用链桥接。
-旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除，线协议和 V2-Extra 版本未改变。
+旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
+仍为 1，其余字段布局未改变。多面方块的面索引顺序固定为
+`DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
+`UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
+匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。
 
 ### 更好的轻松放置
 

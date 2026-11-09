@@ -100,6 +100,10 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 - 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
   Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
   `logicTest` 入口，并扩展对应 family suite 与集成矩阵。
+- 多面方块线值顺序必须保持显式 `DOWN, UP, NORTH, SOUTH, WEST, EAST`；藤蔓顺序从
+  同一数组过滤 `DOWN` 派生，不得另手写一份。该顺序属于当前 V2-Extra v1 构建契约：
+  混用使用历史面顺序的 FCA、TriWasa 或 EarlyCompat 构建会错误解码多面/藤蔓方向；
+  调整顺序或增加兼容协商时必须同步两仓库、模板测试、README 和兼容性说明。
 - 涉及 FCA 兼容的 PR 必须记录所使用的 `fca_ref` 或提交，并至少验证回退 Payload 与
   复用 FCA Payload 两条路径。
 
