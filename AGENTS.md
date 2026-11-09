@@ -93,6 +93,17 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   协议为准。缺少能力或握手失败时回退到 FCA 原版 6×9 菜单。
 - 修改 FCA 协议时先更新并验证 FCA 公共 API，再更新 TriWasa 的 `compileOnly` 适配。
   不要用反射桥接掩盖两边 Payload/字段不一致。
+- Easy Place 状态编解码以 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 为稳定
+  facade，由初始化后冻结的 `EasyPlaceCodecRegistry` 选择 behavior-family adapter；
+  通用纯状态操作放入 `EasyPlaceStateSupport`。不要把已删除的
+  `LegacyEasyPlaceStateCodec` 单体分支或每方块第二套状态表重新引回。
+- 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
+  Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
+  `logicTest` 入口，并扩展对应 family suite 与集成矩阵。
+- 多面方块线值顺序必须保持显式 `DOWN, UP, NORTH, SOUTH, WEST, EAST`；藤蔓顺序从
+  同一数组过滤 `DOWN` 派生，不得另手写一份。该顺序属于当前 V2-Extra v1 构建契约：
+  混用使用历史面顺序的 FCA、TriWasa 或 EarlyCompat 构建会错误解码多面/藤蔓方向；
+  调整顺序或增加兼容协商时必须同步两仓库、模板测试、README 和兼容性说明。
 - 涉及 FCA 兼容的 PR 必须记录所使用的 `fca_ref` 或提交，并至少验证回退 Payload 与
   复用 FCA Payload 两条路径。
 
@@ -118,8 +129,10 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   MixinExtras `Operation` 保留原行为，避免无必要 `@Overwrite`。
 - 保持 `defaultRequire: 1`。可选模组 Mixin 应由插件条件控制，不要为绕过失败静默
   降低 required。
-- Litematica 放置入口同时覆盖普通轻松放置和 `litematica-printer`；MasaGadget、
-  EarlyCompat、REI、IPN 或 Quick Shulker 兼容不得改变 TriWasa 的核心容器语义。
+- Litematica 放置入口同时覆盖普通轻松放置和 Hana 的四改打印机
+  （Hana 版 `litematica-printer` 分支）；MasaGadget、EarlyCompat、REI、IPN 或 Quick
+  Shulker 兼容不得改变 TriWasa 的核心容器语义。更好的打印机只适配该 Hana 分支，
+  不为上游原始打印机复用同一套 Mixin。
 - REI/Cloth Config 仅用于可选编译。终端浮空交互区通过 REI exclusion/display bounds
   标注；大末影箱实际容器仍由原版 `AbstractContainerMenu`、`Slot` 和
   `SlotPositionAccessor` 实现。

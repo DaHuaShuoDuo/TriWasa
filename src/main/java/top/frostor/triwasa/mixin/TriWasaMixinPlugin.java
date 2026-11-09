@@ -32,7 +32,7 @@ public final class TriWasaMixinPlugin implements IMixinConfigPlugin
 		{
 			return isMinecraftVersion("26.3");
 		}
-		if(mixinClassName.endsWith(".LitematicaPrinterMixin"))
+		if(mixinClassName.startsWith("top.frostor.triwasa.mixin.betterprinter."))
 		{
 			return FabricLoader.getInstance().isModLoaded("litematica-printer");
 		}

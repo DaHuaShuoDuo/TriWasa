@@ -3,8 +3,8 @@
 [English](https://github.com/DaHuaShuoDuo/TriWasa/blob/main/README_en.md) | 简体中文
 
 TriWasa 是面向 Minecraft Java 版的 Masa 客户端附属模组，当前提供 FCA
-V2-Extra 轻松放置、大末影箱终端、Quick Shulker 手持补货、客户端拾取过滤和
-多项可选客户端兼容修复。
+V2-Extra 轻松放置、更好的轻松放置、更好的打印机、大末影箱终端、Quick Shulker 手持补货、
+客户端拾取过滤和多项可选客户端兼容修复。
 
 > **AI 辅助开发声明：** 部分代码、测试和文档由生成式 AI 辅助编写，并由项目
 > 维护者审阅。功能设计、发布与维护责任由维护者承担。
@@ -31,7 +31,8 @@ V2-Extra 轻松放置、大末影箱终端、Quick Shulker 手持补货、客户
 
 可选依赖：
 
-- Frostor's Carpet Addition：同进程加载时复用公开协议 API；大末影箱终端需要匹配的 FCA `0.2.0-beta.3`
+- Frostor's Carpet Addition：同进程加载时复用公开协议 API；大末影箱终端需要匹配的 FCA `0.2.1-beta.1`
+- Hana 的四改打印机（Hana 版 `litematica-printer` 分支）：启用更好的打印机功能
 - Mod Menu：在模组列表提供 TriWasa 配置按钮
 - Roughly Enough Items：启用 REI 相关界面修复
 - Quick Shulker：启用手持物品自动补货
@@ -51,11 +52,50 @@ V2-Extra 轻松放置、大末影箱终端、Quick Shulker 手持补货、客户
 ### V2-Extra 轻松放置
 
 TriWasa 在 Litematica 的真实放置入口编码 FCA V2-Extra 方块状态，兼容普通
-轻松放置和 `litematica-printer`。支持铁轨形状保留、合成器锁槽和 Litematica
+轻松放置和 Hana 的四改打印机（Hana 版 `litematica-printer` 分支）。支持铁轨形状保留、合成器锁槽和 Litematica
 V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端校验。
 
 配置总开关为 `easyPlaceV2ProtocolExtra`。
 
+客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
+`EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
+和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、multiface、
+quantity、container、sign、redstone 和 special 等适配器，通用纯状态操作集中在
+`EasyPlaceStateSupport`。墙钟、悬挂牌、蜡烛等目标位置或点击面转换继续留在独立规则与
+客户端放置入口中，不写入状态适配器；Mixin 只负责必要的 Litematica 调用链桥接。
+旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
+仍为 1，其余字段布局未改变。多面方块的面索引顺序固定为
+`DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
+`UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
+匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的
+`legacy` 标签中，仅用于历史兼容，不再维护。
+
+### 更好的轻松放置
+
+`betterEasyPlace` 默认开启，是 TriWasa 更好的放置功能总开关，集中管理共享的
+Litematica 放置链修正，不依赖 FCA 协议握手。当前会修正悬挂牌手放时的支撑方块与点击面选择，允许无侧向
+支撑的墙挂悬挂牌以及无下方支撑的蜡烛通过目标位置虚拟点击放置；蜡烛仅绕过放置阶段
+的支撑校验，不影响放置后的 `updateShape` 行为。`attached=true` 的天花板悬挂牌仍要求
+上方为竖向锁链，依赖未满足时不会发送无效放置。Easy Place 交互期间还会抑制墙挂牌的
+原版链式追加，避免重复点击向相邻方向多放。后续新增的通用手放或原版 Mixin
+修正仍放在 `mixin/bettereasyplace` 包并受此开关控制。数量类方块可在首次放置后继续递增到投影数量，支持蜡烛、花床、落叶堆、海泡菜、雪层和海龟蛋，每次交互只增加一级并消耗一个物品。
+发光地衣、幽匿脉络、树脂团等多面方块也会在同一位置逐面递增，直到达到投影中的完整面状态。
+藤蔓同样会按缺失方向在同一位置逐面递增，并继续受有效附着面校验约束。
+
+### 更好的打印机（子选项）
+
+`betterPrinter` 默认开启，是 `betterEasyPlace` 的子选项，集中管理所有直接修改
+打印机的 Guide/Action 层 Mixin，仅在安装 Hana 的四改打印机（Hana 版 `litematica-printer` 分支）且
+父开关开启时生效。当前允许无侧向支撑的墙挂悬挂牌通过打印机
+原有目标位置点击路径放置，并对 `attached=true` 的天花板悬挂牌保留上方竖向锁链
+依赖校验；蜡烛移除 Guide 前置的放置支撑门禁并进入目标位置点击路径，海龟蛋移除
+`TurtleEggGuide` 人为添加的下方支撑要求，与原版放置语义一致。发光地衣、幽匿脉络、
+树脂团等 `MultifaceBlock` 统一复用逐面放置逻辑；藤蔓只尝试当前缺失且有有效附着面的方向，避免对无支撑面反复尝试。花簇、落叶堆、海泡菜、雪层、蜡烛和海龟蛋等数量方块会逐级递增到目标数量，其中落叶堆复用花簇 Guide 并读取 `SegmentableBlock.AMOUNT`。打印机关闭时不会应用这些打印机专属修正。该功能不会改写方块后续的
+`updateShape` 行为；无支撑墙挂牌和蜡烛仍须由服务端接受最终状态，未安装 FCA 的原版服务端
+可能拒绝该放置。共享的客户端放置状态桥接由更好的轻松放置总开关统一启用。
+
+更好的打印机只适配 Hana 的四改打印机（Hana 版 `litematica-printer` 分支），不适配
+上游原始打印机。两者的 Guide、任务调度和放置确认链路不同，不能混用相应 Mixin。
 
 ### 原理图验证器精确选择
 
@@ -111,7 +151,7 @@ Inventory Profiles Next 向大末影箱终端注入整理按钮。IPN 兼容属�
 
 - **全部**：集中显示热键、所有功能配置和修复信息，便于统一搜索。
 - **移植**：V2-Extra 轻松放置和拾取过滤。
-- **辅助工具**：Quick Shulker 和大末影箱终端。
+- **辅助功能**：更好的轻松放置、更好的打印机、Quick Shulker 和大末影箱终端。
 - **其他模组修复**：显示会修改其它模组自身表现的可选修复项。
 
 父项左侧 `[+]` / `[-]` 只控制子项展开，不是功能总开关。配置缺失、搜索过滤和
@@ -122,6 +162,8 @@ Inventory Profiles Next 向大末影箱终端注入整理按钮。IPN 兼容属�
 - TriWasa 只应安装在客户端。
 - TriWasa 与 EarlyCompat 都接管轻松放置流程，不能同时安装。
 - FCA 服务端负责大末影箱、协议和最终放置判定；TriWasa 不保存权威服务端状态。
+- 更好的打印机只支持 Hana 的四改打印机（Hana 版 `litematica-printer` 分支），不支持
+  上游原始 `litematica-printer`。
 - REI、Quick Shulker 和 Inventory Profiles Next 都是可选兼容对象。
 
 ## 构建
@@ -145,6 +187,9 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 [`libs/README.md`](https://github.com/DaHuaShuoDuo/TriWasa/blob/main/libs/README.md)
 准备与 `fca_version` 匹配的 FCA API。共享源码、资源或 Mixin 修改后必须构建
 26.2 和 26.3。
+`logicTest` 会执行以 `EasyPlaceProtocolTest` 为稳定入口的协议与状态测试；该入口
+聚合按 wire、方向、附着、轨道、多面、数量、容器、悬挂牌、特殊方块和 printer/config
+等行为族拆分的测试。
 
 PR 始终运行变更分类和 `CI Gate`；只有构建相关文件变化时才执行双版本完整构建。
 

@@ -1,5 +1,6 @@
 package top.frostor.triwasa.easyplace;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -26,15 +27,20 @@ public final class EasyPlaceClientEncoder
 			return null;
 		}
 
-		int rawValue = EasyPlaceStateCodec.encode(state);
+		Minecraft client = Minecraft.getInstance();
+		BlockPos protocolPos = client.level == null
+				? pos
+				: BellRules.resolveProtocolTarget(client.level, pos, state);
+		BlockState currentState = client.level == null ? null : client.level.getBlockState(protocolPos);
+		int rawValue = EasyPlaceStateCodec.encode(state, currentState, client.level, protocolPos);
 		if(rawValue < 0 || rawValue > 0x7f)
 		{
 			return null;
 		}
 		TriWasa.LOGGER.debug("[EasyPlace] Encoded raw protocol 0x{} at {}", Integer.toHexString(rawValue), pos);
 
-		EasyPlaceCrafterSlotLock.capture(pos, state);
-		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(pos, hitVec, rawValue);
+		EasyPlaceCrafterSlotLock.capture(protocolPos, state);
+		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(protocolPos, hitVec, rawValue);
 		int crafterDisabledMask = EasyPlaceCrafterSlotLock.getPendingMask();
 		if(crafterDisabledMask != 0)
 		{
