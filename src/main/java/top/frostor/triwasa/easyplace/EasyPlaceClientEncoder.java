@@ -66,6 +66,19 @@ public final class EasyPlaceClientEncoder
 					wallNeighborMatchMask
 			);
 		}
+		if(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue())
+		{
+			Level schematicWorld = SchematicWorldHandler.getSchematicWorld();
+			int railNeighborMatchMask = EasyPlaceRailProtection.neighborMatchMask(
+					client.level == null ? null : client.level::getBlockState,
+					schematicWorld == null ? null : schematicWorld::getBlockState,
+					protocolPos
+			);
+			auxiliaryValue = EasyPlaceRailProtection.applyNeighborMatchMask(
+					auxiliaryValue,
+					railNeighborMatchMask
+			);
+		}
 		if(crafterDisabledMask != 0)
 		{
 			auxiliaryValue = (auxiliaryValue & ~EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK)

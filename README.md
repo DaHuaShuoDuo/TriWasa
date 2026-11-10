@@ -56,8 +56,12 @@ TriWasa 在 Litematica 的真实放置入口编码 FCA V2-Extra 方块状态，�
 V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端校验。
 
 配置总开关为 `easyPlaceV2ProtocolExtra`。
-其下与铁轨保护同级提供 `easyPlaceWallBlockNoShapeUpdate`；两个保护开关默认开启，
-分别控制本次轻松放置期间 FCA 对邻近铁轨和墙体的更新抑制。
+其下提供 `easyPlaceRailProtection` 与 `easyPlaceWallBlockNoShapeUpdate`，默认开启。
+铁轨开关请求 FCA 抑制铁轨形状重算与 PP 更新，并保留动力铁轨、激活铁轨和探测铁轨的
+初始 `POWERED` 状态。26.x 中动力铁轨与激活铁轨都使用 `PoweredRailBlock`，探测铁轨
+使用独立的 `DetectorRailBlock`。客户端会把相邻实际铁轨与投影比较，通过 Z 通道
+match mask 只保护铁轨种类与形状一致的邻轨；邻轨红石状态不参与比较，普通铁轨也没有
+红石状态。
 关闭墙体开关后，墙体不再发送 V2-Extra 投影状态或墙保护标志，放置与后续更新回到原版
 语义。
 墙体开关开启时，客户端逐方向比较实际世界与投影中的相邻墙状态，并把匹配位随 Z 通道
@@ -69,10 +73,8 @@ observer 不发送 V2-Extra 状态或保护标志，放置和检测面更新恢�
 `easyPlaceTntProtection` 控制 TNT 保护，默认开启；开启时阻止轻松放置造成的红石点燃，
 关闭时恢复原版 TNT 激活路径。TNT 没有持久激活状态，因此不增加方块状态 adapter。
 该保护请求由所有 `BlockItem` 的公共放置路径发送，包括珊瑚扇等两用放置物品。
-`easyPlaceDetectorRailProtection` 控制投影中已激活探测铁轨的状态同步，默认开启。
-开启时客户端用 raw 通道 bit4 标记 `POWERED=true`，并请求 FCA 抑制该探测铁轨的初次
-位置更新，避免放置后立即退化；关闭时不发送 bit4。该开关与
-`easyPlaceRailBlockNoShapeUpdate` 独立，通用铁轨开关只控制轨道形状更新保护。
+关闭该铁轨开关后，客户端不发送铁轨保护标志、邻轨 match mask，也不发送动力铁轨、
+激活铁轨或探测铁轨的初始激活位；轨道的形状同步与更新行为回到原有未保护路径。
 
 客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
@@ -85,7 +87,8 @@ quantity、container、sign、redstone 和 special 等适配器，通用纯状�
 旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
 仍为 1；辅助 Z 通道低 9 位继续用于 crafter slot mask，bit9/bit10 分别表示
 rail/wall 更新保护请求，bit11-16 标记匹配的相邻墙方向，bit17 表示 observer 保护请求。
-bit18 表示 TNT 保护请求。多面方块的面索引顺序固定为
+bit18 表示 TNT 保护请求，bit19-24 标记匹配的相邻铁轨方向，bit25 表示目标位置铁轨
+红石状态保护请求。多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
 匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的

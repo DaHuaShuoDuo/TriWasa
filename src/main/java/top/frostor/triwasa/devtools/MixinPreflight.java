@@ -12,6 +12,7 @@ public final class MixinPreflight
 			"net.minecraft.world.level.block.DetectorRailBlock",
 			"net.minecraft.world.level.block.FenceGateBlock",
 			"net.minecraft.world.level.block.ObserverBlock",
+			"net.minecraft.world.level.block.PoweredRailBlock",
 			"net.minecraft.world.level.block.TntBlock",
 			"net.minecraft.world.level.block.WallBlock",
 			"net.minecraft.world.level.block.WallHangingSignBlock",

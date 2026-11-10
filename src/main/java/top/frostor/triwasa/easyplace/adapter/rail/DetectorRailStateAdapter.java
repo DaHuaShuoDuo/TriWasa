@@ -21,12 +21,12 @@ public final class DetectorRailStateAdapter implements EasyPlaceStateEncoder, Ea
 	public int encode(EasyPlaceCodecContext context)
 	{
 		int value = context.state().getValue(DetectorRailBlock.SHAPE).ordinal() & 0x7;
-		if(TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION.getBooleanValue()
+		if(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue()
 				&& context.state().getValue(DetectorRailBlock.POWERED))
 		{
-			value |= EasyPlaceExtraProtocol.DETECTOR_RAIL_POWERED_MASK;
+			value |= EasyPlaceExtraProtocol.RAIL_POWERED_MASK;
 		}
-		if(TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
+		if(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue())
 		{
 			value |= 0x8;
 		}
@@ -47,7 +47,7 @@ public final class DetectorRailStateAdapter implements EasyPlaceStateEncoder, Ea
 		}
 		return state.setValue(
 				DetectorRailBlock.POWERED,
-				(context.rawValue() & EasyPlaceExtraProtocol.DETECTOR_RAIL_POWERED_MASK) != 0
+				(context.rawValue() & EasyPlaceExtraProtocol.RAIL_POWERED_MASK) != 0
 		);
 	}
 }

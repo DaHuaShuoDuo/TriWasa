@@ -11,7 +11,7 @@ public final class EasyPlaceUpdateFlags
 	public static int current()
 	{
 		return encode(
-				TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue(),
+				TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue(),
 				TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue(),
 				TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue(),
 				TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue()
@@ -25,7 +25,10 @@ public final class EasyPlaceUpdateFlags
 			boolean preserveTnt
 	)
 	{
-		return (preserveRail ? EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION : 0)
+		return (preserveRail
+						? EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
+						| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION
+						: 0)
 				| (preserveWall ? EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION : 0)
 				| (preserveObserver ? EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION : 0)
 				| (preserveTnt ? EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION : 0);

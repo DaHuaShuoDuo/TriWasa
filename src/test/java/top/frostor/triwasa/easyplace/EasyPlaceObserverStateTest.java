@@ -71,7 +71,7 @@ public final class EasyPlaceObserverStateTest extends EasyPlaceTestSupport
 	private void checkDisabledToggleUsesVanillaPath()
 	{
 		boolean previous = TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue();
-		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
+		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue();
 		boolean wall = TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
 		try
 		{

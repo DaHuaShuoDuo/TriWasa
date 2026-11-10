@@ -53,17 +53,14 @@ public final class TriWasaConfigs implements IConfigHandler
 			new ConfigBoolean("easyPlaceV2ProtocolExtra", true).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_EXPANDED =
 			new ConfigBoolean("easyPlaceExpanded", false).apply(PORTING_TRANSLATION_PREFIX);
-	public static final ConfigBoolean EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE =
-			new ConfigBoolean("easyPlaceRailBlockNoShapeUpdate", true).apply(PORTING_TRANSLATION_PREFIX);
+	public static final ConfigBoolean EASY_PLACE_RAIL_PROTECTION =
+			new ConfigBoolean("easyPlaceRailProtection", true).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE =
 			new ConfigBoolean("easyPlaceWallBlockNoShapeUpdate", true).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_OBSERVER_PROTECTION =
 			new ConfigBoolean("easyPlaceObserverProtection", true).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_TNT_PROTECTION =
 			new ConfigBoolean("easyPlaceTntProtection", true).apply(PORTING_TRANSLATION_PREFIX);
-	public static final ConfigBoolean EASY_PLACE_DETECTOR_RAIL_PROTECTION =
-			new ConfigBoolean("easyPlaceDetectorRailProtection", true)
-					.apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_CRAFTER_LOCK_SLOT =
 			new ConfigBoolean("easyPlaceCrafterLockSlot", true).apply(PORTING_TRANSLATION_PREFIX);
 
@@ -141,19 +138,17 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ImmutableList<IConfigBase> EASY_PLACE_OPTIONS = ImmutableList.of(
 			EASY_PLACE_V2_PROTOCOL_EXTRA,
 			EASY_PLACE_EXPANDED,
-			EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE,
+			EASY_PLACE_RAIL_PROTECTION,
 			EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE,
 			EASY_PLACE_OBSERVER_PROTECTION,
 			EASY_PLACE_TNT_PROTECTION,
-			EASY_PLACE_DETECTOR_RAIL_PROTECTION,
 			EASY_PLACE_CRAFTER_LOCK_SLOT
 	);
 	public static final ImmutableList<IConfigBase> EASY_PLACE_CHILDREN = ImmutableList.of(
-			EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE,
+			EASY_PLACE_RAIL_PROTECTION,
 			EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE,
 			EASY_PLACE_OBSERVER_PROTECTION,
 			EASY_PLACE_TNT_PROTECTION,
-			EASY_PLACE_DETECTOR_RAIL_PROTECTION,
 			EASY_PLACE_CRAFTER_LOCK_SLOT
 	);
 	public static final ImmutableList<IConfigBase> BETTER_EASY_PLACE_OPTIONS = ImmutableList.of(

@@ -25,6 +25,7 @@ public final class EasyPlaceProtocolTest
 				+ EasyPlaceMushroomStateTest.run()
 				+ EasyPlaceAttachmentStateTest.run()
 				+ EasyPlaceRailStateTest.run()
+				+ EasyPlaceRailProtectionTest.run()
 				+ EasyPlaceWallStateTest.run()
 				+ EasyPlaceWallProtectionTest.run()
 				+ EasyPlaceObserverStateTest.run()

@@ -36,11 +36,10 @@ public final class TriWasaConfigMetadataTest
 				TriWasaConfigs.EASY_PLACE_CHILDREN
 		);
 		check(
-				TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue()
+				TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue()
 						&& TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue()
 						&& TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue()
-						&& TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue()
-						&& TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION.getBooleanValue(),
+						&& TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue(),
 				"easy-place protection child switches must default to enabled"
 		);
 		check(
@@ -59,10 +58,9 @@ public final class TriWasaConfigMetadataTest
 				"TNT protection must be an Easy Place child"
 		);
 		check(
-				TriWasaConfigs.getParentConfig(
-						TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION
-				) == TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
-				"detector rail protection must be an Easy Place child"
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION)
+						== TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
+				"rail protection must be an Easy Place child"
 		);
 		check(
 				TriWasaConfigOptionWidget.getTooltipWrapWidth(100) == 80

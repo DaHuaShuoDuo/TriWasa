@@ -21,6 +21,7 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 		check(
 				EasyPlaceUpdateFlags.encode(true, true, true, true)
 						== (EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
+						| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION
 						| EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION
 						| EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION
 						| EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION),
@@ -28,7 +29,8 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 		);
 		check(
 				EasyPlaceUpdateFlags.encode(true, false, false, false)
-						== EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION,
+						== (EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
+						| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION),
 				"rail protection must encode independently"
 		);
 		check(
@@ -54,13 +56,13 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 
 	private void checkConfigSelection()
 	{
-		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
+		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue();
 		boolean wall = TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
 		boolean observer = TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue();
 		boolean tnt = TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue();
 		try
 		{
-			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
+			TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.setBooleanValue(false);
 			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
 			TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.setBooleanValue(false);
 			TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.setBooleanValue(false);
@@ -86,20 +88,18 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 							== EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION,
 					"TNT config must control only the TNT flag"
 			);
-
-			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(true);
-			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
-			TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.setBooleanValue(false);
 			TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.setBooleanValue(false);
+			TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.setBooleanValue(true);
 			check(
 					EasyPlaceUpdateFlags.current()
-							== EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION,
+							== (EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
+							| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION),
 					"rail config must control only the rail flag"
 			);
 		}
 		finally
 		{
-			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(rail);
+			TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.setBooleanValue(rail);
 			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(wall);
 			TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.setBooleanValue(observer);
 			TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.setBooleanValue(tnt);

@@ -103,10 +103,15 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   辅助值的 bit0；编码结果通过 `EasyPlaceEncodedState(rawValue, auxiliaryValue)` 携带。
   `WATERLOGGED` 不得进入编码。无辅助状态的 adapter 默认返回 `auxiliaryValue=0`，
   且 Z 通道仍须保持合成器锁槽行为不变。
-- Z 通道 bit9 和 bit10 分别表示 `easyPlaceRailBlockNoShapeUpdate` 与
+- Z 通道 bit9 和 bit10 分别表示 `easyPlaceRailProtection` 与
   `easyPlaceWallBlockNoShapeUpdate` 请求的邻域更新保护；低 9 位继续属于 crafter
   slot mask。两个子开关与 `easyPlaceV2ProtocolExtra` 父子关系同级、默认开启，并在每次
   V2-Extra 编码时写入标志，不能只在放置 wall/rail 本身时写入。
+- Z 通道 bit19-24 按 `Direction.ordinal()` 标记五个铁轨保护方向（水平四向和上方）
+  中实际状态与投影一致的邻轨。比较必须忽略 `WATERLOGGED`；所有带 `POWERED` 的
+  铁轨都不将该状态用于邻轨保护比较。目标位置的铁轨红石状态通过 raw bit4 + Z 通道
+  bit25 保护，不能参与邻轨 match mask。形状等其他状态不一致方向的 bit 不得发送，
+  使该铁轨继续接受原版更新。
 - Z 通道 bit11-16 按 `Direction.ordinal()` 标记六个相邻位置中哪些墙的实际状态与
   Litematica 投影状态一致。比较必须忽略 `WATERLOGGED`，其余方块种类、四侧连接和
   `UP` 必须完全一致；不一致方向的 bit 不得发送，使该墙在服务端继续接受原版邻居更新。
@@ -122,11 +127,13 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 - `easyPlaceTntProtection` 与 rail/wall/observer 开关同级、默认开启，并通过 Z 通道
   bit18 请求 FCA 保护 TNT。关闭时不得发送 bit18；客户端不增加 TNT 状态 adapter，
   因为 TNT 没有可恢复的激活方块状态。
-- `easyPlaceDetectorRailProtection` 与 rail/wall/observer/TNT 开关同级、默认开启，
-  通过探测铁轨 raw 通道 bit4 编码投影中的 `POWERED=true`。该开关必须独立于
-  `easyPlaceRailBlockNoShapeUpdate`：通用铁轨开关关闭时 bit4 仍须正常发送，探测铁轨
-  开关关闭时不得发送 bit4。FCA 只按 bit4 request 仅覆盖实际放置位置的
-  `DETECTOR_RAIL` guard，并在 `DetectorRailBlock.onPlace` 初次更新时保留激活状态。
+- `easyPlaceRailProtection` 与 wall/observer/TNT 开关同级、默认开启，统一控制铁轨
+  形状/PP 更新保护、bit9 请求、bit19-24 match mask、bit25 状态保护请求和 raw bit4
+  的 `POWERED` 值。关闭时这些标志和状态位都不得发送。FCA 的 `RAIL` family 负责形状与
+  邻域，`RAIL_STATE` family 只覆盖实际放置位置并保护动力、激活和探测等带红石状态
+  铁轨。26.x 中动力铁轨与激活铁轨都是 `PoweredRailBlock` 的不同方块实例，探测铁轨
+  使用独立 `DetectorRailBlock`；没有独立 `ActivatorRailBlock`。普通铁轨没有红石状态。
+  不要引入形状/状态两个配置开关，也不要新增旧开关别名或迁移分支。
 - TNT 保护的客户端请求必须位于所有 `BlockItem` 共用的 `place` 路径，并在
   `getPlacementState` 调用前发送；不得依赖目标方块 adapter，否则珊瑚扇等
   `StandingAndWallBlockItem` 会漏掉保护。

@@ -6,6 +6,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.easyplace.EasyPlaceExtraProtocol;
 import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
@@ -28,15 +29,20 @@ public final class RailStateAdapter implements EasyPlaceStateEncoder, EasyPlaceS
 		if(context.block() instanceof PoweredRailBlock)
 		{
 			int value = context.state().getValue(PoweredRailBlock.SHAPE).ordinal() & 0x7;
-			if(TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
+			if(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue())
 			{
 				value |= 0x8;
+			}
+			if(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue()
+					&& context.state().getValue(PoweredRailBlock.POWERED))
+			{
+				value |= EasyPlaceExtraProtocol.RAIL_POWERED_MASK;
 			}
 			return value;
 		}
 
 		int value = context.state().getValue(RailBlock.SHAPE).ordinal() & 0xf;
-		if(TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
+		if(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue())
 		{
 			value |= 0x10;
 		}
@@ -47,11 +53,21 @@ public final class RailStateAdapter implements EasyPlaceStateEncoder, EasyPlaceS
 	public BlockState decode(EasyPlaceCodecContext context)
 	{
 		int mask = context.block() instanceof PoweredRailBlock ? 0x7 : 0xf;
-		return EasyPlaceStateSupport.replaceSlot(
+		BlockState state = EasyPlaceStateSupport.replaceSlot(
 				context.state(),
 				railShapeProperty(context.state()),
 				railShape(context.state(), context.rawValue() & mask)
 		);
+		if(state != null
+				&& state.getBlock() instanceof PoweredRailBlock
+				&& TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue())
+		{
+			state = state.setValue(
+					PoweredRailBlock.POWERED,
+					(context.rawValue() & EasyPlaceExtraProtocol.RAIL_POWERED_MASK) != 0
+			);
+		}
+		return state;
 	}
 
 	private static Property<RailShape> railShapeProperty(BlockState state)

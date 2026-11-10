@@ -174,7 +174,7 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 	private void checkDisabledToggleUsesVanillaPath()
 	{
 		boolean previousWall = TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
-		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
+		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue();
 		try
 		{
 			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);

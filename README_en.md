@@ -65,10 +65,15 @@ handling. FCA remains authoritative for final block state and placement
 validation.
 
 The master switch is `easyPlaceV2ProtocolExtra`.
-Its rail and wall protection children,
-`easyPlaceRailBlockNoShapeUpdate` and `easyPlaceWallBlockNoShapeUpdate`, both
-default to enabled and independently control FCA's nearby rail and wall update
-suppression during each easy-place operation.
+Its rail and wall protection children, `easyPlaceRailProtection` and
+`easyPlaceWallBlockNoShapeUpdate`, both default to enabled. The rail switch
+suppresses rail shape recalculation and PP updates and preserves the initial
+`POWERED` state of powered, activator, and detector rails. In 26.x, powered and
+activator rails both use `PoweredRailBlock`, while detector rails use the
+separate `DetectorRailBlock`. The client compares adjacent actual rails with
+the projection and sends a match mask through the Z channel, so only rail type
+and shape matches are protected. Neighbor redstone state is not compared, and
+ordinary rails have no redstone state.
 Disabling the wall switch omits wall V2-Extra state and wall-protection flags,
 returning wall placement and subsequent updates to vanilla behavior.
 While enabled, the client compares each adjacent wall in the actual world with
@@ -85,11 +90,9 @@ easy-place redstone priming of TNT while enabled. TNT has no persistent active
 block state, so no TNT state adapter is added.
 The request is emitted from the common `BlockItem` placement path for all block
 items, including standing/wall coral-fan items.
-The `easyPlaceDetectorRailProtection` switch defaults to enabled and preserves
-projected powered detector rails. The client marks `POWERED=true` with raw bit 4
-and asks FCA to suppress the detector rail's initial placement update; disabling
-the switch omits bit 4. It is independent of
-`easyPlaceRailBlockNoShapeUpdate`, which only controls rail shape protection.
+Disabling the rail switch omits the rail protection flag and match mask, as
+well as the initial active-state bit for powered, activator, and detector
+rails, returning rail synchronization and updates to the unprotected path.
 
 Client-side state encoding and decoding uses explicit behavior-family registries
 that freeze after initialization. The stable
@@ -108,8 +111,9 @@ placement state. The old monolithic
 marker and protocol version remain 1. In the auxiliary Z channel, the low nine
 bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
 update protection, bits 11-16 mark matching wall neighbors, and bit 17 requests
-observer protection. Bit 18 requests TNT protection. Multiface wire indices use
-the fixed order
+observer protection. Bit 18 requests TNT protection, bits 19-24 mark matching
+rail neighbors, and bit 25 requests target-position rail redstone-state
+protection. Multiface wire indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical
 face order must be upgraded to a matching release, because mixed versions can
