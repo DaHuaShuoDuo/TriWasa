@@ -76,24 +76,70 @@ public final class EasyPlaceRailStateTest extends EasyPlaceTestSupport
 
 	private void checkDetectorRailState()
 	{
+		boolean previousDetector = TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION
+				.getBooleanValue();
+		boolean previousRail = TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE
+				.getBooleanValue();
 		BlockState state = Blocks.DETECTOR_RAIL.defaultBlockState();
-		int encoded = EasyPlaceStateCodec.encode(state, Blocks.AIR.defaultBlockState());
-		check(encoded >= 0, Blocks.DETECTOR_RAIL + " must be owned by a client state adapter");
-		check(
-				EasyPlaceStateCodec.apply(Blocks.DETECTOR_RAIL, state, null, encoded) != null,
-				Blocks.DETECTOR_RAIL + " must decode through its client state adapter"
-		);
+		try
+		{
+			TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION.setBooleanValue(true);
+			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
+			int encoded = EasyPlaceStateCodec.encode(state, Blocks.AIR.defaultBlockState());
+			check(encoded >= 0, Blocks.DETECTOR_RAIL + " must be owned by a client state adapter");
+			check(
+					EasyPlaceStateCodec.apply(Blocks.DETECTOR_RAIL, state, null, encoded) != null,
+					Blocks.DETECTOR_RAIL + " must decode through its client state adapter"
+			);
 
-		BlockState detectorRail = Blocks.DETECTOR_RAIL.defaultBlockState()
-				.setValue(DetectorRailBlock.SHAPE, RailShape.NORTH_SOUTH);
-		check(
-				EasyPlaceStateCodec.apply(
-						Blocks.DETECTOR_RAIL,
-						Blocks.DETECTOR_RAIL.defaultBlockState(),
-						null,
-						EasyPlaceStateCodec.encode(detectorRail, Blocks.AIR.defaultBlockState())
-				).getValue(DetectorRailBlock.SHAPE) == RailShape.NORTH_SOUTH,
-				"detector rails must round trip shape"
-		);
+			BlockState poweredDetectorRail = state
+					.setValue(DetectorRailBlock.SHAPE, RailShape.NORTH_SOUTH)
+					.setValue(DetectorRailBlock.POWERED, true);
+			int poweredValue = EasyPlaceStateCodec.encode(
+					poweredDetectorRail,
+					Blocks.AIR.defaultBlockState()
+			);
+			check(
+					(poweredValue & EasyPlaceExtraProtocol.DETECTOR_RAIL_POWERED_MASK) != 0,
+					"powered detector rails must encode the powered bit independently of rails"
+			);
+			check(
+					(poweredValue & 0x8) == 0,
+					"disabling the generic rail switch must omit the rail shape-update bit"
+			);
+			BlockState restoredPowered = EasyPlaceStateCodec.apply(
+					Blocks.DETECTOR_RAIL,
+					Blocks.DETECTOR_RAIL.defaultBlockState(),
+					null,
+					poweredValue
+			);
+			check(
+					restoredPowered != null
+							&& restoredPowered.getValue(DetectorRailBlock.POWERED)
+							&& restoredPowered.getValue(DetectorRailBlock.SHAPE)
+							== RailShape.NORTH_SOUTH,
+					"powered detector rail shape and state must round trip"
+			);
+
+			TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION.setBooleanValue(false);
+			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(true);
+			int disabledValue = EasyPlaceStateCodec.encode(
+					poweredDetectorRail,
+					Blocks.AIR.defaultBlockState()
+			);
+			check(
+					(disabledValue & EasyPlaceExtraProtocol.DETECTOR_RAIL_POWERED_MASK) == 0,
+					"disabling detector rail protection must omit the powered bit"
+			);
+			check(
+					(disabledValue & 0x8) != 0,
+					"the generic rail switch must remain independent of detector rail protection"
+			);
+		}
+		finally
+		{
+			TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION.setBooleanValue(previousDetector);
+			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(previousRail);
+		}
 	}
 }

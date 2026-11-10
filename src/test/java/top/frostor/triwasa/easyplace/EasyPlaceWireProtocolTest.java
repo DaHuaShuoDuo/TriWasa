@@ -67,6 +67,14 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				) == observerAuxiliary,
 				"observer protection flag must survive the Z channel"
 		);
+		int tntAuxiliary = EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION;
+		test.check(
+				EasyPlaceExtraProtocol.decodeZ(
+						EasyPlaceExtraProtocol.encodeZ(pos, encoded, tntAuxiliary),
+						pos
+				) == tntAuxiliary,
+				"TNT protection flag must survive the Z channel"
+		);
 		CompoundTag legacyCapability = new CompoundTag();
 		test.check(
 				EasyPlaceClientNetwork.acceptsCapability(legacyCapability),

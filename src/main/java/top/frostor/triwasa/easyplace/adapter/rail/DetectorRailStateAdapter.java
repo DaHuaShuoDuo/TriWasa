@@ -4,6 +4,7 @@ import net.minecraft.world.level.block.DetectorRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.easyplace.EasyPlaceExtraProtocol;
 import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
@@ -20,6 +21,11 @@ public final class DetectorRailStateAdapter implements EasyPlaceStateEncoder, Ea
 	public int encode(EasyPlaceCodecContext context)
 	{
 		int value = context.state().getValue(DetectorRailBlock.SHAPE).ordinal() & 0x7;
+		if(TriWasaConfigs.EASY_PLACE_DETECTOR_RAIL_PROTECTION.getBooleanValue()
+				&& context.state().getValue(DetectorRailBlock.POWERED))
+		{
+			value |= EasyPlaceExtraProtocol.DETECTOR_RAIL_POWERED_MASK;
+		}
 		if(TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
 		{
 			value |= 0x8;
@@ -30,10 +36,18 @@ public final class DetectorRailStateAdapter implements EasyPlaceStateEncoder, Ea
 	@Override
 	public BlockState decode(EasyPlaceCodecContext context)
 	{
-		return EasyPlaceStateSupport.replaceSlot(
+		BlockState state = EasyPlaceStateSupport.replaceSlot(
 				context.state(),
 				DetectorRailBlock.SHAPE,
 				RailShape.values()[(context.rawValue() & 0x7) % 6]
+		);
+		if(state == null)
+		{
+			return null;
+		}
+		return state.setValue(
+				DetectorRailBlock.POWERED,
+				(context.rawValue() & EasyPlaceExtraProtocol.DETECTOR_RAIL_POWERED_MASK) != 0
 		);
 	}
 }

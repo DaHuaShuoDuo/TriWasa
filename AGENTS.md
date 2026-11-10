@@ -117,6 +117,17 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 - `easyPlaceObserverProtection` 与 rail/wall 开关同级、默认开启。关闭时
   `ObserverStateAdapter.encode(...)` 必须返回 `-1`，且 `EasyPlaceUpdateFlags` 不得发送
   Z 通道 bit17，使 observer 放置和检测面更新完全回到原版语义。
+- `easyPlaceTntProtection` 与 rail/wall/observer 开关同级、默认开启，并通过 Z 通道
+  bit18 请求 FCA 保护 TNT。关闭时不得发送 bit18；客户端不增加 TNT 状态 adapter，
+  因为 TNT 没有可恢复的激活方块状态。
+- `easyPlaceDetectorRailProtection` 与 rail/wall/observer/TNT 开关同级、默认开启，
+  通过探测铁轨 raw 通道 bit4 编码投影中的 `POWERED=true`。该开关必须独立于
+  `easyPlaceRailBlockNoShapeUpdate`：通用铁轨开关关闭时 bit4 仍须正常发送，探测铁轨
+  开关关闭时不得发送 bit4。FCA 只按 bit4 request 仅覆盖实际放置位置的
+  `DETECTOR_RAIL` guard，并在 `DetectorRailBlock.onPlace` 初次更新时保留激活状态。
+- TNT 保护的客户端请求必须位于所有 `BlockItem` 共用的 `place` 路径，并在
+  `getPlacementState` 调用前发送；不得依赖目标方块 adapter，否则珊瑚扇等
+  `StandingAndWallBlockItem` 会漏掉保护。
 - 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
   Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
   `logicTest` 入口，并扩展对应 family suite 与集成矩阵。

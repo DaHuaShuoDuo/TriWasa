@@ -19,29 +19,35 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 	private void checkEncoding()
 	{
 		check(
-				EasyPlaceUpdateFlags.encode(true, true, true)
+				EasyPlaceUpdateFlags.encode(true, true, true, true)
 						== (EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
 						| EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION
-						| EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION),
+						| EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION
+						| EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION),
 				"all update-protection flags must encode together"
 		);
 		check(
-				EasyPlaceUpdateFlags.encode(true, false, false)
+				EasyPlaceUpdateFlags.encode(true, false, false, false)
 						== EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION,
 				"rail protection must encode independently"
 		);
 		check(
-				EasyPlaceUpdateFlags.encode(false, true, false)
+				EasyPlaceUpdateFlags.encode(false, true, false, false)
 						== EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION,
 				"wall protection must encode independently"
 		);
 		check(
-				EasyPlaceUpdateFlags.encode(false, false, true)
+				EasyPlaceUpdateFlags.encode(false, false, true, false)
 						== EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION,
 				"observer protection must encode independently"
 		);
 		check(
-				EasyPlaceUpdateFlags.encode(false, false, false) == 0,
+				EasyPlaceUpdateFlags.encode(false, false, false, true)
+						== EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION,
+				"TNT protection must encode independently"
+		);
+		check(
+				EasyPlaceUpdateFlags.encode(false, false, false, false) == 0,
 				"disabled update protection must encode no flags"
 		);
 	}
@@ -51,11 +57,13 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 		boolean rail = TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
 		boolean wall = TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue();
 		boolean observer = TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue();
+		boolean tnt = TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue();
 		try
 		{
 			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
 			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
 			TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.setBooleanValue(false);
+			TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.setBooleanValue(false);
 			check(EasyPlaceUpdateFlags.current() == 0, "config selection must disable all flags");
 
 			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(true);
@@ -71,10 +79,18 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 							== EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION,
 					"observer config must control only the observer flag"
 			);
+			TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.setBooleanValue(false);
+			TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.setBooleanValue(true);
+			check(
+					EasyPlaceUpdateFlags.current()
+							== EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION,
+					"TNT config must control only the TNT flag"
+			);
 
 			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(true);
 			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(false);
 			TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.setBooleanValue(false);
+			TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.setBooleanValue(false);
 			check(
 					EasyPlaceUpdateFlags.current()
 							== EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION,
@@ -86,6 +102,7 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 			TriWasaConfigs.EASY_PLACE_RAIL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(rail);
 			TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.setBooleanValue(wall);
 			TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.setBooleanValue(observer);
+			TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.setBooleanValue(tnt);
 		}
 	}
 }

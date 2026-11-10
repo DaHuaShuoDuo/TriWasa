@@ -66,6 +66,13 @@ Observer 通过独立 family 只同步 `FACING`，投影中的 `POWERED` 不会�
 observer 时始终从未激活状态开始。
 该行为由与铁轨/墙体保护同级的 `easyPlaceObserverProtection` 控制，默认开启；关闭后
 observer 不发送 V2-Extra 状态或保护标志，放置和检测面更新恢复原版。
+`easyPlaceTntProtection` 控制 TNT 保护，默认开启；开启时阻止轻松放置造成的红石点燃，
+关闭时恢复原版 TNT 激活路径。TNT 没有持久激活状态，因此不增加方块状态 adapter。
+该保护请求由所有 `BlockItem` 的公共放置路径发送，包括珊瑚扇等两用放置物品。
+`easyPlaceDetectorRailProtection` 控制投影中已激活探测铁轨的状态同步，默认开启。
+开启时客户端用 raw 通道 bit4 标记 `POWERED=true`，并请求 FCA 抑制该探测铁轨的初次
+位置更新，避免放置后立即退化；关闭时不发送 bit4。该开关与
+`easyPlaceRailBlockNoShapeUpdate` 独立，通用铁轨开关只控制轨道形状更新保护。
 
 客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
@@ -78,7 +85,7 @@ quantity、container、sign、redstone 和 special 等适配器，通用纯状�
 旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
 仍为 1；辅助 Z 通道低 9 位继续用于 crafter slot mask，bit9/bit10 分别表示
 rail/wall 更新保护请求，bit11-16 标记匹配的相邻墙方向，bit17 表示 observer 保护请求。
-多面方块的面索引顺序固定为
+bit18 表示 TNT 保护请求。多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
 匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的

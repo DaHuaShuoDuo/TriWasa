@@ -80,6 +80,16 @@ Observers use a dedicated family that synchronizes only `FACING`; projected
 The peer `easyPlaceObserverProtection` switch defaults to enabled; disabling it
 omits observer V2-Extra state and protection flags, restoring vanilla placement
 and detection-face updates.
+The peer `easyPlaceTntProtection` switch defaults to enabled and prevents
+easy-place redstone priming of TNT while enabled. TNT has no persistent active
+block state, so no TNT state adapter is added.
+The request is emitted from the common `BlockItem` placement path for all block
+items, including standing/wall coral-fan items.
+The `easyPlaceDetectorRailProtection` switch defaults to enabled and preserves
+projected powered detector rails. The client marks `POWERED=true` with raw bit 4
+and asks FCA to suppress the detector rail's initial placement update; disabling
+the switch omits bit 4. It is independent of
+`easyPlaceRailBlockNoShapeUpdate`, which only controls rail shape protection.
 
 Client-side state encoding and decoding uses explicit behavior-family registries
 that freeze after initialization. The stable
@@ -98,7 +108,8 @@ placement state. The old monolithic
 marker and protocol version remain 1. In the auxiliary Z channel, the low nine
 bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
 update protection, bits 11-16 mark matching wall neighbors, and bit 17 requests
-observer protection. Multiface wire indices use the fixed order
+observer protection. Bit 18 requests TNT protection. Multiface wire indices use
+the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical
 face order must be upgraded to a matching release, because mixed versions can

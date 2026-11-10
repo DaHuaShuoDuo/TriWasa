@@ -15,6 +15,8 @@ public final class EasyPlaceExtraProtocol
 	public static final int WALL_NEIGHBOR_MATCH_BASE = 1 << 11;
 	public static final int WALL_NEIGHBOR_MATCH_MASK = 0x3f << 11;
 	public static final int OBSERVER_UPDATE_SUPPRESSION = 1 << 17;
+	public static final int TNT_UPDATE_SUPPRESSION = 1 << 18;
+	public static final int DETECTOR_RAIL_POWERED_MASK = 1 << 4;
 
 	private EasyPlaceExtraProtocol()
 	{

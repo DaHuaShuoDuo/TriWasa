@@ -193,7 +193,8 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 					EasyPlaceUpdateFlags.current() == EasyPlaceUpdateFlags.encode(
 							rail,
 							false,
-							TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue()
+							TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue(),
+							TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue()
 					),
 					"disabling wall protection must remove only the wall suppression flag"
 			);

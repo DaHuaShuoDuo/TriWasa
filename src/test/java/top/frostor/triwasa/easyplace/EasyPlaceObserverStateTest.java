@@ -84,7 +84,12 @@ public final class EasyPlaceObserverStateTest extends EasyPlaceTestSupport
 					"disabling observer protection must disable projected observer encoding"
 			);
 			check(
-					EasyPlaceUpdateFlags.current() == EasyPlaceUpdateFlags.encode(rail, wall, false),
+					EasyPlaceUpdateFlags.current() == EasyPlaceUpdateFlags.encode(
+							rail,
+							wall,
+							false,
+							TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue()
+					),
 					"disabling observer protection must remove only the observer flag"
 			);
 		}
