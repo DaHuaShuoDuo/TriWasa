@@ -157,10 +157,7 @@ public final class EasyPlaceClientNetwork
 
 	static boolean acceptsCapability(CompoundTag data)
 	{
-		if(!data.contains(NBT_PROTOCOL_VERSION))
-		{
-			return true;
-		}
-		return data.getBooleanOr(CAPABILITY_EASY_PLACE_V2_EXTRA, false);
+		return data.getIntOr(NBT_PROTOCOL_VERSION, -1) == PROTOCOL_VERSION
+				&& data.getBooleanOr(CAPABILITY_EASY_PLACE_V2_EXTRA, false);
 	}
 }

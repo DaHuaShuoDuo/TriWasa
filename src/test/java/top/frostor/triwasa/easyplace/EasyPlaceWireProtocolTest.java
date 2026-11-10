@@ -75,10 +75,10 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				) == tntAuxiliary,
 				"TNT protection flag must survive the Z channel"
 		);
-		CompoundTag legacyCapability = new CompoundTag();
+		CompoundTag missingCapability = new CompoundTag();
 		test.check(
-				EasyPlaceClientNetwork.acceptsCapability(legacyCapability),
-				"legacy acknowledgements without capability fields must remain accepted"
+				!EasyPlaceClientNetwork.acceptsCapability(missingCapability),
+				"acknowledgements without the current protocol fields must be rejected"
 		);
 		CompoundTag currentCapability = new CompoundTag();
 		currentCapability.putInt("protocol_version", 1);
@@ -91,6 +91,12 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 		test.check(
 				!EasyPlaceClientNetwork.acceptsCapability(currentCapability),
 				"an explicit capability rejection must be honored"
+		);
+		currentCapability.putInt("protocol_version", 0);
+		currentCapability.putBoolean("easy_place_v2_extra", true);
+		test.check(
+				!EasyPlaceClientNetwork.acceptsCapability(currentCapability),
+				"an unsupported protocol version must be rejected"
 		);
 
 		for(int mask = 0; mask <= 0x1ff; mask++)

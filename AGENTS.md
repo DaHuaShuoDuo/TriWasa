@@ -87,6 +87,8 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 - 连接专用服务器且客户端未安装 FCA 时，保留 TriWasa 的线兼容 Payload 回退。
 - 单人游戏或集成服务器同时加载 FCA 时，必须复用 FCA 提供的 Payload、Codec 和相关
   类型，不得在同一频道注册两个不同的 Payload 类。
+- Easy Place ACK 必须包含当前 `protocol_version` 和显式能力字段；缺少字段或版本不匹配
+  时不得按旧协议降级为启用。
 - 对 FCA 类型的引用必须隔离在独立兼容适配器中，并通过模组加载检测保护；未安装 FCA
   时不得触发可选类加载错误。
 - 终端的 HELLO、能力、协议版本、快照 CRC、revision 连续性和重同步规则以 FCA 当前
