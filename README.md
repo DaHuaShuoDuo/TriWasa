@@ -60,10 +60,16 @@ V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端
 分别控制本次轻松放置期间 FCA 对邻近铁轨和墙体的更新抑制。
 关闭墙体开关后，墙体不再发送 V2-Extra 投影状态或墙保护标志，放置与后续更新回到原版
 语义。
+墙体开关开启时，客户端逐方向比较实际世界与投影中的相邻墙状态，并把匹配位随 Z 通道
+发送；比较忽略 `WATERLOGGED`，其他状态不符的墙不会获得邻居冻结保护。
+Observer 通过独立 family 只同步 `FACING`，投影中的 `POWERED` 不会发送；服务端放置
+observer 时始终从未激活状态开始。
+该行为由与铁轨/墙体保护同级的 `easyPlaceObserverProtection` 控制，默认开启；关闭后
+observer 不发送 V2-Extra 状态或保护标志，放置和检测面更新恢复原版。
 
 客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
-和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、wall、multiface、
+和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、wall、observer、multiface、
 quantity、container、sign、redstone 和 special 等适配器，通用纯状态操作集中在
 `EasyPlaceStateSupport`。墙钟、悬挂牌、蜡烛等目标位置或点击面转换继续留在独立规则与
 客户端放置入口中，不写入状态适配器；Mixin 只负责必要的 Litematica 调用链桥接。
@@ -71,7 +77,8 @@ quantity、container、sign、redstone 和 special 等适配器，通用纯状�
 `WATERLOGGED` 不写入编码，仍由 FCA 服务端放置状态决定。
 旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
 仍为 1；辅助 Z 通道低 9 位继续用于 crafter slot mask，bit9/bit10 分别表示
-rail/wall 更新保护请求。多面方块的面索引顺序固定为
+rail/wall 更新保护请求，bit11-16 标记匹配的相邻墙方向，bit17 表示 observer 保护请求。
+多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
 匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的

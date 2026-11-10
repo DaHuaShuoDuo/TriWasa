@@ -27,6 +27,7 @@ import top.frostor.triwasa.easyplace.adapter.generic.GenericFallbackStateAdapter
 import top.frostor.triwasa.easyplace.adapter.lantern.LanternStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.multiface.MultiFaceStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.mushroom.MushroomStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.observer.ObserverStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.quantity.QuantityStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.rail.DetectorRailStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.rail.RailStateAdapter;
@@ -284,6 +285,7 @@ public final class EasyPlaceStateCodec
 		DaylightDetectorStateAdapter daylight = new DaylightDetectorStateAdapter();
 		DetectorRailStateAdapter detectorRail = new DetectorRailStateAdapter();
 		WallStateAdapter wall = new WallStateAdapter();
+		ObserverStateAdapter observer = new ObserverStateAdapter();
 		LanternStateAdapter lantern = new LanternStateAdapter();
 		GenericFallbackStateAdapter genericFallback = new GenericFallbackStateAdapter();
 		AdministrativeStateAdapter administrative = new AdministrativeStateAdapter();
@@ -369,6 +371,13 @@ public final class EasyPlaceStateCodec
 				detectorRail
 		);
 		registry.register("wall", 652, WallStateAdapter::matches, wall, wall);
+		registry.register(
+				"observer",
+				651,
+				ObserverStateAdapter::matches,
+				observer,
+				observer
+		);
 		registry.register("lantern", 640, LanternStateAdapter::matches, lantern, lantern);
 		registry.register(
 				"administrative",

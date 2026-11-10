@@ -48,6 +48,25 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				EasyPlaceExtraProtocol.decodeZ(encodedFlags, pos) == combinedAuxiliary,
 				"update flags and crafter masks must survive the Z channel together"
 		);
+		int wallNeighborMask = (1 << net.minecraft.core.Direction.UP.ordinal())
+				| (1 << net.minecraft.core.Direction.DOWN.ordinal());
+		int wallAuxiliary = combinedAuxiliary
+				| (wallNeighborMask << 11);
+		test.check(
+				EasyPlaceExtraProtocol.decodeZ(
+						EasyPlaceExtraProtocol.encodeZ(pos, encoded, wallAuxiliary),
+						pos
+				) == wallAuxiliary,
+				"wall neighbor match bits must survive the Z channel"
+		);
+		int observerAuxiliary = EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION;
+		test.check(
+				EasyPlaceExtraProtocol.decodeZ(
+						EasyPlaceExtraProtocol.encodeZ(pos, encoded, observerAuxiliary),
+						pos
+				) == observerAuxiliary,
+				"observer protection flag must survive the Z channel"
+		);
 		CompoundTag legacyCapability = new CompoundTag();
 		test.check(
 				EasyPlaceClientNetwork.acceptsCapability(legacyCapability),

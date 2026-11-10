@@ -105,9 +105,18 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   `easyPlaceWallBlockNoShapeUpdate` 请求的邻域更新保护；低 9 位继续属于 crafter
   slot mask。两个子开关与 `easyPlaceV2ProtocolExtra` 父子关系同级、默认开启，并在每次
   V2-Extra 编码时写入标志，不能只在放置 wall/rail 本身时写入。
+- Z 通道 bit11-16 按 `Direction.ordinal()` 标记六个相邻位置中哪些墙的实际状态与
+  Litematica 投影状态一致。比较必须忽略 `WATERLOGGED`，其余方块种类、四侧连接和
+  `UP` 必须完全一致；不一致方向的 bit 不得发送，使该墙在服务端继续接受原版邻居更新。
 - 关闭 `easyPlaceWallBlockNoShapeUpdate` 时，`WallStateAdapter.encode(...)` 必须返回
   `-1`，不得发送 wall raw/UP 投影或 wall 邻域保护标志，使墙体放置回到原版状态与更新
   语义；不能只关闭 bit10 而继续恢复投影状态。
+- Observer 状态由独立 `adapter/observer` family 处理。客户端只编码 `FACING` 的
+  3D data value，不得编码 `POWERED`；decoder 必须把 `POWERED` 强制为 false。raw 只
+  接受 `0..5`，其他值返回 `null`。
+- `easyPlaceObserverProtection` 与 rail/wall 开关同级、默认开启。关闭时
+  `ObserverStateAdapter.encode(...)` 必须返回 `-1`，且 `EasyPlaceUpdateFlags` 不得发送
+  Z 通道 bit17，使 observer 放置和检测面更新完全回到原版语义。
 - 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
   Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
   `logicTest` 入口，并扩展对应 family suite 与集成矩阵。

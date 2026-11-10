@@ -71,12 +71,21 @@ default to enabled and independently control FCA's nearby rail and wall update
 suppression during each easy-place operation.
 Disabling the wall switch omits wall V2-Extra state and wall-protection flags,
 returning wall placement and subsequent updates to vanilla behavior.
+While enabled, the client compares each adjacent wall in the actual world with
+Litematica's projected state and sends a per-direction match mask through the Z
+channel. `WATERLOGGED` is ignored; other mismatches do not receive neighbor
+update protection.
+Observers use a dedicated family that synchronizes only `FACING`; projected
+`POWERED` is never encoded, so server-side placement always starts inactive.
+The peer `easyPlaceObserverProtection` switch defaults to enabled; disabling it
+omits observer V2-Extra state and protection flags, restoring vanilla placement
+and detection-face updates.
 
 Client-side state encoding and decoding uses explicit behavior-family registries
 that freeze after initialization. The stable
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` entry points select the owning
 adapter; concrete codecs live under `easyplace/adapter` in directional,
-attachment, rail, wall, multiface, quantity, container, sign, redstone, and special
+attachment, rail, wall, observer, multiface, quantity, container, sign, redstone, and special
 families, with shared pure state operations in `EasyPlaceStateSupport`.
 Target-position and click-face transforms for wall bells, hanging signs,
 candles, and similar placement cases remain in dedicated rules and client
@@ -88,7 +97,8 @@ placement state. The old monolithic
 `LegacyEasyPlaceStateCodec` mapping has been removed. The V2-Extra payload
 marker and protocol version remain 1. In the auxiliary Z channel, the low nine
 bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
-update protection. Multiface wire indices use the fixed order
+update protection, bits 11-16 mark matching wall neighbors, and bit 17 requests
+observer protection. Multiface wire indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical
 face order must be upgraded to a matching release, because mixed versions can

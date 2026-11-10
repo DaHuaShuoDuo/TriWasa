@@ -10,6 +10,7 @@ public final class MixinPreflight
 			"net.minecraft.client.multiplayer.MultiPlayerGameMode",
 			"net.minecraft.world.level.block.BaseRailBlock",
 			"net.minecraft.world.level.block.FenceGateBlock",
+			"net.minecraft.world.level.block.ObserverBlock",
 			"net.minecraft.world.level.block.WallBlock",
 			"net.minecraft.world.level.block.WallHangingSignBlock",
 			"fi.dy.masa.litematica.util.EasyPlaceUtils",

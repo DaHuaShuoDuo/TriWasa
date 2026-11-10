@@ -26,6 +26,8 @@ public final class EasyPlaceProtocolTest
 				+ EasyPlaceAttachmentStateTest.run()
 				+ EasyPlaceRailStateTest.run()
 				+ EasyPlaceWallStateTest.run()
+				+ EasyPlaceWallProtectionTest.run()
+				+ EasyPlaceObserverStateTest.run()
 				+ EasyPlaceUpdateFlagsTest.run()
 				+ EasyPlaceSpecialStateTest.run()
 				+ EasyPlacePrinterStateTest.run();

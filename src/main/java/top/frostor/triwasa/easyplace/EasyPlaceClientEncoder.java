@@ -2,10 +2,13 @@ package top.frostor.triwasa.easyplace;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.config.TriWasaConfigs;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceEncodedState;
 
 public final class EasyPlaceClientEncoder
@@ -50,6 +53,19 @@ public final class EasyPlaceClientEncoder
 		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(protocolPos, hitVec, rawValue);
 		int crafterDisabledMask = EasyPlaceCrafterSlotLock.getPendingMask();
 		int auxiliaryValue = encodedState.auxiliaryValue() | EasyPlaceUpdateFlags.current();
+		if(TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
+		{
+			Level schematicWorld = SchematicWorldHandler.getSchematicWorld();
+			int wallNeighborMatchMask = EasyPlaceWallProtection.neighborMatchMask(
+					client.level == null ? null : client.level::getBlockState,
+					schematicWorld == null ? null : schematicWorld::getBlockState,
+					protocolPos
+			);
+			auxiliaryValue = EasyPlaceWallProtection.applyNeighborMatchMask(
+					auxiliaryValue,
+					wallNeighborMatchMask
+			);
+		}
 		if(crafterDisabledMask != 0)
 		{
 			auxiliaryValue = (auxiliaryValue & ~EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK)

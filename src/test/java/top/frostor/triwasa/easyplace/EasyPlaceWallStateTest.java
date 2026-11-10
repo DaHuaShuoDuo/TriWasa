@@ -190,7 +190,11 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 					"disabling wall protection must clear wall auxiliary state"
 			);
 			check(
-					EasyPlaceUpdateFlags.current() == EasyPlaceUpdateFlags.encode(rail, false),
+					EasyPlaceUpdateFlags.current() == EasyPlaceUpdateFlags.encode(
+							rail,
+							false,
+							TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue()
+					),
 					"disabling wall protection must remove only the wall suppression flag"
 			);
 		}
