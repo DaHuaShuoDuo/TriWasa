@@ -63,7 +63,9 @@ public abstract class PlacementHandlerMixin
 		}
 
 		int rawValue = EasyPlaceExtraProtocol.toRawValue(protocolValue);
-		int auxiliaryValue = EasyPlaceExtraProtocol.decodeZ(context.hitVec(), context.pos());
+		int auxiliaryValue = EasyPlaceExtraProtocol.stripAuxiliarySchema(
+				EasyPlaceExtraProtocol.decodeAuxiliary(context.hitVec())
+		);
 		cir.setReturnValue(
 				EasyPlaceStateCodec.applyPlacementState(
 						state,

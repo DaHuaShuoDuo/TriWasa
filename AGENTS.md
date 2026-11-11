@@ -107,11 +107,18 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   `easyPlaceWallBlockNoShapeUpdate` 请求的邻域更新保护；低 9 位继续属于 crafter
   slot mask。两个子开关与 `easyPlaceV2ProtocolExtra` 父子关系同级、默认开启，并在每次
   V2-Extra 编码时写入标志，不能只在放置 wall/rail 本身时写入。
-- Z 通道 bit19-24 按 `Direction.ordinal()` 标记五个铁轨保护方向（水平四向和上方）
-  中实际状态与投影一致的邻轨。比较必须忽略 `WATERLOGGED`；所有带 `POWERED` 的
-  铁轨都不将该状态用于邻轨保护比较。目标位置的铁轨红石状态通过 raw bit4 + Z 通道
-  bit25 保护，不能参与邻轨 match mask。形状等其他状态不一致方向的 bit 不得发送，
-  使该铁轨继续接受原版更新。
+- Z 通道 bit17-21 按固定顺序 `NORTH,SOUTH,WEST,EAST,UP` 标记五个铁轨保护方向中实际
+  状态与投影一致的邻轨，不得使用 `Direction.ordinal()`。比较必须忽略 `WATERLOGGED`；
+  所有带 `POWERED` 的铁轨都不将该状态用于邻轨保护比较。目标位置的铁轨红石状态由
+  raw bit4 保存，并由 FCA 的 `RAIL` family 在放置位置一并保护，不存在 `RAIL_STATE`
+  family 或 bit25 状态保护位。形状等其他状态不一致方向的 bit 不得发送，使该铁轨继续
+  接受原版更新。
+- Z 通道使用固定原点（`z = auxiliary * 2 + 2`，对齐世界 Z=0），禁止用任何 `BlockPos`
+  的 Z 分量作编码锚点。Litematica 主路径、legacy `WorldUtils` 路径与 printer 适配传入
+  的 `BlockPos` 语义不同，相对锚点会让辅助字段随命中面错一位（这正是铁轨保护曾"部分
+  生效"的根因）。`AUXILIARY_SCHEMA`（bit24）是唯一合法的"Z 已编码"判据，编码时必须
+  置位，服务端解出后剥离；缺少该位按无 auxiliary（-1）处理，不得回退到
+  `decodeZ >= 0` 之类的猜测。该契约要求 TriWasa 与 FCA 同版本号配套。
 - Z 通道 bit11-16 按 `Direction.ordinal()` 标记六个相邻位置中哪些墙的实际状态与
   Litematica 投影状态一致。比较必须忽略 `WATERLOGGED`，其余方块种类、四侧连接和
   `UP` 必须完全一致；不一致方向的 bit 不得发送，使该墙在服务端继续接受原版邻居更新。
@@ -123,16 +130,16 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   接受 `0..5`，其他值返回 `null`。
 - `easyPlaceObserverProtection` 与 rail/wall 开关同级、默认开启。关闭时
   `ObserverStateAdapter.encode(...)` 必须返回 `-1`，且 `EasyPlaceUpdateFlags` 不得发送
-  Z 通道 bit17，使 observer 放置和检测面更新完全回到原版语义。
+  Z 通道 bit22，使 observer 放置和检测面更新完全回到原版语义。
 - `easyPlaceTntProtection` 与 rail/wall/observer 开关同级、默认开启，并通过 Z 通道
-  bit18 请求 FCA 保护 TNT。关闭时不得发送 bit18；客户端不增加 TNT 状态 adapter，
+  bit23 请求 FCA 保护 TNT。关闭时不得发送 bit23；客户端不增加 TNT 状态 adapter，
   因为 TNT 没有可恢复的激活方块状态。
 - `easyPlaceRailProtection` 与 wall/observer/TNT 开关同级、默认开启，统一控制铁轨
-  形状/PP 更新保护、bit9 请求、bit19-24 match mask、bit25 状态保护请求和 raw bit4
-  的 `POWERED` 值。关闭时这些标志和状态位都不得发送。FCA 的 `RAIL` family 负责形状与
-  邻域，`RAIL_STATE` family 只覆盖实际放置位置并保护动力、激活和探测等带红石状态
-  铁轨。26.x 中动力铁轨与激活铁轨都是 `PoweredRailBlock` 的不同方块实例，探测铁轨
-  使用独立 `DetectorRailBlock`；没有独立 `ActivatorRailBlock`。普通铁轨没有红石状态。
+  形状/PP 更新保护、bit9 请求、bit17-21 match mask、raw bit3/bit4 的兜底保护标志和
+  raw bit4 的 `POWERED` 值。关闭时这些标志和状态位都不得发送。FCA 只有 `RAIL` family，
+  同时负责形状、邻域和放置位置状态；`RAIL_STATE` family 已移除。26.x 中动力铁轨与
+  激活铁轨都是 `PoweredRailBlock` 的不同方块实例，探测铁轨使用独立
+  `DetectorRailBlock`；没有独立 `ActivatorRailBlock`。普通铁轨没有红石状态。
   不要引入形状/状态两个配置开关，也不要新增旧开关别名或迁移分支。
 - TNT 保护的客户端请求必须位于所有 `BlockItem` 共用的 `place` 路径，并在
   `getPlacementState` 调用前发送；不得依赖目标方块 adapter，否则珊瑚扇等

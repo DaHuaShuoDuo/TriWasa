@@ -33,9 +33,9 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				EasyPlaceExtraProtocol.toRawValue(EasyPlaceExtraProtocol.decode(encoded, pos)) == 0x5a,
 				"encoded hit position must decode through the FCA wire layout"
 		);
-		Vec3 encodedCrafter = EasyPlaceExtraProtocol.encodeZ(pos, encoded, 0x1ab);
+		Vec3 encodedCrafter = encodeAuxiliary(encoded, 0x1ab);
 		test.check(
-				EasyPlaceExtraProtocol.decodeZ(encodedCrafter, pos) == 0x1ab,
+				decodeAuxiliary(encodedCrafter) == 0x1ab,
 				"crafter slot masks must survive the hit Z encoding"
 		);
 		int updateFlags = EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
@@ -45,36 +45,25 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				"update-suppression flags must not overlap crafter slot bits"
 		);
 		int combinedAuxiliary = updateFlags | 0x1ab;
-		Vec3 encodedFlags = EasyPlaceExtraProtocol.encodeZ(pos, encoded, combinedAuxiliary);
 		test.check(
-				EasyPlaceExtraProtocol.decodeZ(encodedFlags, pos) == combinedAuxiliary,
+				decodeAuxiliary(encodeAuxiliary(encoded, combinedAuxiliary)) == combinedAuxiliary,
 				"update flags and crafter masks must survive the Z channel together"
 		);
 		int wallNeighborMask = (1 << net.minecraft.core.Direction.UP.ordinal())
 				| (1 << net.minecraft.core.Direction.DOWN.ordinal());
-		int wallAuxiliary = combinedAuxiliary
-				| (wallNeighborMask << 11);
+		int wallAuxiliary = combinedAuxiliary | (wallNeighborMask << 11);
 		test.check(
-				EasyPlaceExtraProtocol.decodeZ(
-						EasyPlaceExtraProtocol.encodeZ(pos, encoded, wallAuxiliary),
-						pos
-				) == wallAuxiliary,
+				decodeAuxiliary(encodeAuxiliary(encoded, wallAuxiliary)) == wallAuxiliary,
 				"wall neighbor match bits must survive the Z channel"
 		);
 		int observerAuxiliary = EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION;
 		test.check(
-				EasyPlaceExtraProtocol.decodeZ(
-						EasyPlaceExtraProtocol.encodeZ(pos, encoded, observerAuxiliary),
-						pos
-				) == observerAuxiliary,
+				decodeAuxiliary(encodeAuxiliary(encoded, observerAuxiliary)) == observerAuxiliary,
 				"observer protection flag must survive the Z channel"
 		);
 		int tntAuxiliary = EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION;
 		test.check(
-				EasyPlaceExtraProtocol.decodeZ(
-						EasyPlaceExtraProtocol.encodeZ(pos, encoded, tntAuxiliary),
-						pos
-				) == tntAuxiliary,
+				decodeAuxiliary(encodeAuxiliary(encoded, tntAuxiliary)) == tntAuxiliary,
 				"TNT protection flag must survive the Z channel"
 		);
 		int railNeighborMask = 0b1_0001;
@@ -84,11 +73,25 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				EasyPlaceExtraProtocol.RAIL_NEIGHBOR_MATCH_BASE
 		));
 		test.check(
-				EasyPlaceExtraProtocol.decodeZ(
-						EasyPlaceExtraProtocol.encodeZ(pos, encoded, railAuxiliary),
-						pos
-				) == railAuxiliary,
+				decodeAuxiliary(encodeAuxiliary(encoded, railAuxiliary)) == railAuxiliary,
 				"rail neighbor match bits must survive the Z channel"
+		);
+		Vec3 otherAnchor = EasyPlaceExtraProtocol.encodeX(
+				new BlockPos(500, -20, -400),
+				new Vec3(0.5, -19.5, -399.5),
+				0x5a
+		);
+		test.check(
+				decodeAuxiliary(encodeAuxiliary(otherAnchor, railAuxiliary)) == railAuxiliary,
+				"the fixed-origin Z channel must not depend on the click position"
+		);
+		test.check(
+				EasyPlaceExtraProtocol.stripAuxiliarySchema(
+						EasyPlaceExtraProtocol.decodeAuxiliary(
+								EasyPlaceExtraProtocol.encodeAuxiliary(encoded, railAuxiliary)
+						)
+				) == -1,
+				"a Z value without the schema bit must be rejected"
 		);
 		CompoundTag missingCapability = new CompoundTag();
 		test.check(
@@ -148,4 +151,20 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 
 		return test.checks();
 	}
+
+	private static Vec3 encodeAuxiliary(Vec3 hitVec, int auxiliaryValue)
+	{
+		return EasyPlaceExtraProtocol.encodeAuxiliary(
+				hitVec,
+				auxiliaryValue | EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
+		);
+	}
+
+	private static int decodeAuxiliary(Vec3 hitVec)
+	{
+		return EasyPlaceExtraProtocol.stripAuxiliarySchema(
+				EasyPlaceExtraProtocol.decodeAuxiliary(hitVec)
+		);
+	}
+
 }

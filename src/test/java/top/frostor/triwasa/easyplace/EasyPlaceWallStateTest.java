@@ -139,13 +139,18 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 		BlockPos pos = new BlockPos(12, 70, -9);
 		Vec3 hitVec = new Vec3(12.5, 70.5, -8.5);
 		Vec3 encoded = EasyPlaceExtraProtocol.encodeX(pos, hitVec, 80);
-		encoded = EasyPlaceExtraProtocol.encodeZ(pos, encoded, 1);
+		encoded = EasyPlaceExtraProtocol.encodeAuxiliary(
+				encoded,
+				1 | EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
+		);
 		check(
 				EasyPlaceExtraProtocol.toRawValue(EasyPlaceExtraProtocol.decode(encoded, pos)) == 80,
 				"wall raw values must survive the server-facing X channel"
 		);
 		check(
-				EasyPlaceExtraProtocol.decodeZ(encoded, pos) == 1,
+				EasyPlaceExtraProtocol.stripAuxiliarySchema(
+						EasyPlaceExtraProtocol.decodeAuxiliary(encoded)
+				) == 1,
 				"wall auxiliary values must survive the server-facing Z channel"
 		);
 	}

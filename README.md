@@ -89,10 +89,16 @@ quantity、container、sign、redstone 和 special 等适配器，通用纯状�
 仍为 1；辅助 Z 通道低 9 位继续用于 crafter slot mask，bit9/bit10 分别表示
 rail/wall 更新保护请求，bit11-16 标记匹配的相邻墙方向，bit17-21 按
 `NORTH,SOUTH,WEST,EAST,UP` 标记匹配的相邻铁轨方向，bit22 表示 observer 保护请求，
-bit23 表示 TNT 保护请求，bit24-25 空闲。握手还会声明 `easy_place_y_precision` capability 与
-`y_precision_bits=8`。服务端确认后，客户端把命中高度相对方块底部的 8-bit 定点值
-写入 Y；X raw 固定相对 packet `BlockHitResult.blockPos` 编码，FCA 也使用同一锚点
-在目标变换前解码。未确认该能力的服务端继续接收原始 Y，旧组合保持原有行为。多面方块的面索引顺序固定为
+bit23 表示 TNT 保护请求，bit24 是 `AUXILIARY_SCHEMA` 标记，bit25 空闲。
+Z 通道使用**固定原点**编码（`z = auxiliary * 2 + 2`，对齐世界 Z=0），不再以任何
+`BlockPos` 的 Z 分量为锚点：Litematica 主路径、legacy `WorldUtils` 路径和 printer
+适配传入的 `BlockPos` 语义不同，相对锚点会让辅助字段随命中面错一位。`AUXILIARY_SCHEMA`
+是唯一合法的"Z 已编码"判据，服务端解出后剥离该位，缺少该位按无 auxiliary 处理。
+握手还会声明 `easy_place_y_precision` capability 与 `y_precision_bits=8`。服务端确认后，
+客户端把命中高度相对方块底部的 8-bit 定点值写入 Y；Y 只承载精度值，不复用 raw。
+X raw 仍相对 packet `BlockHitResult.blockPos` 编码，FCA 在目标变换前的 packet 级快照中
+解码。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
+和 TNT 保护位会被静默丢弃。多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
 匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的

@@ -20,6 +20,8 @@ public final class EasyPlaceExtraProtocol
 	public static final int TNT_UPDATE_SUPPRESSION = 1 << 23;
 	public static final int WALL_AUXILIARY_SCHEMA = 1 << 26;
 	public static final int WALL_UP = 1 << 27;
+	/** Marks a deliberately encoded Z auxiliary field. Must match the paired FCA build. */
+	public static final int AUXILIARY_SCHEMA = 1 << 24;
 	public static final int RAIL_POWERED_MASK = 1 << 4;
 	public static final int RAIL_PROTECTION_FLAG_POWERED = 1 << 3;
 	public static final int RAIL_PROTECTION_FLAG_REGULAR = 1 << 4;
@@ -36,9 +38,28 @@ public final class EasyPlaceExtraProtocol
 		return decodeDimension(hitPos.x - clickedPos.getX());
 	}
 
-	public static int decodeZ(Vec3 hitPos, BlockPos clickedPos)
+	/**
+	 * The Z auxiliary field is anchored at world Z = 0, not at the click position. Litematica's
+	 * main/legacy paths and the printer adapter pass different BlockPos values to the encoder,
+	 * so a relative anchor used to shift the decoded flags by one bit depending on the hit face.
+	 */
+	public static int decodeAuxiliary(Vec3 hitPos)
 	{
-		return decodeDimension(hitPos.z - clickedPos.getZ());
+		return decodeDimension(hitPos.z);
+	}
+
+	public static boolean hasAuxiliarySchema(int auxiliaryValue)
+	{
+		return auxiliaryValue >= 0 && (auxiliaryValue & AUXILIARY_SCHEMA) != 0;
+	}
+
+	public static int stripAuxiliarySchema(int auxiliaryValue)
+	{
+		if(!hasAuxiliarySchema(auxiliaryValue))
+		{
+			return -1;
+		}
+		return auxiliaryValue & ~AUXILIARY_SCHEMA;
 	}
 
 	public static int decodeY(Vec3 hitPos, BlockPos clickedPos)
@@ -125,12 +146,12 @@ public final class EasyPlaceExtraProtocol
 		);
 	}
 
-	public static Vec3 encodeZ(BlockPos pos, Vec3 hitVec, int protocolValue)
+	public static Vec3 encodeAuxiliary(Vec3 hitVec, int auxiliaryValue)
 	{
 		return new Vec3(
 				hitVec.x,
 				hitVec.y,
-				pos.getZ() + (protocolValue << 1) + 2.0
+				(auxiliaryValue << 1) + 2.0
 		);
 	}
 }

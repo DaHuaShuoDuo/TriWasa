@@ -97,7 +97,10 @@ public final class EasyPlaceClientEncoder
 		}
 		if(auxiliaryValue != 0)
 		{
-			encodedHitVec = EasyPlaceExtraProtocol.encodeZ(pos, encodedHitVec, auxiliaryValue);
+			encodedHitVec = EasyPlaceExtraProtocol.encodeAuxiliary(
+					encodedHitVec,
+					auxiliaryValue | EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
+			);
 		}
 		if(EasyPlaceClientNetwork.supportsYPrecision())
 		{
