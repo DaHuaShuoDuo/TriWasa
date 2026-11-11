@@ -50,7 +50,11 @@ public final class EasyPlaceClientEncoder
 		TriWasa.LOGGER.debug("[EasyPlace] Encoded raw protocol 0x{} at {}", Integer.toHexString(rawValue), pos);
 
 		EasyPlaceCrafterSlotLock.capture(protocolPos, state);
-		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(protocolPos, hitVec, rawValue);
+		// Wire values are always anchored at the block position that will be sent in
+		// BlockHitResult. protocolPos is only used above to read projected/current state:
+		// Litematica 0.28/0.29 and bell placement plans resolve it differently, and the
+		// network codec stores the hit location as a float offset relative to blockPos.
+		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(pos, hitVec, rawValue);
 		int crafterDisabledMask = EasyPlaceCrafterSlotLock.getPendingMask();
 		int auxiliaryValue = encodedState.auxiliaryValue() | EasyPlaceUpdateFlags.current();
 		if(TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
@@ -104,7 +108,7 @@ public final class EasyPlaceClientEncoder
 		}
 		if(EasyPlaceClientNetwork.supportsYPrecision())
 		{
-			encodedHitVec = EasyPlaceExtraProtocol.encodeY(protocolPos, encodedHitVec);
+			encodedHitVec = EasyPlaceExtraProtocol.encodeY(pos, encodedHitVec);
 		}
 		return encodedHitVec;
 	}

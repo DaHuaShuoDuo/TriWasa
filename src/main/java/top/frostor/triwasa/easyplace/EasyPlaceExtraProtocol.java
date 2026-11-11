@@ -48,6 +48,15 @@ public final class EasyPlaceExtraProtocol
 		return decodeDimension(hitPos.z);
 	}
 
+	/**
+	 * Decodes Litematica's own V2 hit vector (relative to its placement position). This is NOT
+	 * the FCA wire channel: PlacementHandler runs before TriWasa applies its wire encoding.
+	 */
+	public static int decodeZ(Vec3 hitPos, BlockPos clickedPos)
+	{
+		return decodeDimension(hitPos.z - clickedPos.getZ());
+	}
+
 	public static boolean hasAuxiliarySchema(int auxiliaryValue)
 	{
 		return auxiliaryValue >= 0 && (auxiliaryValue & AUXILIARY_SCHEMA) != 0;

@@ -119,6 +119,12 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   生效"的根因）。`AUXILIARY_SCHEMA`（bit24）是唯一合法的"Z 已编码"判据，编码时必须
   置位，服务端解出后剥离；缺少该位按无 auxiliary（-1）处理，不得回退到
   `decodeZ >= 0` 之类的猜测。该契约要求 TriWasa 与 FCA 同版本号配套。
+- 26.2/26.3 放置语义必须统一：两版分别依赖 Litematica 0.28.6 / 0.29.1，且 26.3 的
+  `ServerboundUseItemOnPacket` 是 record，命中位置以相对 `blockPos` 的 float 传输。wire 的
+  X/Y 编码锚点只能是 packet `BlockHitResult.blockPos`；`resolveProtocolTarget` 一类的
+  `protocolPos` 仅用于读投影/世界状态，禁止进入 `encodeX`/`encodeY`。服务端以 Z 的
+  `AUXILIARY_SCHEMA` 位识别 V2-Extra 包，并在 X 主锚点无 marker 时按命中面及 X 轴
+  相邻锚点兜底，不得按 Minecraft 版本分叉实现。
 - Z 通道 bit11-16 按 `Direction.ordinal()` 标记六个相邻位置中哪些墙的实际状态与
   Litematica 投影状态一致。比较必须忽略 `WATERLOGGED`，其余方块种类、四侧连接和
   `UP` 必须完全一致；不一致方向的 bit 不得发送，使该墙在服务端继续接受原版邻居更新。
