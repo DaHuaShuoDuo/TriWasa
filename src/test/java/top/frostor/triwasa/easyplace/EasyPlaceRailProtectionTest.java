@@ -110,10 +110,7 @@ public final class EasyPlaceRailProtectionTest extends EasyPlaceTestSupport
 				},
 				origin
 		);
-		int expected = (1 << Direction.UP.ordinal())
-				| (1 << Direction.NORTH.ordinal())
-				| (1 << Direction.EAST.ordinal())
-				| (1 << Direction.SOUTH.ordinal());
+		int expected = 0b1_1011;
 		check(
 				mask == expected,
 				"powered and activator rail redstone differences must remain in the rail protection mask"
@@ -122,14 +119,17 @@ public final class EasyPlaceRailProtectionTest extends EasyPlaceTestSupport
 
 	private void checkMaskAuxiliaryRoundTrip()
 	{
-		int mask = (1 << Direction.UP.ordinal()) | (1 << Direction.NORTH.ordinal());
+		int mask = 0b1_0001;
 		int auxiliary = EasyPlaceRailProtection.applyNeighborMatchMask(
 				EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION,
 				mask
 		);
 		check(
 				(auxiliary & EasyPlaceExtraProtocol.RAIL_NEIGHBOR_MATCH_MASK)
-						== (mask << 19),
+						== (mask
+						<< Integer.numberOfTrailingZeros(
+						EasyPlaceExtraProtocol.RAIL_NEIGHBOR_MATCH_BASE
+				)),
 				"rail neighbor match bits must pack into the auxiliary field"
 		);
 	}

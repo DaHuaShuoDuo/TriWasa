@@ -87,12 +87,12 @@ quantity、container、sign、redstone 和 special 等适配器，通用纯状�
 `WATERLOGGED` 不写入编码，仍由 FCA 服务端放置状态决定。
 旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
 仍为 1；辅助 Z 通道低 9 位继续用于 crafter slot mask，bit9/bit10 分别表示
-rail/wall 更新保护请求，bit11-16 标记匹配的相邻墙方向，bit17 表示 observer 保护请求。
-bit18 表示 TNT 保护请求，bit19-24 标记匹配的相邻铁轨方向，bit25 表示目标位置铁轨
-红石状态保护请求。握手还会声明 `easy_place_y_precision` capability 与
-`y_precision_bits=8`。服务端确认后，客户端在 Y 中使用 bit15 schema、bit8-14 raw、
-bit0-7 命中高度定点值，供 FCA 在目标变换前恢复 raw 和近似命中高度；未确认该能力的
-服务端继续接收原始 Y，旧组合保持原有行为。多面方块的面索引顺序固定为
+rail/wall 更新保护请求，bit11-16 标记匹配的相邻墙方向，bit17-21 按
+`NORTH,SOUTH,WEST,EAST,UP` 标记匹配的相邻铁轨方向，bit22 表示 observer 保护请求，
+bit23 表示 TNT 保护请求，bit24-25 空闲。握手还会声明 `easy_place_y_precision` capability 与
+`y_precision_bits=8`。服务端确认后，客户端把命中高度相对方块底部的 8-bit 定点值
+写入 Y；X raw 固定相对 packet `BlockHitResult.blockPos` 编码，FCA 也使用同一锚点
+在目标变换前解码。未确认该能力的服务端继续接收原始 Y，旧组合保持原有行为。多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
 匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的

@@ -112,13 +112,14 @@ placement state. The old monolithic
 marker and protocol version remain 1. In the auxiliary Z channel, the low nine
 bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
 update protection, bits 11-16 mark matching wall neighbors, and bit 17 requests
-observer protection. Bit 18 requests TNT protection, bits 19-24 mark matching
-rail neighbors, and bit 25 requests target-position rail redstone-state
-protection. The handshake also advertises the `easy_place_y_precision`
+rail neighbors in `NORTH,SOUTH,WEST,EAST,UP` order through bits 17-21; bit 22
+requests observer protection and bit 23 requests TNT protection; bits 24-25
+are free. The handshake also advertises the `easy_place_y_precision`
 capability with `y_precision_bits=8`. Once the server confirms it, the client
-uses bit 15 as a schema marker, bits 8-14 for raw state, and bits 0-7 for the
-eight-bit fixed-point hit height in Y so FCA can recover both before target
-transformations. Servers that do not
+stores an eight-bit fixed-point hit height relative to the bottom of the target
+block in Y. X raw is encoded relative to the packet's
+`BlockHitResult.blockPos`, and FCA decodes it against the same anchor before
+target transformations. Servers that do not
 confirm the capability continue receiving the original Y value. Multiface wire
 indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,

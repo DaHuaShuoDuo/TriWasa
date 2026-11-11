@@ -77,11 +77,12 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				) == tntAuxiliary,
 				"TNT protection flag must survive the Z channel"
 		);
-		int railNeighborMask = (1 << net.minecraft.core.Direction.UP.ordinal())
-				| (1 << net.minecraft.core.Direction.NORTH.ordinal());
+		int railNeighborMask = 0b1_0001;
 		int railAuxiliary = EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
-				| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION
-				| (railNeighborMask << 19);
+				| (railNeighborMask
+				<< Integer.numberOfTrailingZeros(
+				EasyPlaceExtraProtocol.RAIL_NEIGHBOR_MATCH_BASE
+		));
 		test.check(
 				EasyPlaceExtraProtocol.decodeZ(
 						EasyPlaceExtraProtocol.encodeZ(pos, encoded, railAuxiliary),

@@ -70,17 +70,13 @@ public final class EasyPlaceYPrecisionTest extends EasyPlaceTestSupport
 	{
 		BlockPos pos = new BlockPos(-17, 70, 31);
 		Vec3 original = new Vec3(2.5, 70.73, 6.5);
-		Vec3 encoded = EasyPlaceExtraProtocol.encodeY(pos, original, 0x5a);
-		int payload = EasyPlaceExtraProtocol.decodeYPayload(encoded);
-		int precisionValue = payload & EasyPlaceExtraProtocol.Y_PRECISION_MASK;
+		Vec3 encoded = EasyPlaceExtraProtocol.encodeY(pos, original);
+		int precisionValue = EasyPlaceExtraProtocol.decodeY(encoded, pos)
+				& EasyPlaceExtraProtocol.Y_PRECISION_MASK;
 
 		check(
 				encoded.x == original.x && encoded.z == original.z,
 				"Y encoding must preserve X and Z"
-		);
-		check(
-				EasyPlaceExtraProtocol.rawValueFromYPayload(payload) == 0x5a,
-				"raw must travel independently of the placement target"
 		);
 		check(
 				precisionValue == EasyPlaceExtraProtocol.quantizeRelativeY(0.73),

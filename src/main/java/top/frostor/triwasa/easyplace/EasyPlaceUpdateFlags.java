@@ -27,7 +27,6 @@ public final class EasyPlaceUpdateFlags
 	{
 		return (preserveRail
 						? EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
-						| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION
 						: 0)
 				| (preserveWall ? EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION : 0)
 				| (preserveObserver ? EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION : 0)

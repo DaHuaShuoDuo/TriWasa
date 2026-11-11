@@ -21,7 +21,6 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 		check(
 				EasyPlaceUpdateFlags.encode(true, true, true, true)
 						== (EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
-						| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION
 						| EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION
 						| EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION
 						| EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION),
@@ -29,8 +28,7 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 		);
 		check(
 				EasyPlaceUpdateFlags.encode(true, false, false, false)
-						== (EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
-						| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION),
+						== EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION,
 				"rail protection must encode independently"
 		);
 		check(
@@ -92,8 +90,7 @@ public final class EasyPlaceUpdateFlagsTest extends EasyPlaceTestSupport
 			TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.setBooleanValue(true);
 			check(
 					EasyPlaceUpdateFlags.current()
-							== (EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
-							| EasyPlaceExtraProtocol.RAIL_STATE_UPDATE_SUPPRESSION),
+							== EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION,
 					"rail config must control only the rail flag"
 			);
 		}

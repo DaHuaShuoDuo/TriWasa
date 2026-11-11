@@ -44,7 +44,7 @@ public final class EasyPlaceRailProtection
 					projectedStates.apply(neighborPos)
 			))
 			{
-				mask |= 1 << direction.ordinal();
+				mask |= railNeighborBit(direction);
 			}
 		}
 		return mask;
@@ -87,7 +87,19 @@ public final class EasyPlaceRailProtection
 	public static int applyNeighborMatchMask(int auxiliaryValue, int neighborMatchMask)
 	{
 		return (auxiliaryValue & ~EasyPlaceExtraProtocol.RAIL_NEIGHBOR_MATCH_MASK)
-				| ((neighborMatchMask & 0x3f)
+				| ((neighborMatchMask & 0x1f)
 				<< Integer.numberOfTrailingZeros(EasyPlaceExtraProtocol.RAIL_NEIGHBOR_MATCH_BASE));
+	}
+
+	private static int railNeighborBit(Direction direction)
+	{
+		for(int index = 0; index < RAIL_DIRECTIONS.length; index++)
+		{
+			if(RAIL_DIRECTIONS[index] == direction)
+			{
+				return 1 << index;
+			}
+		}
+		return 0;
 	}
 }

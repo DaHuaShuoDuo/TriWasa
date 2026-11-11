@@ -74,6 +74,17 @@ public final class EasyPlaceClientEncoder
 					schematicWorld == null ? null : schematicWorld::getBlockState,
 					protocolPos
 			);
+			if(railNeighborMatchMask != 0
+					|| state.getBlock() instanceof net.minecraft.world.level.block.BaseRailBlock)
+			{
+				TriWasa.LOGGER.info(
+						"[EasyPlace-Rail] client target={} state={} auxiliary=0x{} mask=0x{}",
+						protocolPos,
+						state,
+						Integer.toHexString(auxiliaryValue),
+						Integer.toHexString(railNeighborMatchMask)
+				);
+			}
 			auxiliaryValue = EasyPlaceRailProtection.applyNeighborMatchMask(
 					auxiliaryValue,
 					railNeighborMatchMask
@@ -90,11 +101,7 @@ public final class EasyPlaceClientEncoder
 		}
 		if(EasyPlaceClientNetwork.supportsYPrecision())
 		{
-			encodedHitVec = EasyPlaceExtraProtocol.encodeY(
-					protocolPos,
-					encodedHitVec,
-					rawValue
-			);
+			encodedHitVec = EasyPlaceExtraProtocol.encodeY(protocolPos, encodedHitVec);
 		}
 		return encodedHitVec;
 	}
