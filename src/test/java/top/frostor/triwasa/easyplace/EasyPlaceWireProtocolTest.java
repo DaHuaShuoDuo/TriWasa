@@ -2,6 +2,8 @@ package top.frostor.triwasa.easyplace;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Arrays;
@@ -95,10 +97,27 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 		CompoundTag currentCapability = new CompoundTag();
 		currentCapability.putInt("protocol_version", 1);
 		currentCapability.putBoolean("easy_place_v2_extra", true);
+		currentCapability.putBoolean("easy_place_y_precision", true);
+		currentCapability.putInt("y_precision_bits", 8);
+		ListTag capabilities = new ListTag();
+		capabilities.add(StringTag.valueOf("easy_place_y_precision"));
+		currentCapability.put("capabilities", capabilities);
 		test.check(
 				EasyPlaceClientNetwork.acceptsCapability(currentCapability),
 				"an explicit V2-Extra capability must be accepted"
 		);
+		test.check(
+				EasyPlaceClientNetwork.acceptsYPrecisionCapability(currentCapability),
+				"the eight-bit Y capability must be accepted"
+		);
+		currentCapability.put("capabilities", new ListTag());
+		test.check(
+				!EasyPlaceClientNetwork.acceptsYPrecisionCapability(currentCapability),
+				"the Y capability must also be advertised in the capability list"
+		);
+		capabilities = new ListTag();
+		capabilities.add(StringTag.valueOf("easy_place_y_precision"));
+		currentCapability.put("capabilities", capabilities);
 		currentCapability.putBoolean("easy_place_v2_extra", false);
 		test.check(
 				!EasyPlaceClientNetwork.acceptsCapability(currentCapability),

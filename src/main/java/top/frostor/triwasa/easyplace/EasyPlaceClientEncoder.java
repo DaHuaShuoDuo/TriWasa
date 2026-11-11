@@ -88,6 +88,14 @@ public final class EasyPlaceClientEncoder
 		{
 			encodedHitVec = EasyPlaceExtraProtocol.encodeZ(pos, encodedHitVec, auxiliaryValue);
 		}
+		if(EasyPlaceClientNetwork.supportsYPrecision())
+		{
+			encodedHitVec = EasyPlaceExtraProtocol.encodeY(
+					protocolPos,
+					encodedHitVec,
+					rawValue
+			);
+		}
 		return encodedHitVec;
 	}
 }

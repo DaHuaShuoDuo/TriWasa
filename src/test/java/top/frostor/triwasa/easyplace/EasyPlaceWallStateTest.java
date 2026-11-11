@@ -3,6 +3,7 @@ package top.frostor.triwasa.easyplace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.FrontAndTop;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RedstoneWallTorchBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -26,6 +27,7 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 		test.checkWaterloggedStateIsPreserved();
 		test.checkServerFacingValues();
 		test.checkCrafterAuxiliaryIsolation();
+		test.checkEastWallTorchEncoding();
 		test.checkDisabledToggleUsesVanillaPath();
 		return test.checks();
 	}
@@ -43,7 +45,10 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 					.setValue(WallBlock.WEST, sides[(rawValue / 27) % 3]);
 			EasyPlaceEncodedState encoded = EasyPlaceStateCodec.encodeState(projected);
 			check(encoded.rawValue() == rawValue, "all wall side combinations must encode");
-			check(encoded.auxiliaryValue() == 0, "UP=false must encode auxiliary zero");
+			check(
+					encoded.auxiliaryValue() == EasyPlaceExtraProtocol.WALL_AUXILIARY_SCHEMA,
+					"UP=false must encode the wall schema without the UP bit"
+			);
 
 			BlockState restored = EasyPlaceStateCodec.apply(
 					Blocks.STONE_BRICK_WALL,
@@ -72,7 +77,12 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 	{
 		BlockState wall = Blocks.STONE_BRICK_WALL.defaultBlockState().setValue(WallBlock.UP, true);
 		EasyPlaceEncodedState encoded = EasyPlaceStateCodec.encodeState(wall);
-		check(encoded.auxiliaryValue() == 1, "UP=true must use auxiliary bit zero");
+		check(
+				encoded.auxiliaryValue()
+						== (EasyPlaceExtraProtocol.WALL_AUXILIARY_SCHEMA
+						| EasyPlaceExtraProtocol.WALL_UP),
+				"UP=true must use the dedicated wall auxiliary bit"
+		);
 
 		BlockState restored = EasyPlaceStateCodec.apply(
 				Blocks.STONE_BRICK_WALL,
@@ -108,7 +118,7 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 				.setValue(WallBlock.UP, false);
 		EasyPlaceEncodedState encoded = EasyPlaceStateCodec.encodeState(waterlogged);
 		check(
-				encoded.auxiliaryValue() == 0,
+				encoded.auxiliaryValue() == EasyPlaceExtraProtocol.WALL_AUXILIARY_SCHEMA,
 				"waterlogged walls with no post must not write WATERLOGGED into auxiliary data"
 		);
 		BlockState restored = EasyPlaceStateCodec.apply(
@@ -168,6 +178,18 @@ public final class EasyPlaceWallStateTest extends EasyPlaceTestSupport
 						&& withCrafterMask.getValue(BlockStateProperties.ORIENTATION)
 						== FrontAndTop.values()[1],
 				"crafter slot-mask bits must not affect crafter orientation decoding"
+		);
+	}
+
+	private void checkEastWallTorchEncoding()
+	{
+		BlockState wallTorch = Blocks.REDSTONE_WALL_TORCH.defaultBlockState()
+				.setValue(RedstoneWallTorchBlock.FACING, net.minecraft.core.Direction.EAST)
+				.setValue(RedstoneWallTorchBlock.LIT, true);
+		EasyPlaceEncodedState encoded = EasyPlaceStateCodec.encodeState(wallTorch);
+		check(
+				encoded.rawValue() == 0x0F,
+				"east-facing lit wall torches must encode wall, east, and lit bits"
 		);
 	}
 

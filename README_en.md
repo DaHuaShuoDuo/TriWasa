@@ -104,7 +104,8 @@ Target-position and click-face transforms for wall bells, hanging signs,
 candles, and similar placement cases remain in dedicated rules and client
 placement entry points rather than state adapters. Mixins only bridge the
 required Litematica call paths. All vanilla wall blocks encode their four side
-connections as base-3 raw data and use bit zero of the Z channel for `UP`;
+connections as base-3 raw data. `UP` uses bit 26 as a schema marker and bit 27
+as its value while the server continues to accept the legacy bit-zero layout;
 `WATERLOGGED` is omitted and remains authoritative from FCA's server-side
 placement state. The old monolithic
 `LegacyEasyPlaceStateCodec` mapping has been removed. The V2-Extra payload
@@ -113,7 +114,13 @@ bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
 update protection, bits 11-16 mark matching wall neighbors, and bit 17 requests
 observer protection. Bit 18 requests TNT protection, bits 19-24 mark matching
 rail neighbors, and bit 25 requests target-position rail redstone-state
-protection. Multiface wire indices use the fixed order
+protection. The handshake also advertises the `easy_place_y_precision`
+capability with `y_precision_bits=8`. Once the server confirms it, the client
+uses bit 15 as a schema marker, bits 8-14 for raw state, and bits 0-7 for the
+eight-bit fixed-point hit height in Y so FCA can recover both before target
+transformations. Servers that do not
+confirm the capability continue receiving the original Y value. Multiface wire
+indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical
 face order must be upgraded to a matching release, because mixed versions can

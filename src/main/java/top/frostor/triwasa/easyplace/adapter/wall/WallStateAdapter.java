@@ -5,6 +5,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.WallSide;
 import org.jetbrains.annotations.Nullable;
 import top.frostor.triwasa.config.TriWasaConfigs;
+import top.frostor.triwasa.easyplace.EasyPlaceExtraProtocol;
 import top.frostor.triwasa.easyplace.EasyPlaceStateSupport;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceStateDecoder;
@@ -36,7 +37,10 @@ public final class WallStateAdapter implements EasyPlaceStateEncoder, EasyPlaceS
 	@Override
 	public int encodeAuxiliary(EasyPlaceCodecContext context)
 	{
-		return context.state().getValue(WallBlock.UP) ? 1 : 0;
+		return EasyPlaceExtraProtocol.WALL_AUXILIARY_SCHEMA
+				| (context.state().getValue(WallBlock.UP)
+				? EasyPlaceExtraProtocol.WALL_UP
+				: 0);
 	}
 
 	@Override
@@ -88,7 +92,7 @@ public final class WallStateAdapter implements EasyPlaceStateEncoder, EasyPlaceS
 		return EasyPlaceStateSupport.replaceSlot(
 				state,
 				WallBlock.UP,
-				context.auxiliaryValue() >= 0 && (context.auxiliaryValue() & 0x1) != 0
+				EasyPlaceExtraProtocol.wallUp(context.auxiliaryValue())
 		);
 	}
 }

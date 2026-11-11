@@ -19,8 +19,11 @@ public final class EasyPlaceClientNetwork
 	private static final int PROTOCOL_VERSION = 1;
 	private static final String NBT_PROTOCOL_VERSION = "protocol_version";
 	private static final String NBT_CAPABILITIES = "capabilities";
+	private static final String NBT_Y_PRECISION_BITS = "y_precision_bits";
 	private static final String CAPABILITY_EASY_PLACE_V2_EXTRA = "easy_place_v2_extra";
+	private static final String CAPABILITY_Y_PRECISION = "easy_place_y_precision";
 	private static boolean serverSupports;
+	private static boolean serverSupportsYPrecision;
 	private static boolean helloPending;
 	private static boolean wasEnabled;
 
@@ -41,10 +44,14 @@ public final class EasyPlaceClientNetwork
 			context.client().execute(() -> {
 				if(EasyPlacePayloadBridge.packetId(payload) == EasyPlacePayload.HELLO_ACK)
 				{
-					serverSupports = acceptsCapability(EasyPlacePayloadBridge.data(payload));
+					CompoundTag data = EasyPlacePayloadBridge.data(payload);
+					serverSupports = acceptsCapability(data);
+					serverSupportsYPrecision = serverSupports
+							&& acceptsYPrecisionCapability(data);
 					TriWasa.LOGGER.info(
-							"[EasyPlace] Client received V2-Extra acknowledgement (capability={})",
-							serverSupports
+							"[EasyPlace] Client received V2-Extra acknowledgement (capability={}, y8={})",
+							serverSupports,
+							serverSupportsYPrecision
 					);
 				}
 			});
@@ -78,9 +85,15 @@ public final class EasyPlaceClientNetwork
 		return TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue() && serverSupports;
 	}
 
+	public static boolean supportsYPrecision()
+	{
+		return isActive() && serverSupportsYPrecision;
+	}
+
 	public static void onConfigChanged(boolean enabled)
 	{
 		serverSupports = false;
+		serverSupportsYPrecision = false;
 		if(!enabled)
 		{
 			helloPending = false;
@@ -101,6 +114,7 @@ public final class EasyPlaceClientNetwork
 	public static void reset()
 	{
 		serverSupports = false;
+		serverSupportsYPrecision = false;
 		helloPending = false;
 		wasEnabled = TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue();
 		EasyPlaceCrafterSlotLock.clear();
@@ -116,6 +130,7 @@ public final class EasyPlaceClientNetwork
 		if(!enabled)
 		{
 			serverSupports = false;
+			serverSupportsYPrecision = false;
 			helloPending = false;
 		}
 		wasEnabled = enabled;
@@ -147,8 +162,11 @@ public final class EasyPlaceClientNetwork
 		data.putString("mod_version", version);
 		data.putInt(NBT_PROTOCOL_VERSION, PROTOCOL_VERSION);
 		data.putBoolean(CAPABILITY_EASY_PLACE_V2_EXTRA, true);
+		data.putBoolean(CAPABILITY_Y_PRECISION, true);
+		data.putInt(NBT_Y_PRECISION_BITS, EasyPlaceExtraProtocol.Y_PRECISION_BITS);
 		ListTag capabilities = new ListTag();
 		capabilities.add(StringTag.valueOf(CAPABILITY_EASY_PLACE_V2_EXTRA));
+		capabilities.add(StringTag.valueOf(CAPABILITY_Y_PRECISION));
 		data.put(NBT_CAPABILITIES, capabilities);
 		ClientPlayNetworking.send(EasyPlacePayloadBridge.create(EasyPlacePayload.HELLO, data));
 		TriWasa.LOGGER.info("[EasyPlace] Client sent V2-Extra hello");
@@ -159,5 +177,26 @@ public final class EasyPlaceClientNetwork
 	{
 		return data.getIntOr(NBT_PROTOCOL_VERSION, -1) == PROTOCOL_VERSION
 				&& data.getBooleanOr(CAPABILITY_EASY_PLACE_V2_EXTRA, false);
+	}
+
+	static boolean acceptsYPrecisionCapability(CompoundTag data)
+	{
+		return data.getIntOr(NBT_Y_PRECISION_BITS, -1)
+				== EasyPlaceExtraProtocol.Y_PRECISION_BITS
+				&& data.getBooleanOr(CAPABILITY_Y_PRECISION, false)
+				&& advertisesCapability(data, CAPABILITY_Y_PRECISION);
+	}
+
+	private static boolean advertisesCapability(CompoundTag data, String capability)
+	{
+		ListTag capabilities = data.getListOrEmpty(NBT_CAPABILITIES);
+		for(int index = 0; index < capabilities.size(); index++)
+		{
+			if(capability.equals(capabilities.getStringOr(index, "")))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 }

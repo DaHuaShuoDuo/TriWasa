@@ -19,7 +19,17 @@ public final class EasyPlaceExtraProtocol
 	public static final int RAIL_NEIGHBOR_MATCH_BASE = 1 << 19;
 	public static final int RAIL_NEIGHBOR_MATCH_MASK = 0x3f << 19;
 	public static final int RAIL_STATE_UPDATE_SUPPRESSION = 1 << 25;
+	public static final int WALL_AUXILIARY_SCHEMA = 1 << 26;
+	public static final int WALL_UP = 1 << 27;
 	public static final int RAIL_POWERED_MASK = 1 << 4;
+	public static final int RAIL_PROTECTION_FLAG_POWERED = 1 << 3;
+	public static final int RAIL_PROTECTION_FLAG_REGULAR = 1 << 4;
+	public static final int Y_PRECISION_BITS = 8;
+	public static final int Y_PRECISION_SCALE = 1 << Y_PRECISION_BITS;
+	public static final int Y_PRECISION_MASK = Y_PRECISION_SCALE - 1;
+	public static final int Y_PAYLOAD_SCHEMA = 1 << 15;
+	public static final int Y_RAW_SHIFT = Y_PRECISION_BITS;
+	public static final int Y_RAW_MASK = 0x7f;
 
 	private EasyPlaceExtraProtocol()
 	{
@@ -33,6 +43,80 @@ public final class EasyPlaceExtraProtocol
 	public static int decodeZ(Vec3 hitPos, BlockPos clickedPos)
 	{
 		return decodeDimension(hitPos.z - clickedPos.getZ());
+	}
+
+	public static int decodeY(Vec3 hitPos, BlockPos clickedPos)
+	{
+		return decodeDimension(hitPos.y - clickedPos.getY());
+	}
+
+	public static int decodeYPayload(Vec3 hitPos)
+	{
+		if(hitPos.y < 2.0)
+		{
+			return -1;
+		}
+		return ((int) hitPos.y - 2) >>> 1;
+	}
+
+	public static Vec3 encodeY(BlockPos pos, Vec3 hitVec, int rawValue)
+	{
+		int precisionValue = quantizeRelativeY(hitVec.y - pos.getY());
+		int payload = Y_PAYLOAD_SCHEMA
+				| ((rawValue & Y_RAW_MASK) << Y_RAW_SHIFT)
+				| precisionValue;
+		return new Vec3(
+				hitVec.x,
+				2.0 + payload * 2.0,
+				hitVec.z
+		);
+	}
+
+	public static boolean isYPayload(int payload)
+	{
+		return payload >= 0 && (payload & Y_PAYLOAD_SCHEMA) != 0;
+	}
+
+	public static int rawValueFromYPayload(int payload)
+	{
+		if(!isYPayload(payload))
+		{
+			return -1;
+		}
+		return (payload >>> Y_RAW_SHIFT) & Y_RAW_MASK;
+	}
+
+	public static int quantizeRelativeY(double relativeHitY)
+	{
+		double clamped = Math.max(0.0, Math.min(1.0, relativeHitY));
+		int value = Math.min(
+				Y_PRECISION_MASK,
+				(int) Math.floor(clamped * Y_PRECISION_SCALE)
+		);
+		if(clamped <= 0.5)
+		{
+			value = Math.min(value, (Y_PRECISION_SCALE / 2) - 1);
+		}
+		return value;
+	}
+
+	public static double restoreRelativeY(int precisionValue)
+	{
+		int clamped = Math.max(0, Math.min(Y_PRECISION_MASK, precisionValue));
+		return (clamped + 0.5) / Y_PRECISION_SCALE;
+	}
+
+	public static boolean wallUp(int auxiliaryValue)
+	{
+		if(auxiliaryValue < 0)
+		{
+			return false;
+		}
+		if((auxiliaryValue & WALL_AUXILIARY_SCHEMA) != 0)
+		{
+			return (auxiliaryValue & WALL_UP) != 0;
+		}
+		return (auxiliaryValue & 0x1) != 0;
 	}
 
 	private static int decodeDimension(double relativeHit)
