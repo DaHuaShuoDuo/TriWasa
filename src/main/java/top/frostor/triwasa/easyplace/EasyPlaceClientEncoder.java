@@ -106,9 +106,25 @@ public final class EasyPlaceClientEncoder
 					auxiliaryValue | EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
 			);
 		}
+		int pistonProtectionMask = 0;
+		if(EasyPlaceClientNetwork.supportsPistonProtection()
+				&& EasyPlacePistonProtection.isEnabled())
+		{
+			Level schematicWorld = SchematicWorldHandler.getSchematicWorld();
+			pistonProtectionMask = EasyPlacePistonProtection.protectionMask(
+					state,
+					client.level == null ? null : client.level::getBlockState,
+					schematicWorld == null ? null : schematicWorld::getBlockState,
+					protocolPos
+			);
+		}
 		if(EasyPlaceClientNetwork.supportsYPrecision())
 		{
-			encodedHitVec = EasyPlaceExtraProtocol.encodeY(pos, encodedHitVec);
+			encodedHitVec = EasyPlaceExtraProtocol.encodeY(
+					pos,
+					encodedHitVec,
+					pistonProtectionMask
+			);
 		}
 		return encodedHitVec;
 	}

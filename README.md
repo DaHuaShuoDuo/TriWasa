@@ -73,6 +73,10 @@ observer 不发送 V2-Extra 状态或保护标志，放置和检测面更新恢�
 `easyPlaceTntProtection` 控制 TNT 保护，默认开启；开启时阻止轻松放置造成的红石点燃，
 关闭时恢复原版 TNT 激活路径。TNT 没有持久激活状态，因此不增加方块状态 adapter。
 该保护请求由所有 `BlockItem` 的公共放置路径发送，包括珊瑚扇等两用放置物品。
+`easyPlacePistonProtection` 与上述开关同级、默认开启。开启时客户端比较放置目标、
+六个面邻居与五个 QC 二跳候选的实际状态与投影，把匹配的 12 位掩码写入 Y 的 bit8-19，
+并置 `Y_PISTON_SCHEMA`（bit20）；关闭或服务端未声明活塞能力时 Y 退回纯精度编码。
+投影中的 `EXTENDED` 永不恢复，状态不一致的活塞仍执行原版更新。
 关闭该铁轨开关后，客户端不发送铁轨保护标志、邻轨 match mask，也不发送动力铁轨、
 激活铁轨或探测铁轨的初始激活位；轨道的形状同步与更新行为回到原有未保护路径。
 
@@ -94,8 +98,12 @@ Z 通道使用**固定原点**编码（`z = auxiliary * 2 + 2`，对齐世界 Z=
 `BlockPos` 的 Z 分量为锚点：Litematica 主路径、legacy `WorldUtils` 路径和 printer
 适配传入的 `BlockPos` 语义不同，相对锚点会让辅助字段随命中面错一位。`AUXILIARY_SCHEMA`
 是唯一合法的"Z 已编码"判据，服务端解出后剥离该位，缺少该位按无 auxiliary 处理。
-握手还会声明 `easy_place_y_precision` capability 与 `y_precision_bits=8`。服务端确认后，
-客户端把命中高度相对方块底部的 8-bit 定点值写入 Y；Y 只承载精度值，不复用 raw。
+握手还会声明 `easy_place_y_precision` capability 与 `y_precision_bits=8`，以及
+`easy_place_piston_protection` capability 与 `piston_protection_bits=12`。服务端确认后，
+客户端把命中高度相对方块底部的 8-bit 定点值写入 Y 的 bit0-7；Y 的 bit8-19 承载
+12 位活塞保护掩码，bit20 是 `Y_PISTON_SCHEMA`，只有掩码非零时置位。Y 不复用 raw，
+掩码为零或能力缺失时与纯精度编码逐位一致。命中位置按相对 `blockPos` 的 binary32
+float 传输，Y payload 最大 `2+2*(2^21-1)=2^22`，低于精确整数上限 2^24。
 X raw 与 Y 精度一律相对 packet `BlockHitResult.blockPos` 编码（不再用 `protocolPos`），
 FCA 在目标变换前的 packet 级快照中解码。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
 和 TNT 保护位会被静默丢弃。26.2/26.3 放置语义统一：两版依赖的 Litematica 不同（0.28.6 / 0.29.1），且 26.3 把

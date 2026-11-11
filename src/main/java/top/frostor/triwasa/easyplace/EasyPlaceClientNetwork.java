@@ -20,10 +20,13 @@ public final class EasyPlaceClientNetwork
 	private static final String NBT_PROTOCOL_VERSION = "protocol_version";
 	private static final String NBT_CAPABILITIES = "capabilities";
 	private static final String NBT_Y_PRECISION_BITS = "y_precision_bits";
+	private static final String NBT_PISTON_PROTECTION_BITS = "piston_protection_bits";
 	private static final String CAPABILITY_EASY_PLACE_V2_EXTRA = "easy_place_v2_extra";
 	private static final String CAPABILITY_Y_PRECISION = "easy_place_y_precision";
+	private static final String CAPABILITY_PISTON_PROTECTION = "easy_place_piston_protection";
 	private static boolean serverSupports;
 	private static boolean serverSupportsYPrecision;
+	private static boolean serverSupportsPistonProtection;
 	private static boolean helloPending;
 	private static boolean wasEnabled;
 
@@ -48,10 +51,13 @@ public final class EasyPlaceClientNetwork
 					serverSupports = acceptsCapability(data);
 					serverSupportsYPrecision = serverSupports
 							&& acceptsYPrecisionCapability(data);
+					serverSupportsPistonProtection = serverSupportsYPrecision
+							&& acceptsPistonProtectionCapability(data);
 					TriWasa.LOGGER.info(
-							"[EasyPlace] Client received V2-Extra acknowledgement (capability={}, y8={})",
+							"[EasyPlace] Client received V2-Extra acknowledgement (capability={}, y8={}, piston={})",
 							serverSupports,
-							serverSupportsYPrecision
+							serverSupportsYPrecision,
+							serverSupportsPistonProtection
 					);
 				}
 			});
@@ -90,10 +96,17 @@ public final class EasyPlaceClientNetwork
 		return isActive() && serverSupportsYPrecision;
 	}
 
+	/** The piston mask rides in the Y payload, so it is unavailable without the y8 capability. */
+	public static boolean supportsPistonProtection()
+	{
+		return supportsYPrecision() && serverSupportsPistonProtection;
+	}
+
 	public static void onConfigChanged(boolean enabled)
 	{
 		serverSupports = false;
 		serverSupportsYPrecision = false;
+		serverSupportsPistonProtection = false;
 		if(!enabled)
 		{
 			helloPending = false;
@@ -115,6 +128,7 @@ public final class EasyPlaceClientNetwork
 	{
 		serverSupports = false;
 		serverSupportsYPrecision = false;
+		serverSupportsPistonProtection = false;
 		helloPending = false;
 		wasEnabled = TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue();
 		EasyPlaceCrafterSlotLock.clear();
@@ -131,6 +145,7 @@ public final class EasyPlaceClientNetwork
 		{
 			serverSupports = false;
 			serverSupportsYPrecision = false;
+			serverSupportsPistonProtection = false;
 			helloPending = false;
 		}
 		wasEnabled = enabled;
@@ -163,10 +178,16 @@ public final class EasyPlaceClientNetwork
 		data.putInt(NBT_PROTOCOL_VERSION, PROTOCOL_VERSION);
 		data.putBoolean(CAPABILITY_EASY_PLACE_V2_EXTRA, true);
 		data.putBoolean(CAPABILITY_Y_PRECISION, true);
+		data.putBoolean(CAPABILITY_PISTON_PROTECTION, true);
 		data.putInt(NBT_Y_PRECISION_BITS, EasyPlaceExtraProtocol.Y_PRECISION_BITS);
+		data.putInt(
+				NBT_PISTON_PROTECTION_BITS,
+				EasyPlaceExtraProtocol.PISTON_PROTECTION_BITS
+		);
 		ListTag capabilities = new ListTag();
 		capabilities.add(StringTag.valueOf(CAPABILITY_EASY_PLACE_V2_EXTRA));
 		capabilities.add(StringTag.valueOf(CAPABILITY_Y_PRECISION));
+		capabilities.add(StringTag.valueOf(CAPABILITY_PISTON_PROTECTION));
 		data.put(NBT_CAPABILITIES, capabilities);
 		ClientPlayNetworking.send(EasyPlacePayloadBridge.create(EasyPlacePayload.HELLO, data));
 		TriWasa.LOGGER.info("[EasyPlace] Client sent V2-Extra hello");
@@ -185,6 +206,14 @@ public final class EasyPlaceClientNetwork
 				== EasyPlaceExtraProtocol.Y_PRECISION_BITS
 				&& data.getBooleanOr(CAPABILITY_Y_PRECISION, false)
 				&& advertisesCapability(data, CAPABILITY_Y_PRECISION);
+	}
+
+	static boolean acceptsPistonProtectionCapability(CompoundTag data)
+	{
+		return data.getIntOr(NBT_PISTON_PROTECTION_BITS, -1)
+				== EasyPlaceExtraProtocol.PISTON_PROTECTION_BITS
+				&& data.getBooleanOr(CAPABILITY_PISTON_PROTECTION, false)
+				&& advertisesCapability(data, CAPABILITY_PISTON_PROTECTION);
 	}
 
 	private static boolean advertisesCapability(CompoundTag data, String capability)

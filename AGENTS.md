@@ -119,6 +119,12 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   生效"的根因）。`AUXILIARY_SCHEMA`（bit24）是唯一合法的"Z 已编码"判据，编码时必须
   置位，服务端解出后剥离；缺少该位按无 auxiliary（-1）处理，不得回退到
   `decodeZ >= 0` 之类的猜测。该契约要求 TriWasa 与 FCA 同版本号配套。
+- Y 的 bit0-7 只承载 8-bit 命中高度，bit8-19 承载 12 位活塞保护掩码，bit20 是
+  `Y_PISTON_SCHEMA`；不得把 raw 或活塞掩码放进 X/Z，也不得恢复跨包 context 包。
+  仅当 `easyPlacePistonProtection` 开启且服务端同时声明 `easy_place_piston_protection`
+  与 `easy_place_y_precision` 时才计算掩码；掩码为零时 Y 必须与纯精度编码逐位一致。
+  掩码 bit0 是放置目标，bit1-6 是匹配的面邻居，bit7-11 是五个 QC 二跳目标；投影中的
+  `EXTENDED` 不得参与状态恢复或比较。
 - 26.2/26.3 放置语义必须统一：两版分别依赖 Litematica 0.28.6 / 0.29.1，且 26.3 的
   `ServerboundUseItemOnPacket` 是 record，命中位置以相对 `blockPos` 的 float 传输。wire 的
   X/Y 编码锚点只能是 packet `BlockHitResult.blockPos`；`resolveProtocolTarget` 一类的

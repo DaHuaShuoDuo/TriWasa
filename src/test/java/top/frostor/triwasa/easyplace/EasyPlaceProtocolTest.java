@@ -32,7 +32,9 @@ public final class EasyPlaceProtocolTest
 				+ EasyPlaceUpdateFlagsTest.run()
 				+ EasyPlaceSpecialStateTest.run()
 				+ EasyPlacePrinterStateTest.run()
-				+ EasyPlaceYPrecisionTest.run();
+				+ EasyPlaceYPrecisionTest.run()
+				+ EasyPlacePistonProtectionTest.run()
+				+ EasyPlaceYPistonPayloadTest.run();
 
 		System.out.println("EasyPlaceProtocolTest passed " + checks + " checks");
 	}

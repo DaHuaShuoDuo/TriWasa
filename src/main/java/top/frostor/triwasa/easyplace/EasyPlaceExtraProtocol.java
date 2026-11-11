@@ -29,6 +29,27 @@ public final class EasyPlaceExtraProtocol
 	public static final int Y_PRECISION_SCALE = 1 << Y_PRECISION_BITS;
 	public static final int Y_PRECISION_MASK = Y_PRECISION_SCALE - 1;
 
+	public static final int PISTON_TARGET_MATCH = 1;
+	public static final int PISTON_NEIGHBOR_MATCH_MASK = 0x3f << 1;
+	public static final int PISTON_QC_TARGET_MATCH_BASE = 1 << 7;
+	public static final int PISTON_QC_TARGET_MATCH_MASK = 0x1f << 7;
+	public static final int PISTON_PROTECTION_MASK = 0xfff;
+	public static final int PISTON_PROTECTION_BITS = 12;
+	private static final BlockPos[] PISTON_QC_TARGET_OFFSETS = {
+			new BlockPos(0, -2, 0),
+			new BlockPos(0, -1, -1),
+			new BlockPos(0, -1, 1),
+			new BlockPos(-1, -1, 0),
+			new BlockPos(1, -1, 0)
+	};
+
+	/** Y bits 0-7 hold the 8-bit hit height, bits 8-19 the piston mask, bit20 the schema marker. */
+	public static final int Y_PISTON_MASK_SHIFT = Y_PRECISION_BITS;
+	public static final int Y_PISTON_SCHEMA = 1 << 20;
+	public static final int Y_PAYLOAD_MASK = Y_PRECISION_MASK
+			| (PISTON_PROTECTION_MASK << Y_PISTON_MASK_SHIFT)
+			| Y_PISTON_SCHEMA;
+
 	private EasyPlaceExtraProtocol()
 	{
 	}
@@ -78,12 +99,78 @@ public final class EasyPlaceExtraProtocol
 
 	public static Vec3 encodeY(BlockPos pos, Vec3 hitVec)
 	{
+		return encodeY(pos, hitVec, 0);
+	}
+
+	public static Vec3 encodeY(BlockPos pos, Vec3 hitVec, int pistonProtectionMask)
+	{
 		int precisionValue = quantizeRelativeY(hitVec.y - pos.getY());
+		int payload = encodeYPistonPayload(precisionValue, pistonProtectionMask);
 		return new Vec3(
 				hitVec.x,
-				pos.getY() + 2.0 + precisionValue * 2.0,
+				pos.getY() + 2.0 + payload * 2.0,
 				hitVec.z
 		);
+	}
+
+	public static int encodeYPistonPayload(int precisionValue, int pistonProtectionMask)
+	{
+		int mask = pistonProtectionMask & PISTON_PROTECTION_MASK;
+		if(mask == 0)
+		{
+			return precisionValue & Y_PRECISION_MASK;
+		}
+		return (precisionValue & Y_PRECISION_MASK)
+				| (mask << Y_PISTON_MASK_SHIFT)
+				| Y_PISTON_SCHEMA;
+	}
+
+	public static boolean hasYPistonSchema(int packedY)
+	{
+		return packedY >= 0 && (packedY & Y_PISTON_SCHEMA) != 0;
+	}
+
+	public static int decodeYPiston(int packedY)
+	{
+		if(!hasYPistonSchema(packedY))
+		{
+			return 0;
+		}
+		return (packedY >>> Y_PISTON_MASK_SHIFT) & PISTON_PROTECTION_MASK;
+	}
+
+	public static int pistonNeighborMatchMask(int pistonProtectionMask)
+	{
+		if(pistonProtectionMask < 0)
+		{
+			return 0;
+		}
+		return (pistonProtectionMask & PISTON_NEIGHBOR_MATCH_MASK) >>> 1;
+	}
+
+	public static BlockPos[] pistonQcTargetOffsets()
+	{
+		return PISTON_QC_TARGET_OFFSETS.clone();
+	}
+
+	public static int pistonQcTargetMatchBit(BlockPos placementPos, BlockPos pos)
+	{
+		for(int index = 0; index < PISTON_QC_TARGET_OFFSETS.length; index++)
+		{
+			BlockPos offset = PISTON_QC_TARGET_OFFSETS[index];
+			if(pos.equals(placementPos.offset(
+					offset.getX(),
+					offset.getY(),
+					offset.getZ()
+			)))
+			{
+				return 1 << (
+						Integer.numberOfTrailingZeros(PISTON_QC_TARGET_MATCH_BASE)
+								+ index
+				);
+			}
+		}
+		return 0;
 	}
 
 	public static int quantizeRelativeY(double relativeHitY)
