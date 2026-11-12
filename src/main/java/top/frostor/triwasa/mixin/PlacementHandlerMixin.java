@@ -63,6 +63,16 @@ public abstract class PlacementHandlerMixin
 		}
 
 		int rawValue = EasyPlaceExtraProtocol.toRawValue(protocolValue);
-		cir.setReturnValue(EasyPlaceStateCodec.applyPlacementState(state, context, rawValue));
+		// PlacementHandler sees Litematica's own V2 hit vector, not the encoded wire hit vector.
+		// Its Z component is still the plain click position, so no FCA auxiliary field is present.
+		int auxiliaryValue = EasyPlaceExtraProtocol.decodeZ(context.hitVec(), context.pos());
+		cir.setReturnValue(
+				EasyPlaceStateCodec.applyPlacementState(
+						state,
+						context,
+						rawValue,
+						auxiliaryValue
+				)
+		);
 	}
 }

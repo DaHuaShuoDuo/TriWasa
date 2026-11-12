@@ -7,7 +7,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import top.frostor.triwasa.betterprinter.PrinterPacketAnchor;
 import top.frostor.triwasa.easyplace.EasyPlaceClientEncoder;
+import top.frostor.triwasa.easyplace.EasyPlaceClientNetwork;
 import top.frostor.triwasa.easyplace.EasyPlaceRules;
 
 @Mixin(targets = "me.aleksilassila.litematica.printer.utils.mods.LitematicaUtils")
@@ -31,6 +33,21 @@ public abstract class LitematicaPrinterMixin
 			return original;
 		}
 		Vec3 encoded = EasyPlaceClientEncoder.encode(pos, state, original);
-		return encoded == null ? original : encoded;
+		if(encoded == null)
+		{
+			// A native V2/V3 payload is about to be attached; drop any state that a rejected
+			// click may have left behind so it can never translate this placement.
+			PrinterPacketAnchor.clear();
+			return original;
+		}
+		// The payload is anchored at the schematic target; the queued click may target the
+		// support block instead, so remember the anchor until the click is actually queued.
+		// Z only moves when the server negotiated the relative-aux layout.
+		PrinterPacketAnchor.begin(
+				pos,
+				encoded,
+				EasyPlaceClientNetwork.supportsRelativeAux()
+		);
+		return encoded;
 	}
 }

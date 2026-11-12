@@ -87,6 +87,8 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 - 连接专用服务器且客户端未安装 FCA 时，保留 TriWasa 的线兼容 Payload 回退。
 - 单人游戏或集成服务器同时加载 FCA 时，必须复用 FCA 提供的 Payload、Codec 和相关
   类型，不得在同一频道注册两个不同的 Payload 类。
+- Easy Place ACK 必须包含当前 `protocol_version` 和显式能力字段；缺少字段或版本不匹配
+  时不得按旧协议降级为启用。
 - 对 FCA 类型的引用必须隔离在独立兼容适配器中，并通过模组加载检测保护；未安装 FCA
   时不得触发可选类加载错误。
 - 终端的 HELLO、能力、协议版本、快照 CRC、revision 连续性和重同步规则以 FCA 当前
@@ -97,6 +99,70 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   facade，由初始化后冻结的 `EasyPlaceCodecRegistry` 选择 behavior-family adapter；
   通用纯状态操作放入 `EasyPlaceStateSupport`。不要把已删除的
   `LegacyEasyPlaceStateCodec` 单体分支或每方块第二套状态表重新引回。
+- `WallBlock` 四侧按 `NORTH + EAST*3 + SOUTH*9 + WEST*27` 编码为 raw，`UP` 使用
+  辅助值的 bit0；编码结果通过 `EasyPlaceEncodedState(rawValue, auxiliaryValue)` 携带。
+  `WATERLOGGED` 不得进入编码。无辅助状态的 adapter 默认返回 `auxiliaryValue=0`，
+  且 Z 通道仍须保持合成器锁槽行为不变。
+- Z 通道 bit9 和 bit10 分别表示 `easyPlaceRailProtection` 与
+  `easyPlaceWallBlockNoShapeUpdate` 请求的邻域更新保护；低 9 位继续属于 crafter
+  slot mask。两个子开关与 `easyPlaceV2ProtocolExtra` 父子关系同级、默认开启，并在每次
+  V2-Extra 编码时写入标志，不能只在放置 wall/rail 本身时写入。
+- Z 通道 bit17-21 按固定顺序 `NORTH,SOUTH,WEST,EAST,UP` 标记五个铁轨保护方向中实际
+  状态与投影一致的邻轨，不得使用 `Direction.ordinal()`。比较必须忽略 `WATERLOGGED`；
+  所有带 `POWERED` 的铁轨都不将该状态用于邻轨保护比较。目标位置的铁轨红石状态由
+  raw bit4 保存，并由 FCA 的 `RAIL` family 在放置位置一并保护，不存在 `RAIL_STATE`
+  family 或 bit25 状态保护位。形状等其他状态不一致方向的 bit 不得发送，使该铁轨继续
+  接受原版更新。
+- Z 通道使用固定原点（`z = auxiliary * 2 + 2`，对齐世界 Z=0），禁止用任何 `BlockPos`
+  的 Z 分量作编码锚点。Litematica 主路径、legacy `WorldUtils` 路径与 printer 适配传入
+  的 `BlockPos` 语义不同，相对锚点会让辅助字段随命中面错一位（这正是铁轨保护曾"部分
+  生效"的根因）。`AUXILIARY_SCHEMA`（bit24）是唯一合法的"Z 已编码"判据，编码时必须
+  置位，服务端解出后剥离；缺少该位按无 auxiliary（-1）处理，不得回退到
+  `decodeZ >= 0` 之类的猜测。该契约要求 TriWasa 与 FCA 同版本号配套。
+- Y 的 bit0-7 只承载 8-bit 命中高度，bit8-19 承载 12 位活塞保护掩码，bit20 是
+  `Y_PISTON_SCHEMA`；不得把 raw 或活塞掩码放进 X/Z，也不得恢复跨包 context 包。
+  仅当 `easyPlacePistonProtection` 开启且服务端同时声明 `easy_place_piston_protection`
+  与 `easy_place_y_precision` 时才计算掩码；掩码为零时 Y 必须与纯精度编码逐位一致。
+  掩码 bit0 是放置目标，bit1-6 是匹配的面邻居，bit7-11 是五个 QC 二跳目标；投影中的
+  `EXTENDED` 不得参与状态恢复或比较。
+- 26.2/26.3 放置语义必须统一：两版分别依赖 Litematica 0.28.6 / 0.29.1，且 26.3 的
+  `ServerboundUseItemOnPacket` 是 record，命中位置以相对 `blockPos` 的 float 传输。wire 的
+  X/Y/Z 只承认 packet `BlockHitResult.blockPos` 一个锚点；`resolveProtocolTarget` 一类的
+  `protocolPos` 仅用于读投影/世界状态，禁止进入 `encodeX`/`encodeY`。printer 点击支撑方块
+  时，`Action.queueAction` 选定的 packet 位置与编码锚点相差一格，必须在
+  `ActionManager.queueClick` 到 `useProtocolHitModifier` 之间把 X/Y 平移
+  `packetTarget - encodeAnchor`；Z 只在服务端确认 `easy_place_relative_aux` 时一起平移，
+  legacy 固定原点布局下不得动 Z。服务端已删除命中面/X 轴候选兜底，所以 HELLO 必须声明
+  `easy_place_packet_anchor`，缺少该能力会被 FCA 拒绝并回落原版 easy place。
+- relative aux 布局：Z 承载 `aux & 0xFFFFFF` 并以 packet `BlockPos` 为锚点，
+  `AUXILIARY_SCHEMA`/`WALL_AUXILIARY_SCHEMA`/`WALL_UP` 拆到 X payload 的 bit8-10
+  （`splitAuxiliaryHigh`）。24 位是精确上限（偏移 ≤ 2^25 且为偶数，ULP=2），25 位起
+  开始丢低位。该能力是可选的：只在 ACK 明确回声明时启用，客户端单方面开启不算。
+- Z 通道 bit11-16 按 `Direction.ordinal()` 标记六个相邻位置中哪些墙的实际状态与
+  Litematica 投影状态一致。比较必须忽略 `WATERLOGGED`，其余方块种类、四侧连接和
+  `UP` 必须完全一致；不一致方向的 bit 不得发送，使该墙在服务端继续接受原版邻居更新。
+- 关闭 `easyPlaceWallBlockNoShapeUpdate` 时，`WallStateAdapter.encode(...)` 必须返回
+  `-1`，不得发送 wall raw/UP 投影或 wall 邻域保护标志，使墙体放置回到原版状态与更新
+  语义；不能只关闭 bit10 而继续恢复投影状态。
+- Observer 状态由独立 `adapter/observer` family 处理。客户端只编码 `FACING` 的
+  3D data value，不得编码 `POWERED`；decoder 必须把 `POWERED` 强制为 false。raw 只
+  接受 `0..5`，其他值返回 `null`。
+- `easyPlaceObserverProtection` 与 rail/wall 开关同级、默认开启。关闭时
+  `ObserverStateAdapter.encode(...)` 必须返回 `-1`，且 `EasyPlaceUpdateFlags` 不得发送
+  Z 通道 bit22，使 observer 放置和检测面更新完全回到原版语义。
+- `easyPlaceTntProtection` 与 rail/wall/observer 开关同级、默认开启，并通过 Z 通道
+  bit23 请求 FCA 保护 TNT。关闭时不得发送 bit23；客户端不增加 TNT 状态 adapter，
+  因为 TNT 没有可恢复的激活方块状态。
+- `easyPlaceRailProtection` 与 wall/observer/TNT 开关同级、默认开启，统一控制铁轨
+  形状/PP 更新保护、bit9 请求、bit17-21 match mask、raw bit3/bit4 的兜底保护标志和
+  raw bit4 的 `POWERED` 值。关闭时这些标志和状态位都不得发送。FCA 只有 `RAIL` family，
+  同时负责形状、邻域和放置位置状态；`RAIL_STATE` family 已移除。26.x 中动力铁轨与
+  激活铁轨都是 `PoweredRailBlock` 的不同方块实例，探测铁轨使用独立
+  `DetectorRailBlock`；没有独立 `ActivatorRailBlock`。普通铁轨没有红石状态。
+  不要引入形状/状态两个配置开关，也不要新增旧开关别名或迁移分支。
+- TNT 保护的客户端请求必须位于所有 `BlockItem` 共用的 `place` 路径，并在
+  `getPlacementState` 调用前发送；不得依赖目标方块 adapter，否则珊瑚扇等
+  `StandingAndWallBlockItem` 会漏掉保护。
 - 墙钟、悬挂牌、蜡烛等 target/click 转换属于独立 placement rule、client encoder 或
   Mixin 桥接，不得塞入状态 codec。新增或调整时保留 `EasyPlaceProtocolTest` 作为
   `logicTest` 入口，并扩展对应 family suite 与集成矩阵。

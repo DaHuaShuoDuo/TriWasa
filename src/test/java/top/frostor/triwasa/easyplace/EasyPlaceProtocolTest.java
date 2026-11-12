@@ -25,8 +25,17 @@ public final class EasyPlaceProtocolTest
 				+ EasyPlaceMushroomStateTest.run()
 				+ EasyPlaceAttachmentStateTest.run()
 				+ EasyPlaceRailStateTest.run()
+				+ EasyPlaceRailProtectionTest.run()
+				+ EasyPlaceWallStateTest.run()
+				+ EasyPlaceWallProtectionTest.run()
+				+ EasyPlaceObserverStateTest.run()
+				+ EasyPlaceUpdateFlagsTest.run()
 				+ EasyPlaceSpecialStateTest.run()
-				+ EasyPlacePrinterStateTest.run();
+				+ EasyPlacePrinterStateTest.run()
+				+ EasyPlaceYPrecisionTest.run()
+				+ EasyPlacePistonProtectionTest.run()
+				+ EasyPlaceYPistonPayloadTest.run()
+				+ PrinterPacketAnchorTest.run();
 
 		System.out.println("EasyPlaceProtocolTest passed " + checks + " checks");
 	}

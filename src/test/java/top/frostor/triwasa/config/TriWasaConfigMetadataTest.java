@@ -35,6 +35,45 @@ public final class TriWasaConfigMetadataTest
 				TriWasaConfigs.EASY_PLACE_EXPANDED,
 				TriWasaConfigs.EASY_PLACE_CHILDREN
 		);
+		check(
+				TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION.getBooleanValue()
+						&& TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue()
+					&& TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION.getBooleanValue()
+					&& TriWasaConfigs.EASY_PLACE_TNT_PROTECTION.getBooleanValue()
+					&& TriWasaConfigs.EASY_PLACE_PISTON_PROTECTION.getBooleanValue(),
+			"easy-place protection child switches must default to enabled"
+		);
+		check(
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE)
+						== TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
+				"wall update protection must be an Easy Place child"
+		);
+		check(
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.EASY_PLACE_OBSERVER_PROTECTION)
+						== TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
+				"observer protection must be an Easy Place child"
+		);
+		check(
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.EASY_PLACE_TNT_PROTECTION)
+						== TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
+				"TNT protection must be an Easy Place child"
+		);
+		check(
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.EASY_PLACE_RAIL_PROTECTION)
+						== TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
+				"rail protection must be an Easy Place child"
+		);
+		check(
+				TriWasaConfigs.getParentConfig(TriWasaConfigs.EASY_PLACE_PISTON_PROTECTION)
+						== TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA,
+				"piston protection must be an Easy Place child"
+		);
+		check(
+				TriWasaConfigOptionWidget.getTooltipWrapWidth(100) == 80
+						&& TriWasaConfigOptionWidget.getTooltipWrapWidth(400) == 320
+						&& TriWasaConfigOptionWidget.getTooltipWrapWidth(1000) == 320,
+				"config tooltips must use bounded screen-aware wrapping"
+		);
 		checkParent(
 				TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK,
 				TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK_EXPANDED,

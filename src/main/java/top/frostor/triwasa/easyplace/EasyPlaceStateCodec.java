@@ -27,6 +27,7 @@ import top.frostor.triwasa.easyplace.adapter.generic.GenericFallbackStateAdapter
 import top.frostor.triwasa.easyplace.adapter.lantern.LanternStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.multiface.MultiFaceStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.mushroom.MushroomStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.observer.ObserverStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.quantity.QuantityStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.rail.DetectorRailStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.rail.RailStateAdapter;
@@ -35,8 +36,10 @@ import top.frostor.triwasa.easyplace.adapter.special.BellStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.sign.HangingSignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.sign.SignStateAdapter;
 import top.frostor.triwasa.easyplace.adapter.special.AdministrativeStateAdapter;
+import top.frostor.triwasa.easyplace.adapter.wall.WallStateAdapter;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecContext;
 import top.frostor.triwasa.easyplace.registry.EasyPlaceCodecRegistry;
+import top.frostor.triwasa.easyplace.registry.EasyPlaceEncodedState;
 import top.frostor.triwasa.mixin.StandingAndWallBlockItemAccessor;
 
 public final class EasyPlaceStateCodec
@@ -52,12 +55,12 @@ public final class EasyPlaceStateCodec
 
 	public static int encode(BlockState state)
 	{
-		return encode(state, null, null, null);
+		return encodeState(state).rawValue();
 	}
 
 	static int encode(BlockState state, @Nullable BlockState currentState)
 	{
-		return encode(state, currentState, null, null);
+		return encodeState(state, currentState, null, null).rawValue();
 	}
 
 	public static int encode(
@@ -67,16 +70,32 @@ public final class EasyPlaceStateCodec
 			@Nullable BlockPos pos
 	)
 	{
-		Block block = state.getBlock();
+		return encodeState(state, currentState, level, pos).rawValue();
+	}
 
+	public static EasyPlaceEncodedState encodeState(BlockState state)
+	{
+		return encodeState(state, null, null, null);
+	}
+
+	public static EasyPlaceEncodedState encodeState(
+			BlockState state,
+			@Nullable BlockState currentState,
+			@Nullable BlockGetter level,
+			@Nullable BlockPos pos
+	)
+	{
 		BlockItem item = state.getBlock().asItem() instanceof BlockItem blockItem ? blockItem : null;
 		if(item instanceof StandingAndWallBlockItem standingAndWallItem)
 		{
-			int stateValue = REGISTRY.encode(codecContext(state, currentState, level, pos));
+			EasyPlaceEncodedState encodedState = REGISTRY.encode(
+					codecContext(state, currentState, level, pos)
+			);
+			int stateValue = encodedState.rawValue();
 			boolean hangingSign = state.getBlock() instanceof HangingSignBlock;
 			if(stateValue < 0 || stateValue > (hangingSign ? 0x1f : 0xf))
 			{
-				return -1;
+				return new EasyPlaceEncodedState(-1, 0);
 			}
 
 			boolean wall = state.getBlock() != standingAndWallItem.getBlock();
@@ -88,7 +107,7 @@ public final class EasyPlaceStateCodec
 			{
 				encoded |= 0x4;
 			}
-			return encoded;
+			return new EasyPlaceEncodedState(encoded, 0);
 		}
 		return REGISTRY.encode(new EasyPlaceCodecContext(
 				state,
@@ -96,6 +115,7 @@ public final class EasyPlaceStateCodec
 				level,
 				pos,
 				null,
+				0,
 				0
 		));
 	}
@@ -104,6 +124,16 @@ public final class EasyPlaceStateCodec
 			BlockState state,
 			PlacementHandler.UseContext context,
 			int rawValue
+	)
+	{
+		return applyPlacementState(state, context, rawValue, 0);
+	}
+
+	public static @Nullable BlockState applyPlacementState(
+			BlockState state,
+			PlacementHandler.UseContext context,
+			int rawValue,
+			int auxiliaryValue
 	)
 	{
 		BlockItem item = state.getBlock().asItem() instanceof BlockItem blockItem ? blockItem : null;
@@ -124,10 +154,17 @@ public final class EasyPlaceStateCodec
 					wallBlock,
 					standingState,
 					context.itemPlacementContext(),
-					rawValue
+					rawValue,
+					auxiliaryValue
 			);
 		}
-		return apply(state.getBlock(), state, context.itemPlacementContext(), rawValue);
+		return apply(
+				state.getBlock(),
+				state,
+				context.itemPlacementContext(),
+				rawValue,
+				auxiliaryValue
+		);
 	}
 
 	public static @Nullable BlockState apply(
@@ -137,13 +174,25 @@ public final class EasyPlaceStateCodec
 			int rawValue
 	)
 	{
+		return apply(block, state, context, rawValue, 0);
+	}
+
+	public static @Nullable BlockState apply(
+			Block block,
+			BlockState state,
+			BlockPlaceContext context,
+			int rawValue,
+			int auxiliaryValue
+	)
+	{
 		return REGISTRY.decode(new EasyPlaceCodecContext(
 				state,
 				null,
 				null,
 				null,
 				context,
-				rawValue
+				rawValue,
+				auxiliaryValue
 		));
 	}
 
@@ -153,6 +202,25 @@ public final class EasyPlaceStateCodec
 			BlockState standingState,
 			BlockPlaceContext context,
 			int rawValue
+	)
+	{
+		return applyStandingOrWall(
+				standingBlock,
+				wallBlock,
+				standingState,
+				context,
+				rawValue,
+				0
+		);
+	}
+
+	public static @Nullable BlockState applyStandingOrWall(
+			Block standingBlock,
+			Block wallBlock,
+			BlockState standingState,
+			BlockPlaceContext context,
+			int rawValue,
+			int auxiliaryValue
 	)
 	{
 		boolean wall = (rawValue & 1) != 0;
@@ -170,8 +238,12 @@ public final class EasyPlaceStateCodec
 		{
 			state = wallBlock.defaultBlockState();
 		}
+		if(state == null)
+		{
+			return null;
+		}
 		state = EasyPlaceStateSupport.setFirstDirection(state, facing);
-		return apply(block, state, context, stateValue);
+		return apply(block, state, context, stateValue, auxiliaryValue);
 	}
 
 	static BlockState applyGeneric(BlockState state, int protocolValue, BlockPlaceContext context)
@@ -212,6 +284,8 @@ public final class EasyPlaceStateCodec
 		CrafterStateAdapter crafter = new CrafterStateAdapter();
 		DaylightDetectorStateAdapter daylight = new DaylightDetectorStateAdapter();
 		DetectorRailStateAdapter detectorRail = new DetectorRailStateAdapter();
+		WallStateAdapter wall = new WallStateAdapter();
+		ObserverStateAdapter observer = new ObserverStateAdapter();
 		LanternStateAdapter lantern = new LanternStateAdapter();
 		GenericFallbackStateAdapter genericFallback = new GenericFallbackStateAdapter();
 		AdministrativeStateAdapter administrative = new AdministrativeStateAdapter();
@@ -296,6 +370,14 @@ public final class EasyPlaceStateCodec
 				detectorRail,
 				detectorRail
 		);
+		registry.register("wall", 652, WallStateAdapter::matches, wall, wall);
+		registry.register(
+				"observer",
+				651,
+				ObserverStateAdapter::matches,
+				observer,
+				observer
+		);
 		registry.register("lantern", 640, LanternStateAdapter::matches, lantern, lantern);
 		registry.register(
 				"administrative",
@@ -322,7 +404,7 @@ public final class EasyPlaceStateCodec
 			@Nullable BlockPos pos
 	)
 	{
-		return new EasyPlaceCodecContext(state, currentState, level, pos, null, 0);
+		return new EasyPlaceCodecContext(state, currentState, level, pos, null, 0, 0);
 	}
 
 }

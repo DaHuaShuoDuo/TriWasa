@@ -56,15 +56,71 @@ TriWasa 在 Litematica 的真实放置入口编码 FCA V2-Extra 方块状态，�
 V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端校验。
 
 配置总开关为 `easyPlaceV2ProtocolExtra`。
+其下提供铁轨、墙体、observer、TNT 与活塞保护子开关，均默认开启。
+铁轨开关请求 FCA 抑制铁轨形状重算与 PP 更新，并保留动力铁轨、激活铁轨和探测铁轨的
+初始 `POWERED` 状态。26.x 中动力铁轨与激活铁轨都使用 `PoweredRailBlock`，探测铁轨
+使用独立的 `DetectorRailBlock`。客户端会把相邻实际铁轨与投影比较，通过 Z 通道
+match mask 只保护铁轨种类与形状一致的邻轨；邻轨红石状态不参与比较，普通铁轨也没有
+红石状态。
+关闭墙体开关后，墙体不再发送 V2-Extra 投影状态或墙保护标志，放置与后续更新回到原版
+语义。
+墙体开关开启时，客户端逐方向比较实际世界与投影中的相邻墙状态，并把匹配位随 Z 通道
+发送；比较忽略 `WATERLOGGED`，其他状态不符的墙不会获得邻居冻结保护。
+Observer 通过独立 family 只同步 `FACING`，投影中的 `POWERED` 不会发送；服务端放置
+observer 时始终从未激活状态开始。
+该行为由与铁轨/墙体保护同级的 `easyPlaceObserverProtection` 控制，默认开启；关闭后
+observer 不发送 V2-Extra 状态或保护标志，放置和检测面更新恢复原版。
+`easyPlaceTntProtection` 控制 TNT 保护，默认开启；开启时阻止轻松放置造成的红石点燃，
+关闭时恢复原版 TNT 激活路径。TNT 没有持久激活状态，因此不增加方块状态 adapter。
+该保护请求由所有 `BlockItem` 的公共放置路径发送，包括珊瑚扇等两用放置物品。
+`easyPlacePistonProtection` 与上述开关同级、默认开启。开启时客户端比较放置目标、
+六个面邻居与五个 QC 二跳候选的实际状态与投影，把匹配的 12 位掩码写入 Y 的 bit8-19，
+并置 `Y_PISTON_SCHEMA`（bit20）；关闭或服务端未声明活塞能力时 Y 退回纯精度编码。
+投影中的 `EXTENDED` 永不恢复，状态不一致的活塞仍执行原版更新。
+关闭该铁轨开关后，客户端不发送铁轨保护标志、邻轨 match mask，也不发送动力铁轨、
+激活铁轨或探测铁轨的初始激活位；轨道的形状同步与更新行为回到原有未保护路径。
 
 客户端方块状态编解码使用显式、初始化后冻结的行为族注册表。稳定的
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` 作为 facade 查找 owner，具体编码
-和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、multiface、
+和解码位于 `easyplace/adapter` 下的 directional、attachment、rail、wall、observer、multiface、
 quantity、container、sign、redstone 和 special 等适配器，通用纯状态操作集中在
 `EasyPlaceStateSupport`。墙钟、悬挂牌、蜡烛等目标位置或点击面转换继续留在独立规则与
 客户端放置入口中，不写入状态适配器；Mixin 只负责必要的 Litematica 调用链桥接。
+所有原版墙方块将四侧连接编码为 base-3 raw，并用 Z 通道 bit26 的 schema 与 bit27
+传递 `UP`；服务端继续接受旧 bit0 布局。
+`WATERLOGGED` 不写入编码，仍由 FCA 服务端放置状态决定。
 旧的 `LegacyEasyPlaceStateCodec` 单体映射已移除。V2-Extra Payload 标记和协议版本
-仍为 1，其余字段布局未改变。多面方块的面索引顺序固定为
+仍为 1；辅助 Z 通道低 9 位继续用于 crafter slot mask，bit9/bit10 分别表示
+rail/wall 更新保护请求，bit11-16 标记匹配的相邻墙方向，bit17-21 按
+`NORTH,SOUTH,WEST,EAST,UP` 标记匹配的相邻铁轨方向，bit22 表示 observer 保护请求，
+bit23 表示 TNT 保护请求，bit24 是 `AUXILIARY_SCHEMA` 标记，bit25 空闲。
+Z 通道使用**固定原点**编码（`z = auxiliary * 2 + 2`，对齐世界 Z=0），不再以任何
+`BlockPos` 的 Z 分量为锚点：Litematica 主路径、legacy `WorldUtils` 路径和 printer
+适配传入的 `BlockPos` 语义不同，相对锚点会让辅助字段随命中面错一位。`AUXILIARY_SCHEMA`
+是唯一合法的"Z 已编码"判据，服务端解出后剥离该位，缺少该位按无 auxiliary 处理。
+握手还会声明 `easy_place_y_precision` capability 与 `y_precision_bits=8`，以及
+`easy_place_piston_protection` capability 与 `piston_protection_bits=12`。服务端确认后，
+客户端把命中高度相对方块底部的 8-bit 定点值写入 Y 的 bit0-7；Y 的 bit8-19 承载
+12 位活塞保护掩码，bit20 是 `Y_PISTON_SCHEMA`，只有掩码非零时置位。Y 不复用 raw，
+掩码为零或能力缺失时与纯精度编码逐位一致。命中位置按相对 `blockPos` 的 binary32
+float 传输，Y payload 最大 `2+2*(2^21-1)=2^22`，低于精确整数上限 2^24。
+X raw 与 Y 精度一律相对 packet `BlockHitResult.blockPos` 编码（不再用 `protocolPos`），
+FCA 在目标变换前的 packet 级快照中解码。打印机需要点击支撑方块时，`queueAction` 决定的
+packet 位置与编码锚点相差一格，框架会在入队到 `useProtocolHitModifier` 之间把 X/Y 平移
+同一差值；Z 仅在 relative 布局下一起平移。
+
+服务端确认 `easy_place_relative_aux` 后，Z 改用相对布局：低 24 位以 packet `blockPos`
+为锚点，`AUXILIARY_SCHEMA`、`WALL_AUXILIARY_SCHEMA`、`WALL_UP` 三位随 X payload 的
+bit8-10 一起发送。偏移 `2 + 2*payload ≤ 2^25` 且恒为偶数，binary32 在该区间 ULP 为 2，
+可以逐位还原；未确认时继续使用 legacy 固定原点布局。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
+和 TNT 保护位会被静默丢弃。26.2/26.3 放置语义统一：两版依赖的 Litematica 不同（0.28.6 / 0.29.1），且 26.3 把
+`ServerboundUseItemOnPacket` 改为 record，命中位置经 `BlockHitResult.STREAM_CODEC` 以
+**相对 `blockPos` 的 float** 传输。wire 的 X/Y/Z 只承认 packet `blockPos` 一个锚点：
+`BellRules.resolveProtocolTarget` 等解析出的 `protocolPos` 只用于读取投影与当前世界状态，
+不得传给 `encodeX`/`encodeY`。服务端不再按命中面或 X 轴相邻锚点兜底，因此客户端必须在
+HELLO 中声明 `easy_place_packet_anchor`；未声明该能力的客户端不会获得 V2-Extra，会回落到
+原版 easy place，而不是静默放错状态。
+多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到
 匹配版本，混用版本时多面方块和藤蔓可能按错误方向解码。旧 `main` 快照保存在双方的

@@ -47,7 +47,7 @@ public final class EasyPlaceCrafterSlotLock
 				disabledMask |= 1 << slot;
 			}
 		}
-		PENDING_SLOTS.set(disabledMask & 0x1ff);
+		PENDING_SLOTS.set(disabledMask & EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK);
 	}
 
 	public static int getPendingMask()
@@ -62,7 +62,7 @@ public final class EasyPlaceCrafterSlotLock
 
 	static int[] decodeSlots(int disabledMask)
 	{
-		int[] slots = new int[Integer.bitCount(disabledMask & 0x1ff)];
+		int[] slots = new int[Integer.bitCount(disabledMask & EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK)];
 		int index = 0;
 		for(int slot = 0; slot < SLOT_COUNT; slot++)
 		{

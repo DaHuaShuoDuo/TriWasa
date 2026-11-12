@@ -19,6 +19,7 @@ public final class EasyPlaceCodecRegistryTest
 		checkDuplicateRegistration();
 		checkFreeze();
 		checkNotFrozenLookup();
+		checkNegativeRawClearsAuxiliary();
 		System.out.println("EasyPlaceCodecRegistryTest passed " + checks + " checks");
 	}
 
@@ -49,7 +50,9 @@ public final class EasyPlaceCodecRegistryTest
 		registry.freeze();
 
 		EasyPlaceCodecContext context = context();
-		check(registry.encode(context) == 3, "higher-priority exact encoders must win");
+		EasyPlaceEncodedState encoded = registry.encode(context);
+		check(encoded.rawValue() == 3, "higher-priority exact encoders must win");
+		check(encoded.auxiliaryValue() == 0, "adapters without auxiliary state must encode zero");
 		BlockState result = registry.decode(context);
 		check(result != null, "a matching decoder must produce a state");
 		check(
@@ -115,6 +118,25 @@ public final class EasyPlaceCodecRegistryTest
 		);
 	}
 
+	private static void checkNegativeRawClearsAuxiliary()
+	{
+		EasyPlaceCodecRegistry registry = new EasyPlaceCodecRegistry();
+		registry.register(
+				"disabled",
+				0,
+				context -> true,
+				context -> -1,
+				context -> {
+					throw new AssertionError("auxiliary encoding must not run for rejected states");
+				}
+		);
+		registry.freeze();
+
+		EasyPlaceEncodedState encoded = registry.encode(context());
+		check(encoded.rawValue() == -1, "negative raw values must remain rejected");
+		check(encoded.auxiliaryValue() == 0, "rejected states must clear auxiliary data");
+	}
+
 	private static EasyPlaceCodecContext context()
 	{
 		return new EasyPlaceCodecContext(
@@ -123,6 +145,7 @@ public final class EasyPlaceCodecRegistryTest
 				null,
 				null,
 				null,
+				0,
 				0
 		);
 	}

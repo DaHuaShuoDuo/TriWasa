@@ -65,20 +65,76 @@ handling. FCA remains authoritative for final block state and placement
 validation.
 
 The master switch is `easyPlaceV2ProtocolExtra`.
+Its rail, wall, observer, TNT, and piston protection children all default to
+enabled. The rail switch
+suppresses rail shape recalculation and PP updates and preserves the initial
+`POWERED` state of powered, activator, and detector rails. In 26.x, powered and
+activator rails both use `PoweredRailBlock`, while detector rails use the
+separate `DetectorRailBlock`. The client compares adjacent actual rails with
+the projection and sends a match mask through the Z channel, so only rail type
+and shape matches are protected. Neighbor redstone state is not compared, and
+ordinary rails have no redstone state.
+Disabling the wall switch omits wall V2-Extra state and wall-protection flags,
+returning wall placement and subsequent updates to vanilla behavior.
+While enabled, the client compares each adjacent wall in the actual world with
+Litematica's projected state and sends a per-direction match mask through the Z
+channel. `WATERLOGGED` is ignored; other mismatches do not receive neighbor
+update protection.
+Observers use a dedicated family that synchronizes only `FACING`; projected
+`POWERED` is never encoded, so server-side placement always starts inactive.
+The peer `easyPlaceObserverProtection` switch defaults to enabled; disabling it
+omits observer V2-Extra state and protection flags, restoring vanilla placement
+and detection-face updates.
+The peer `easyPlaceTntProtection` switch defaults to enabled and prevents
+easy-place redstone priming of TNT while enabled. TNT has no persistent active
+block state, so no TNT state adapter is added.
+The request is emitted from the common `BlockItem` placement path for all block
+items, including standing/wall coral-fan items.
+The peer `easyPlacePistonProtection` switch compares the placement target, six
+face neighbors, and five QC second-hop candidates with the projection while
+the projected piston remains unextended. Matching entries are packed into the
+12-bit mask in Y bits 8-19 with `Y_PISTON_SCHEMA` at bit 20. Projected
+`EXTENDED` is never restored, and mismatched pistons retain vanilla updates.
+Disabling the rail switch omits the rail protection flag and match mask, as
+well as the initial active-state bit for powered, activator, and detector
+rails, returning rail synchronization and updates to the unprotected path.
 
 Client-side state encoding and decoding uses explicit behavior-family registries
 that freeze after initialization. The stable
 `EasyPlaceStateCodec.encode(...)` / `apply(...)` entry points select the owning
 adapter; concrete codecs live under `easyplace/adapter` in directional,
-attachment, rail, multiface, quantity, container, sign, redstone, and special
+attachment, rail, wall, observer, multiface, quantity, container, sign, redstone, and special
 families, with shared pure state operations in `EasyPlaceStateSupport`.
 Target-position and click-face transforms for wall bells, hanging signs,
 candles, and similar placement cases remain in dedicated rules and client
 placement entry points rather than state adapters. Mixins only bridge the
-required Litematica call paths. The old monolithic
+required Litematica call paths. All vanilla wall blocks encode their four side
+connections as base-3 raw data. `UP` uses bit 26 as a schema marker and bit 27
+as its value while the server continues to accept the legacy bit-zero layout;
+`WATERLOGGED` is omitted and remains authoritative from FCA's server-side
+placement state. The old monolithic
 `LegacyEasyPlaceStateCodec` mapping has been removed. The V2-Extra payload
-marker and protocol version remain 1, and the rest of the field layout is
-unchanged. Multiface wire indices use the fixed order
+marker and protocol version remain 1. In the auxiliary Z channel, the low nine
+bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
+update protection, bits 11-16 mark matching wall neighbors, and bit 17 requests
+rail neighbors in `NORTH,SOUTH,WEST,EAST,UP` order through bits 17-21; bit 22
+requests observer protection and bit 23 requests TNT protection; bit 24 is the
+`AUXILIARY_SCHEMA` marker, bit 25 is free, and bits 26-27 are the wall schema
+and `UP` value. Auxiliary Z data has two layouts. The legacy layout,
+`z = auxiliary * 2 + 2`, stays anchored at world Z=0. After the server confirms
+`easy_place_relative_aux`, only the low 24 bits remain in Z and are anchored at
+the packet `blockPos`; the three high bits move to X payload bits 8-10. The
+relative offset stays at or below 2^25 and every even value is exact in
+binary32. The handshake also advertises `easy_place_y_precision` with
+`y_precision_bits=8` and `easy_place_piston_protection` with
+`piston_protection_bits=12`. Once confirmed, the client stores an eight-bit
+fixed-point hit height in Y bits 0-7, the piston mask in bits 8-19, and the
+schema marker at bit 20. X raw and Y precision are encoded relative to the
+packet's `BlockHitResult.blockPos`, and FCA decodes them against the same anchor
+before target transformations. The HELLO handshake must declare
+`easy_place_packet_anchor`; a client without that capability falls back to
+vanilla easy place instead of silently decoding the wrong raw state. Multiface wire
+indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical
 face order must be upgraded to a matching release, because mixed versions can

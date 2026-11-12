@@ -2,6 +2,8 @@ package top.frostor.triwasa.easyplace;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Arrays;
@@ -31,27 +33,152 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				EasyPlaceExtraProtocol.toRawValue(EasyPlaceExtraProtocol.decode(encoded, pos)) == 0x5a,
 				"encoded hit position must decode through the FCA wire layout"
 		);
-		Vec3 encodedCrafter = EasyPlaceExtraProtocol.encodeZ(pos, encoded, 0x1ab);
+		Vec3 encodedCrafter = encodeAuxiliary(encoded, 0x1ab);
 		test.check(
-				EasyPlaceExtraProtocol.decodeZ(encodedCrafter, pos) == 0x1ab,
+				decodeAuxiliary(encodedCrafter) == 0x1ab,
 				"crafter slot masks must survive the hit Z encoding"
 		);
-		CompoundTag legacyCapability = new CompoundTag();
+		int updateFlags = EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
+				| EasyPlaceExtraProtocol.WALL_UPDATE_SUPPRESSION;
 		test.check(
-				EasyPlaceClientNetwork.acceptsCapability(legacyCapability),
-				"legacy acknowledgements without capability fields must remain accepted"
+				(updateFlags & EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK) == 0,
+				"update-suppression flags must not overlap crafter slot bits"
+		);
+		int combinedAuxiliary = updateFlags | 0x1ab;
+		test.check(
+				decodeAuxiliary(encodeAuxiliary(encoded, combinedAuxiliary)) == combinedAuxiliary,
+				"update flags and crafter masks must survive the Z channel together"
+		);
+		int wallNeighborMask = (1 << net.minecraft.core.Direction.UP.ordinal())
+				| (1 << net.minecraft.core.Direction.DOWN.ordinal());
+		int wallAuxiliary = combinedAuxiliary | (wallNeighborMask << 11);
+		test.check(
+				decodeAuxiliary(encodeAuxiliary(encoded, wallAuxiliary)) == wallAuxiliary,
+				"wall neighbor match bits must survive the Z channel"
+		);
+		int observerAuxiliary = EasyPlaceExtraProtocol.OBSERVER_UPDATE_SUPPRESSION;
+		test.check(
+				decodeAuxiliary(encodeAuxiliary(encoded, observerAuxiliary)) == observerAuxiliary,
+				"observer protection flag must survive the Z channel"
+		);
+		int tntAuxiliary = EasyPlaceExtraProtocol.TNT_UPDATE_SUPPRESSION;
+		test.check(
+				decodeAuxiliary(encodeAuxiliary(encoded, tntAuxiliary)) == tntAuxiliary,
+				"TNT protection flag must survive the Z channel"
+		);
+		int railNeighborMask = 0b1_0001;
+		int railAuxiliary = EasyPlaceExtraProtocol.RAIL_UPDATE_SUPPRESSION
+				| (railNeighborMask
+				<< Integer.numberOfTrailingZeros(
+				EasyPlaceExtraProtocol.RAIL_NEIGHBOR_MATCH_BASE
+		));
+		test.check(
+				decodeAuxiliary(encodeAuxiliary(encoded, railAuxiliary)) == railAuxiliary,
+				"rail neighbor match bits must survive the Z channel"
+		);
+		Vec3 otherAnchor = EasyPlaceExtraProtocol.encodeX(
+				new BlockPos(500, -20, -400),
+				new Vec3(0.5, -19.5, -399.5),
+				0x5a
+		);
+		test.check(
+				decodeAuxiliary(encodeAuxiliary(otherAnchor, railAuxiliary)) == railAuxiliary,
+				"the fixed-origin Z channel must not depend on the click position"
+		);
+		// relative-aux layout: the low 24 bits travel in Z anchored at the packet position,
+		// and the three high bits travel in the X payload
+		int relativeAuxiliary = EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
+				| EasyPlaceExtraProtocol.WALL_AUXILIARY_SCHEMA
+				| EasyPlaceExtraProtocol.WALL_UP
+				| EasyPlaceExtraProtocol.AUX_LOW_MASK;
+		int highBits = EasyPlaceExtraProtocol.splitAuxiliaryHigh(relativeAuxiliary);
+		Vec3 relativeX = EasyPlaceExtraProtocol.encodeX(
+				pos,
+				new Vec3(0.5, 70.5, 31.5),
+				0x5a,
+				highBits
+		);
+		test.check(
+				EasyPlaceExtraProtocol.toRawValue(
+						EasyPlaceExtraProtocol.decode(relativeX, pos)
+				) == 0x5a,
+				"the moved auxiliary bits must not disturb the raw value"
+		);
+		test.check(
+				(EasyPlaceExtraProtocol.decode(relativeX, pos)
+						& EasyPlaceExtraProtocol.X_AUX_HIGH_MASK) == highBits,
+				"the three auxiliary bits must be readable from the X payload"
+		);
+		BlockPos[] relativePositions = {
+				pos,
+				new BlockPos(4, 64, 0),
+				// WorldBorder.MAX_CENTER_COORDINATE: block coordinates never exceed +-29,999,984.
+				new BlockPos(4, 64, -29999984),
+				new BlockPos(4, 64, 29999984)
+		};
+		for(BlockPos relativePos : relativePositions)
+		{
+			Vec3 relativeZ = EasyPlaceExtraProtocol.encodeRelativeAuxiliary(
+					relativePos,
+					relativeX,
+					relativeAuxiliary
+			);
+			float wire = (float)(relativeZ.z - relativePos.getZ());
+			Vec3 received = new Vec3(0.0, 0.0, (double)relativePos.getZ() + wire);
+			test.check(
+					(EasyPlaceExtraProtocol.decodeZ(received, relativePos)
+							& EasyPlaceExtraProtocol.AUX_LOW_MASK)
+							== (relativeAuxiliary & EasyPlaceExtraProtocol.AUX_LOW_MASK),
+					"the 24-bit relative payload must survive at z=" + relativePos.getZ()
+			);
+		}
+		test.check(
+				EasyPlaceExtraProtocol.stripAuxiliarySchema(
+						EasyPlaceExtraProtocol.decodeAuxiliary(
+								EasyPlaceExtraProtocol.encodeAuxiliary(encoded, railAuxiliary)
+						)
+				) == -1,
+				"a Z value without the schema bit must be rejected"
+		);
+		CompoundTag missingCapability = new CompoundTag();
+		test.check(
+				!EasyPlaceClientNetwork.acceptsCapability(missingCapability),
+				"acknowledgements without the current protocol fields must be rejected"
 		);
 		CompoundTag currentCapability = new CompoundTag();
 		currentCapability.putInt("protocol_version", 1);
 		currentCapability.putBoolean("easy_place_v2_extra", true);
+		currentCapability.putBoolean("easy_place_y_precision", true);
+		currentCapability.putInt("y_precision_bits", 8);
+		ListTag capabilities = new ListTag();
+		capabilities.add(StringTag.valueOf("easy_place_y_precision"));
+		currentCapability.put("capabilities", capabilities);
 		test.check(
 				EasyPlaceClientNetwork.acceptsCapability(currentCapability),
 				"an explicit V2-Extra capability must be accepted"
 		);
+		test.check(
+				EasyPlaceClientNetwork.acceptsYPrecisionCapability(currentCapability),
+				"the eight-bit Y capability must be accepted"
+		);
+		currentCapability.put("capabilities", new ListTag());
+		test.check(
+				!EasyPlaceClientNetwork.acceptsYPrecisionCapability(currentCapability),
+				"the Y capability must also be advertised in the capability list"
+		);
+		capabilities = new ListTag();
+		capabilities.add(StringTag.valueOf("easy_place_y_precision"));
+		currentCapability.put("capabilities", capabilities);
 		currentCapability.putBoolean("easy_place_v2_extra", false);
 		test.check(
 				!EasyPlaceClientNetwork.acceptsCapability(currentCapability),
 				"an explicit capability rejection must be honored"
+		);
+		currentCapability.putInt("protocol_version", 0);
+		currentCapability.putBoolean("easy_place_v2_extra", true);
+		test.check(
+				!EasyPlaceClientNetwork.acceptsCapability(currentCapability),
+				"an unsupported protocol version must be rejected"
 		);
 
 		for(int mask = 0; mask <= 0x1ff; mask++)
@@ -71,4 +198,20 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 
 		return test.checks();
 	}
+
+	private static Vec3 encodeAuxiliary(Vec3 hitVec, int auxiliaryValue)
+	{
+		return EasyPlaceExtraProtocol.encodeAuxiliary(
+				hitVec,
+				auxiliaryValue | EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
+		);
+	}
+
+	private static int decodeAuxiliary(Vec3 hitVec)
+	{
+		return EasyPlaceExtraProtocol.stripAuxiliarySchema(
+				EasyPlaceExtraProtocol.decodeAuxiliary(hitVec)
+		);
+	}
+
 }
