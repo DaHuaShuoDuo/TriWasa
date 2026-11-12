@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.jetbrains.annotations.Nullable;
+import top.frostor.triwasa.config.TriWasaConfigs;
 import top.frostor.triwasa.verifier.VerifierPositionPickerScreen;
 
 @Mixin(WidgetSchematicVerificationResult.class)
@@ -33,6 +34,11 @@ public abstract class WidgetSchematicVerificationResultPickerMixin
 	@Inject(method = "<init>", at = @At("RETURN"))
 	private void triwasa$addPositionPickerButton(CallbackInfo ci)
 	{
+		if(TriWasaConfigs.VERIFIER_POSITION_PICKER.getBooleanValue() == false)
+		{
+			return;
+		}
+
 		if(this.mismatchEntry.type != BlockMismatchEntry.Type.DATA
 				|| this.mismatchEntry.blockMismatch == null
 				|| this.mismatchEntry.mismatchType == MismatchType.CORRECT_STATE)

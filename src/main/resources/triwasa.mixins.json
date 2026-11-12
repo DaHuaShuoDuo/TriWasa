@@ -40,6 +40,8 @@
 		"ItemPickupFilterMixin",
 		"LivingEntitySwingMixin26_2",
 		"LivingEntitySwingMixin26_3",
+		"MaterialCacheMixin",
+		"MaterialListEntryMixin",
 		"PacketProcessorMixin",
 		"PlacementHandlerMixin",
 		"QuickShulkerRestockScreenMixin",

@@ -184,6 +184,9 @@ Mixins are not interchangeable.
 Every mismatch-state row in the Litematica schematic verifier has a **Pick Position** button. The child screen lists every block position for that mismatch state and supports searching by coordinate, block ID, state, or display name. Click positions to toggle them, and keep the child screen open while selecting multiple blocks. Selections from different mismatch groups are independent and persist together; the world overlays, targeted outline, and verifier HUD show the selected blocks from every group. Each row has a **Copy** button for copying that block's integer `x y z` coordinates. **Show All** selects every position in the current group. Coarse-selecting a state row marks every position in that state as selected in the child screen; a row with exact selections is also highlighted, and clicking it again clears both the coarse and exact selections for that group.
 
 This feature only narrows verifier highlighting. It does not change mismatch counts, sorting, or the scope of ignoring a mismatch state.
+The `verifierPositionPicker` switch (enabled by default) controls the **Pick Position** button on each
+mismatch row; when disabled the button is hidden, the verifier falls back to the vanilla per-category
+highlighting, and existing exact selections no longer affect overlay merging.
 
 ### Big Ender Chest Terminal
 
@@ -218,6 +221,10 @@ Press `C+T` by default to open the main TriWasa configuration screen. The hotkey
 can be rebound on the All tab. With Mod Menu installed, the configuration
 button in the mod list opens the same screen.
 
+Every true/false option has a keybind slot to the right of its switch; together
+they fill the original row width, and all of them are unbound by default. Once
+bound, pressing the key toggles that option exactly like clicking the switch.
+
 ### Quick Shulker Hand Restocking
 
 `quickShulkerHandRestock` can restock the selected hand item from Quick Shulker
@@ -235,6 +242,15 @@ After the client receives a pickup result, `itemPickupFilterEnabled` can discard
 matching items by stack using a blacklist or whitelist. It cannot replace server
 permissions, region protection, or entity interception.
 
+### Projection Material Stats Fix
+
+`projectionMaterialStatsFix` fixes Litematica's material list undercounting
+multi-item and multiface blocks. It is off by default; when enabled, pink
+petals, wildflowers and leaf litter count 1-4 segments, resin clumps count their
+attached faces, and vines count up to five faces. It also removes the duplicated
+multiplier in the recipe JSON export. Regenerate the material list after
+toggling the switch.
+
 ### Other Mod Fixes
 
 TriWasa automatically fixes REI submenu clipping and terminal interaction
@@ -250,8 +266,8 @@ TriWasa stores configuration in `config/triwasa.json` through MaLiLib:
 - **All**: the configuration hotkey, every feature option, and fix information
   in one searchable list.
 - **Porting**: V2-Extra easy place and pickup filtering.
-- **Auxiliary Features**: Better Easy Place, Better Printer, Quick Shulker, and the big ender
-  chest terminal.
+- **Auxiliary Features**: Better Easy Place, Better Printer, Quick Shulker, the big ender
+  chest terminal, and the projection material stats fix.
 - **Other Mod Fixes**: optional fixes that change another mod's own behavior.
 
 The `[+]` / `[-]` control on a parent only expands or collapses child options;

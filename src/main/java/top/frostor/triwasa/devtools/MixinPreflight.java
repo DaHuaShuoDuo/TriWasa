@@ -19,6 +19,8 @@ public final class MixinPreflight
 			"fi.dy.masa.litematica.util.EasyPlaceUtils",
 			"fi.dy.masa.litematica.util.WorldUtils",
 			"fi.dy.masa.litematica.util.PlacementHandler",
+			"fi.dy.masa.litematica.materials.MaterialCache",
+			"fi.dy.masa.litematica.materials.MaterialListEntry",
 			"me.aleksilassila.litematica.printer.guide.Guide",
 			"me.aleksilassila.litematica.printer.guide.Guides",
 			"me.aleksilassila.litematica.printer.guide.Guides$GuideRegistration",

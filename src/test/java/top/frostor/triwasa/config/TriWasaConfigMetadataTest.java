@@ -1,6 +1,8 @@
 package top.frostor.triwasa.config;
 
 import fi.dy.masa.malilib.config.IConfigBase;
+import fi.dy.masa.malilib.config.IConfigBoolean;
+import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import top.frostor.triwasa.easyplace.EasyPlaceRules;
 
 import java.util.List;
@@ -121,6 +123,50 @@ public final class TriWasaConfigMetadataTest
 						== TriWasaConfigs.BETTER_EASY_PLACE,
 				"betterPrinter parent changed"
 		);
+		check(
+				TriWasaConfigs.UTILITY_OPTIONS.contains(TriWasaConfigs.PROJECTION_MATERIAL_STATS_FIX)
+						&& TriWasaConfigs.UTILITY_FILE_OPTIONS.contains(
+								TriWasaConfigs.PROJECTION_MATERIAL_STATS_FIX),
+				"projection material stats fix must remain a utility option"
+		);
+		check(
+				TriWasaConfigs.PROJECTION_MATERIAL_STATS_FIX.getBooleanValue() == false,
+				"projection material stats fix must default to disabled"
+		);
+		check(
+				TriWasaConfigs.getExpansionState(TriWasaConfigs.PROJECTION_MATERIAL_STATS_FIX) == null,
+				"projection material stats fix must stay a standalone switch"
+		);
+
+		int booleanOptions = 0;
+
+		for(IConfigBase config : TriWasaConfigs.ALL_OPTIONS)
+		{
+			if((config instanceof IConfigBoolean) == false
+					|| TriWasaConfigs.EXPANSION_STATE_OPTIONS.contains(config))
+			{
+				continue;
+			}
+
+			booleanOptions++;
+			ConfigHotkey hotkey = TriWasaConfigs.BOOLEAN_HOTKEYS.get(config);
+			check(hotkey != null, "every visible boolean option must own a hotkey");
+			check(
+					hotkey.getHotkeyStringValue().isEmpty(),
+					"boolean hotkeys must default to unbound"
+			);
+			check(
+					TriWasaConfigs.getGuiConfig(config) != config,
+					"boolean options must render together with their hotkey"
+			);
+			check(
+					TriWasaConfigs.HOTKEY_OPTIONS.contains(hotkey)
+							&& TriWasaConfigs.ALL_OPTIONS.contains(hotkey) == false,
+					"hotkeys must be persisted without becoming their own config row"
+			);
+		}
+
+		check(booleanOptions == 16, "unexpected number of visible boolean options");
 
 		boolean easyPlace = TriWasaConfigs.BETTER_EASY_PLACE.getBooleanValue();
 		boolean printer = TriWasaConfigs.BETTER_PRINTER.getBooleanValue();

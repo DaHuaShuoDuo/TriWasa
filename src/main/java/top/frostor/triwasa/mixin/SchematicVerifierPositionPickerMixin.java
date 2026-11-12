@@ -18,7 +18,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import top.frostor.triwasa.config.TriWasaConfigs;
 import top.frostor.triwasa.verifier.SchematicVerifierPositionPickerAccess;
+import top.frostor.triwasa.verifier.VerifierOverlayRefresh;
 import top.frostor.triwasa.verifier.VerifierPositionOverlayFilter;
 
 import java.util.ArrayList;
@@ -40,6 +42,12 @@ public abstract class SchematicVerifierPositionPickerMixin
 	@Shadow @Final private List<MismatchRenderPos> mismatchPositionsForRender;
 	@Shadow @Final private List<BlockPos> mismatchBlockPositionsForRender;
 	@Unique private final Map<BlockMismatch, Set<BlockPos>> triwasa$pinnedSelections = new HashMap<>();
+
+	@Inject(method = "<init>", at = @At("RETURN"))
+	private void triwasa$registerForOverlayRefresh(CallbackInfo ci)
+	{
+		VerifierOverlayRefresh.register((SchematicVerifier) (Object) this);
+	}
 
 	@Override
 	public List<BlockPos> triwasa$getPositionsFor(BlockMismatch mismatch)
@@ -106,6 +114,11 @@ public abstract class SchematicVerifierPositionPickerMixin
 	@Override
 	public Set<BlockPos> triwasa$getPinnedPositions(BlockMismatch mismatch)
 	{
+		if(TriWasaConfigs.VERIFIER_POSITION_PICKER.getBooleanValue() == false)
+		{
+			return Set.of();
+		}
+
 		Set<BlockPos> pinnedPositions = this.triwasa$pinnedSelections.get(mismatch);
 		if(pinnedPositions != null)
 		{
@@ -123,6 +136,11 @@ public abstract class SchematicVerifierPositionPickerMixin
 	@ModifyReturnValue(method = "isMismatchEntrySelected", at = @At("RETURN"))
 	private boolean triwasa$markPinnedEntrySelected(boolean original, BlockMismatch mismatch)
 	{
+		if(TriWasaConfigs.VERIFIER_POSITION_PICKER.getBooleanValue() == false)
+		{
+			return original;
+		}
+
 		return original || this.triwasa$pinnedSelections.containsKey(mismatch);
 	}
 
@@ -163,7 +181,8 @@ public abstract class SchematicVerifierPositionPickerMixin
 	@Inject(method = "combineClosestPositions", at = @At("RETURN"))
 	private void triwasa$retainPinnedPositions(BlockPos centerPos, int maxEntries, CallbackInfo ci)
 	{
-		if(this.triwasa$pinnedSelections.isEmpty())
+		if(TriWasaConfigs.VERIFIER_POSITION_PICKER.getBooleanValue() == false
+				|| this.triwasa$pinnedSelections.isEmpty())
 		{
 			return;
 		}

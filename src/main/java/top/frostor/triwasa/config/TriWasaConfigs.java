@@ -1,11 +1,15 @@
 package top.frostor.triwasa.config;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import fi.dy.masa.litematica.materials.MaterialCache;
 import fi.dy.masa.malilib.config.ConfigUtils;
 import fi.dy.masa.malilib.config.IConfigBase;
+import fi.dy.masa.malilib.config.IConfigBoolean;
 import fi.dy.masa.malilib.config.IConfigHandler;
+import fi.dy.masa.malilib.config.options.BooleanHotkeyGuiWrapper;
 import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.config.options.ConfigInteger;
@@ -25,10 +29,13 @@ import top.frostor.triwasa.pickupfilter.ItemPickupFilter;
 import top.frostor.triwasa.pickupfilter.PickupFilterFeedback;
 import top.frostor.triwasa.pickupfilter.PickupFilterMode;
 import top.frostor.triwasa.quickshulker.QuickShulkerHandRestock;
+import top.frostor.triwasa.verifier.VerifierOverlayRefresh;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class TriWasaConfigs implements IConfigHandler
 {
@@ -37,6 +44,7 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final String UTILITIES_KEY = "Utilities";
 	public static final String BIG_ENDER_CHEST_KEY = "BigEnderChest";
 	public static final String PICKUP_FILTER_KEY = "ItemPickupFilter";
+	public static final String HOTKEYS_KEY = "Hotkeys";
 	public static final String CONFIG_FILE_NAME = TriWasa.MOD_ID + ".json";
 	public static final String GENERAL_TRANSLATION_PREFIX = "triwasa.config.general";
 	public static final String PORTING_TRANSLATION_PREFIX = "triwasa.config.porting";
@@ -51,6 +59,8 @@ public final class TriWasaConfigs implements IConfigHandler
 					.apply(GENERAL_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_V2_PROTOCOL_EXTRA =
 			new ConfigBoolean("easyPlaceV2ProtocolExtra", true).apply(PORTING_TRANSLATION_PREFIX);
+	public static final ConfigHotkey EASY_PLACE_V2_PROTOCOL_EXTRA_HOTKEY =
+			booleanHotkey("easyPlaceV2ProtocolExtra");
 	public static final ConfigBoolean EASY_PLACE_EXPANDED =
 			new ConfigBoolean("easyPlaceExpanded", false).apply(PORTING_TRANSLATION_PREFIX);
 	public static final ConfigBoolean EASY_PLACE_RAIL_PROTECTION =
@@ -115,6 +125,13 @@ public final class TriWasaConfigs implements IConfigHandler
 			new ConfigBoolean("bigEnderChestRememberSearch", false)
 					.apply(BIG_ENDER_CHEST_TRANSLATION_PREFIX);
 
+	public static final ConfigBoolean PROJECTION_MATERIAL_STATS_FIX =
+			new ConfigBoolean("projectionMaterialStatsFix", false)
+					.apply(UTILITIES_TRANSLATION_PREFIX);
+	public static final ConfigBoolean VERIFIER_POSITION_PICKER =
+			new ConfigBoolean("verifierPositionPicker", true)
+					.apply(UTILITIES_TRANSLATION_PREFIX);
+
 	public static final ConfigBoolean PICKUP_FILTER_ENABLED =
 			new ConfigBoolean("itemPickupFilterEnabled", false).apply(PICKUP_FILTER_TRANSLATION_PREFIX);
 	public static final ConfigBoolean PICKUP_FILTER_EXPANDED =
@@ -134,6 +151,66 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ConfigBoolean PICKUP_FILTER_PAUSE_WHILE_SNEAKING =
 			new ConfigBoolean("itemPickupFilterPauseWhileSneaking", true)
 					.apply(PICKUP_FILTER_TRANSLATION_PREFIX);
+
+	/*
+	 * One empty-by-default hotkey per visible true/false option. They are stored in their own
+	 * "Hotkeys" section, are not part of any display list, and are rendered inside the matching
+	 * boolean row (switch on the left, keybind on the right).
+	 */
+	public static final ConfigHotkey EASY_PLACE_RAIL_PROTECTION_HOTKEY =
+			booleanHotkey("easyPlaceRailProtection");
+	public static final ConfigHotkey EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE_HOTKEY =
+			booleanHotkey("easyPlaceWallBlockNoShapeUpdate");
+	public static final ConfigHotkey EASY_PLACE_OBSERVER_PROTECTION_HOTKEY =
+			booleanHotkey("easyPlaceObserverProtection");
+	public static final ConfigHotkey EASY_PLACE_TNT_PROTECTION_HOTKEY =
+			booleanHotkey("easyPlaceTntProtection");
+	public static final ConfigHotkey EASY_PLACE_PISTON_PROTECTION_HOTKEY =
+			booleanHotkey("easyPlacePistonProtection");
+	public static final ConfigHotkey EASY_PLACE_CRAFTER_LOCK_SLOT_HOTKEY =
+			booleanHotkey("easyPlaceCrafterLockSlot");
+	public static final ConfigHotkey PICKUP_FILTER_ENABLED_HOTKEY =
+			booleanHotkey("itemPickupFilterEnabled");
+	public static final ConfigHotkey PICKUP_FILTER_PAUSE_WHILE_SNEAKING_HOTKEY =
+			booleanHotkey("itemPickupFilterPauseWhileSneaking");
+	public static final ConfigHotkey BETTER_EASY_PLACE_HOTKEY = booleanHotkey("betterEasyPlace");
+	public static final ConfigHotkey BETTER_PRINTER_HOTKEY = booleanHotkey("betterPrinter");
+	public static final ConfigHotkey QUICK_SHULKER_HAND_RESTOCK_HOTKEY =
+			booleanHotkey("quickShulkerHandRestock");
+	public static final ConfigHotkey BIG_ENDER_CHEST_TERMINAL_ENABLED_HOTKEY =
+			booleanHotkey("bigEnderChestTerminalEnabled");
+	public static final ConfigHotkey BIG_ENDER_CHEST_REMEMBER_SEARCH_HOTKEY =
+			booleanHotkey("bigEnderChestRememberSearch");
+	public static final ConfigHotkey PROJECTION_MATERIAL_STATS_FIX_HOTKEY =
+			booleanHotkey("projectionMaterialStatsFix");
+	public static final ConfigHotkey VERIFIER_POSITION_PICKER_HOTKEY =
+			booleanHotkey("verifierPositionPicker");
+
+	/**
+	 * Boolean options that own a hotkey, in display order. Hidden {@code ...Expanded} switches
+	 * are deliberately absent: they are UI state, not user facing toggles.
+	 */
+	public static final ImmutableMap<IConfigBase, ConfigHotkey> BOOLEAN_HOTKEYS =
+			ImmutableMap.<IConfigBase, ConfigHotkey>builder()
+					.put(EASY_PLACE_V2_PROTOCOL_EXTRA, EASY_PLACE_V2_PROTOCOL_EXTRA_HOTKEY)
+					.put(EASY_PLACE_RAIL_PROTECTION, EASY_PLACE_RAIL_PROTECTION_HOTKEY)
+					.put(EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE, EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE_HOTKEY)
+					.put(EASY_PLACE_OBSERVER_PROTECTION, EASY_PLACE_OBSERVER_PROTECTION_HOTKEY)
+					.put(EASY_PLACE_TNT_PROTECTION, EASY_PLACE_TNT_PROTECTION_HOTKEY)
+					.put(EASY_PLACE_PISTON_PROTECTION, EASY_PLACE_PISTON_PROTECTION_HOTKEY)
+					.put(EASY_PLACE_CRAFTER_LOCK_SLOT, EASY_PLACE_CRAFTER_LOCK_SLOT_HOTKEY)
+					.put(PICKUP_FILTER_ENABLED, PICKUP_FILTER_ENABLED_HOTKEY)
+					.put(PICKUP_FILTER_PAUSE_WHILE_SNEAKING, PICKUP_FILTER_PAUSE_WHILE_SNEAKING_HOTKEY)
+					.put(BETTER_EASY_PLACE, BETTER_EASY_PLACE_HOTKEY)
+					.put(BETTER_PRINTER, BETTER_PRINTER_HOTKEY)
+					.put(QUICK_SHULKER_HAND_RESTOCK, QUICK_SHULKER_HAND_RESTOCK_HOTKEY)
+					.put(BIG_ENDER_CHEST_TERMINAL_ENABLED, BIG_ENDER_CHEST_TERMINAL_ENABLED_HOTKEY)
+					.put(BIG_ENDER_CHEST_REMEMBER_SEARCH, BIG_ENDER_CHEST_REMEMBER_SEARCH_HOTKEY)
+					.put(PROJECTION_MATERIAL_STATS_FIX, PROJECTION_MATERIAL_STATS_FIX_HOTKEY)
+					.put(VERIFIER_POSITION_PICKER, VERIFIER_POSITION_PICKER_HOTKEY)
+					.build();
+	public static final ImmutableList<IConfigBase> HOTKEY_OPTIONS =
+			ImmutableList.copyOf(BOOLEAN_HOTKEYS.values());
 
 	public static final ImmutableList<IConfigBase> GENERAL_OPTIONS =
 			ImmutableList.of(OPEN_CONFIG_GUI);
@@ -205,6 +282,16 @@ public final class TriWasaConfigs implements IConfigHandler
 			PICKUP_FILTER_FEEDBACK,
 			PICKUP_FILTER_PAUSE_WHILE_SNEAKING
 	);
+	/**
+	 * Standalone switch without child options, so it is deliberately not part of
+	 * {@code PARENT_GROUPS} (a parent group would render an expand button with nothing to show).
+	 */
+	public static final ImmutableList<IConfigBase> PROJECTION_MATERIAL_STATS_FIX_OPTIONS =
+			ImmutableList.of(PROJECTION_MATERIAL_STATS_FIX);
+	public static final ImmutableList<IConfigBase> VERIFIER_POSITION_PICKER_OPTIONS =
+			ImmutableList.of(VERIFIER_POSITION_PICKER);
+	private static final Map<IConfigBase, BooleanHotkeyGuiWrapper> GUI_BOOLEAN_WRAPPERS =
+			new HashMap<>();
 	private static final ImmutableList<ParentGroup> PARENT_GROUPS = ImmutableList.of(
 			new ParentGroup(
 					BETTER_EASY_PLACE,
@@ -244,6 +331,8 @@ public final class TriWasaConfigs implements IConfigHandler
 					.addAll(BETTER_EASY_PLACE_OPTIONS)
 					.addAll(QUICK_SHULKER_HAND_RESTOCK_OPTIONS)
 					.addAll(BIG_ENDER_CHEST_OPTIONS)
+					.addAll(PROJECTION_MATERIAL_STATS_FIX_OPTIONS)
+					.addAll(VERIFIER_POSITION_PICKER_OPTIONS)
 					.build();
 	public static final ImmutableList<IConfigBase> ALL_OPTIONS =
 			ImmutableList.<IConfigBase>builder()
@@ -255,6 +344,8 @@ public final class TriWasaConfigs implements IConfigHandler
 			ImmutableList.<IConfigBase>builder()
 					.addAll(BETTER_EASY_PLACE_OPTIONS)
 					.addAll(QUICK_SHULKER_HAND_RESTOCK_OPTIONS)
+					.addAll(PROJECTION_MATERIAL_STATS_FIX_OPTIONS)
+					.addAll(VERIFIER_POSITION_PICKER_OPTIONS)
 					.build();
 
 	static
@@ -272,6 +363,12 @@ public final class TriWasaConfigs implements IConfigHandler
 		PICKUP_FILTER_MODE.setValueChangeCallback(value -> ItemPickupFilter.onConfigChanged());
 		PICKUP_FILTER_ITEMS.setValueChangeCallback(value -> ItemPickupFilter.onConfigChanged());
 		PICKUP_FILTER_RARITIES.setValueChangeCallback(value -> ItemPickupFilter.onConfigChanged());
+		PROJECTION_MATERIAL_STATS_FIX.setValueChangeCallback(
+				value -> MaterialCache.getInstance().clearCache()
+		);
+		VERIFIER_POSITION_PICKER.setValueChangeCallback(
+				value -> VerifierOverlayRefresh.refreshAll()
+		);
 	}
 
 	@Override
@@ -307,6 +404,10 @@ public final class TriWasaConfigs implements IConfigHandler
 					&& root.get(BIG_ENDER_CHEST_KEY).isJsonObject())
 			{
 				ConfigUtils.readConfigBase(root, BIG_ENDER_CHEST_KEY, BIG_ENDER_CHEST_OPTIONS);
+			}
+			if(root != null && root.has(HOTKEYS_KEY) && root.get(HOTKEYS_KEY).isJsonObject())
+			{
+				ConfigUtils.readConfigBase(root, HOTKEYS_KEY, HOTKEY_OPTIONS);
 			}
 			if(!loadedUtilities && root != null
 					&& root.has(PORTING_KEY) && root.get(PORTING_KEY).isJsonObject())
@@ -345,6 +446,7 @@ public final class TriWasaConfigs implements IConfigHandler
 		ConfigUtils.writeConfigBase(root, UTILITIES_KEY, UTILITY_FILE_OPTIONS);
 		ConfigUtils.writeConfigBase(root, PICKUP_FILTER_KEY, PICKUP_FILTER_OPTIONS);
 		ConfigUtils.writeConfigBase(root, BIG_ENDER_CHEST_KEY, BIG_ENDER_CHEST_OPTIONS);
+		ConfigUtils.writeConfigBase(root, HOTKEYS_KEY, HOTKEY_OPTIONS);
 		JsonUtils.writeJsonToFile(root, configDir.resolve(CONFIG_FILE_NAME));
 	}
 
@@ -381,6 +483,35 @@ public final class TriWasaConfigs implements IConfigHandler
 	{
 		JsonElement element = JsonUtils.parseJsonFile(path);
 		return element != null && element.isJsonObject() ? element.getAsJsonObject() : null;
+	}
+
+	private static ConfigHotkey booleanHotkey(String name)
+	{
+		return new ConfigHotkey(name + "Hotkey", "");
+	}
+
+	/**
+	 * Wraps a boolean option together with its hotkey so the config GUI renders one switch and
+	 * one keybind button inside the same row. The wrapper delegates the value to the real option,
+	 * so callbacks and persistence are unaffected.
+	 */
+	static IConfigBase getGuiConfig(IConfigBase config)
+	{
+		ConfigHotkey hotkey = BOOLEAN_HOTKEYS.get(config);
+
+		if(hotkey == null || (config instanceof IConfigBoolean) == false)
+		{
+			return config;
+		}
+
+		return GUI_BOOLEAN_WRAPPERS.computeIfAbsent(
+				config,
+				key -> new BooleanHotkeyGuiWrapper(
+						key.getName(),
+						(IConfigBoolean) key,
+						BOOLEAN_HOTKEYS.get(key).getKeybind()
+				)
+		);
 	}
 
 	static boolean isChildConfig(IConfigBase config)
