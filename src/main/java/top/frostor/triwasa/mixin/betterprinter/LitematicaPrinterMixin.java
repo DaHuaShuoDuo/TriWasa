@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import top.frostor.triwasa.betterprinter.PrinterPacketAnchor;
 import top.frostor.triwasa.easyplace.EasyPlaceClientEncoder;
+import top.frostor.triwasa.easyplace.EasyPlaceClientNetwork;
 import top.frostor.triwasa.easyplace.EasyPlaceRules;
 
 @Mixin(targets = "me.aleksilassila.litematica.printer.utils.mods.LitematicaUtils")
@@ -41,7 +42,12 @@ public abstract class LitematicaPrinterMixin
 		}
 		// The payload is anchored at the schematic target; the queued click may target the
 		// support block instead, so remember the anchor until the click is actually queued.
-		PrinterPacketAnchor.begin(pos, encoded);
+		// Z only moves when the server negotiated the relative-aux layout.
+		PrinterPacketAnchor.begin(
+				pos,
+				encoded,
+				EasyPlaceClientNetwork.supportsRelativeAux()
+		);
 		return encoded;
 	}
 }

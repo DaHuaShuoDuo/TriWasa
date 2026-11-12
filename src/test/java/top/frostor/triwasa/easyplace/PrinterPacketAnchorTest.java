@@ -30,6 +30,7 @@ public final class PrinterPacketAnchorTest
 		checks += new PrinterPacketAnchorTest().checkWireRoundTrip();
 		checks += new PrinterPacketAnchorTest().checkOneShot();
 		checks += new PrinterPacketAnchorTest().checkForeignPayload();
+		checks += new PrinterPacketAnchorTest().checkRelativeZTranslation();
 		return checks;
 	}
 
@@ -39,7 +40,7 @@ public final class PrinterPacketAnchorTest
 		Vec3 applied = PrinterPacketAnchor.apply(encoded);
 		check(same(applied, encoded), "apply without a recorded anchor must be a no-op");
 
-		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.begin(TARGET, encoded, false);
 		PrinterPacketAnchor.recordTarget(TARGET);
 		applied = PrinterPacketAnchor.apply(encoded);
 		check(same(applied, encoded), "a click on the target must not translate the payload");
@@ -49,7 +50,7 @@ public final class PrinterPacketAnchorTest
 	private int checkAxisTranslation()
 	{
 		Vec3 encoded = payload(TARGET, 0x2a);
-		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.begin(TARGET, encoded, false);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
 		Vec3 east = PrinterPacketAnchor.apply(encoded);
 		check(
@@ -59,7 +60,7 @@ public final class PrinterPacketAnchorTest
 				"an east support click must translate X only"
 		);
 
-		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.begin(TARGET, encoded, false);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.UP));
 		Vec3 up = PrinterPacketAnchor.apply(encoded);
 		check(
@@ -69,7 +70,7 @@ public final class PrinterPacketAnchorTest
 				"an up support click must translate Y only"
 		);
 
-		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.begin(TARGET, encoded, false);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.WEST));
 		Vec3 west = PrinterPacketAnchor.apply(encoded);
 		check(
@@ -93,7 +94,7 @@ public final class PrinterPacketAnchorTest
 			for(Direction side : Direction.values())
 			{
 				BlockPos support = TARGET.relative(side);
-				PrinterPacketAnchor.begin(TARGET, encoded);
+				PrinterPacketAnchor.begin(TARGET, encoded, false);
 				PrinterPacketAnchor.recordTarget(support);
 				Vec3 reanchored = PrinterPacketAnchor.apply(encoded);
 				Vec3 received = wire(support, reanchored);
@@ -118,7 +119,7 @@ public final class PrinterPacketAnchorTest
 	private int checkOneShot()
 	{
 		Vec3 encoded = payload(TARGET, 0x2a);
-		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.begin(TARGET, encoded, false);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
 		PrinterPacketAnchor.apply(encoded);
 		Vec3 second = PrinterPacketAnchor.apply(encoded);
@@ -134,7 +135,7 @@ public final class PrinterPacketAnchorTest
 	private int checkForeignPayload()
 	{
 		Vec3 encoded = payload(TARGET, 0x2a);
-		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.begin(TARGET, encoded, false);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
 
 		Vec3 nativePayload = new Vec3(
@@ -151,7 +152,7 @@ public final class PrinterPacketAnchorTest
 				"the foreign attach must consume the stale delta"
 		);
 
-		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.begin(TARGET, encoded, false);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
 		PrinterPacketAnchor.clear();
 		check(
@@ -159,6 +160,38 @@ public final class PrinterPacketAnchorTest
 				"clear() must drop the pending delta and the remembered payload"
 		);
 		return 3;
+	}
+
+	/**
+	 * The relative-aux layout anchors Z at the packet position, so a north/south support click
+	 * must translate it; the legacy field is anchored at the world origin and must not move.
+	 */
+	private int checkRelativeZTranslation()
+	{
+		Vec3 payload = new Vec3(
+				TARGET.getX() + 20.0,
+				TARGET.getY() + 2.0,
+				TARGET.getZ() + 2.0
+		);
+
+		PrinterPacketAnchor.begin(TARGET, payload, true);
+		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.SOUTH));
+		Vec3 shifted = PrinterPacketAnchor.apply(payload);
+		check(
+				Math.abs(shifted.z - (payload.z + 1.0)) < 1e-9
+						&& Math.abs(shifted.x - payload.x) < 1e-9
+						&& Math.abs(shifted.y - payload.y) < 1e-9,
+				"a south support click must translate the relative Z payload"
+		);
+
+		PrinterPacketAnchor.begin(TARGET, payload, false);
+		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.SOUTH));
+		Vec3 legacy = PrinterPacketAnchor.apply(payload);
+		check(
+				same(legacy, payload),
+				"legacy mode must leave the fixed-origin Z payload untouched"
+		);
+		return 2;
 	}
 
 	/** Encodes X, Y and the fixed-origin Z the way the client encoder does. */

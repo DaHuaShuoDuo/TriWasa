@@ -24,11 +24,13 @@ public final class EasyPlaceClientNetwork
 	private static final String NBT_PISTON_PROTECTION_BITS = "piston_protection_bits";
 	private static final String CAPABILITY_EASY_PLACE_V2_EXTRA = "easy_place_v2_extra";
 	private static final String CAPABILITY_PACKET_ANCHOR = "easy_place_packet_anchor";
+	private static final String CAPABILITY_RELATIVE_AUX = "easy_place_relative_aux";
 	private static final String CAPABILITY_Y_PRECISION = "easy_place_y_precision";
 	private static final String CAPABILITY_PISTON_PROTECTION = "easy_place_piston_protection";
 	private static boolean serverSupports;
 	private static boolean serverSupportsYPrecision;
 	private static boolean serverSupportsPistonProtection;
+	private static boolean serverSupportsRelativeAux;
 	private static boolean helloPending;
 	private static boolean wasEnabled;
 
@@ -56,6 +58,8 @@ public final class EasyPlaceClientNetwork
 							&& acceptsYPrecisionCapability(data);
 					serverSupportsPistonProtection = serverSupportsYPrecision
 							&& acceptsPistonProtectionCapability(data);
+					serverSupportsRelativeAux = serverSupports
+							&& acceptsRelativeAuxCapability(data);
 					TriWasa.LOGGER.info(
 							"[EasyPlace] Client received V2-Extra acknowledgement (capability={}, y8={}, piston={})",
 							serverSupports,
@@ -105,11 +109,22 @@ public final class EasyPlaceClientNetwork
 		return supportsYPrecision() && serverSupportsPistonProtection;
 	}
 
+	/**
+	 * Whether the server splits the auxiliary value into a 24-bit relative Z payload plus three
+	 * bits in X. Only an explicit server acknowledgement enables it: encoding the new layout for
+	 * a server that still decodes the fixed-origin field would silently misplace state.
+	 */
+	public static boolean supportsRelativeAux()
+	{
+		return isActive() && serverSupportsRelativeAux;
+	}
+
 	public static void onConfigChanged(boolean enabled)
 	{
 		serverSupports = false;
 		serverSupportsYPrecision = false;
 		serverSupportsPistonProtection = false;
+		serverSupportsRelativeAux = false;
 		if(!enabled)
 		{
 			helloPending = false;
@@ -133,6 +148,7 @@ public final class EasyPlaceClientNetwork
 		serverSupports = false;
 		serverSupportsYPrecision = false;
 		serverSupportsPistonProtection = false;
+		serverSupportsRelativeAux = false;
 		helloPending = false;
 		wasEnabled = TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue();
 		EasyPlaceCrafterSlotLock.clear();
@@ -151,6 +167,7 @@ public final class EasyPlaceClientNetwork
 			serverSupports = false;
 			serverSupportsYPrecision = false;
 			serverSupportsPistonProtection = false;
+			serverSupportsRelativeAux = false;
 			helloPending = false;
 		}
 		wasEnabled = enabled;
@@ -183,6 +200,7 @@ public final class EasyPlaceClientNetwork
 		data.putInt(NBT_PROTOCOL_VERSION, PROTOCOL_VERSION);
 		data.putBoolean(CAPABILITY_EASY_PLACE_V2_EXTRA, true);
 		data.putBoolean(CAPABILITY_PACKET_ANCHOR, true);
+		data.putBoolean(CAPABILITY_RELATIVE_AUX, true);
 		data.putBoolean(CAPABILITY_Y_PRECISION, true);
 		data.putBoolean(CAPABILITY_PISTON_PROTECTION, true);
 		data.putInt(NBT_Y_PRECISION_BITS, EasyPlaceExtraProtocol.Y_PRECISION_BITS);
@@ -193,6 +211,7 @@ public final class EasyPlaceClientNetwork
 		ListTag capabilities = new ListTag();
 		capabilities.add(StringTag.valueOf(CAPABILITY_EASY_PLACE_V2_EXTRA));
 		capabilities.add(StringTag.valueOf(CAPABILITY_PACKET_ANCHOR));
+		capabilities.add(StringTag.valueOf(CAPABILITY_RELATIVE_AUX));
 		capabilities.add(StringTag.valueOf(CAPABILITY_Y_PRECISION));
 		capabilities.add(StringTag.valueOf(CAPABILITY_PISTON_PROTECTION));
 		data.put(NBT_CAPABILITIES, capabilities);
@@ -216,6 +235,13 @@ public final class EasyPlaceClientNetwork
 	{
 		return data.getBooleanOr(CAPABILITY_PACKET_ANCHOR, false)
 				&& advertisesCapability(data, CAPABILITY_PACKET_ANCHOR);
+	}
+
+	/** The split auxiliary layout is optional, but a half-declared ACK must not enable it. */
+	static boolean acceptsRelativeAuxCapability(CompoundTag data)
+	{
+		return data.getBooleanOr(CAPABILITY_RELATIVE_AUX, false)
+				&& advertisesCapability(data, CAPABILITY_RELATIVE_AUX);
 	}
 
 	static boolean acceptsYPrecisionCapability(CompoundTag data)

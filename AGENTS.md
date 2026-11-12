@@ -131,9 +131,13 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   `protocolPos` 仅用于读投影/世界状态，禁止进入 `encodeX`/`encodeY`。printer 点击支撑方块
   时，`Action.queueAction` 选定的 packet 位置与编码锚点相差一格，必须在
   `ActionManager.queueClick` 到 `useProtocolHitModifier` 之间把 X/Y 平移
-  `packetTarget - encodeAnchor`，Z 不得平移；服务端已删除命中面/X 轴候选兜底，所以
-  HELLO 必须声明 `easy_place_packet_anchor`，缺少该能力会被 FCA 拒绝并回落原版
-  easy place。
+  `packetTarget - encodeAnchor`；Z 只在服务端确认 `easy_place_relative_aux` 时一起平移，
+  legacy 固定原点布局下不得动 Z。服务端已删除命中面/X 轴候选兜底，所以 HELLO 必须声明
+  `easy_place_packet_anchor`，缺少该能力会被 FCA 拒绝并回落原版 easy place。
+- relative aux 布局：Z 承载 `aux & 0xFFFFFF` 并以 packet `BlockPos` 为锚点，
+  `AUXILIARY_SCHEMA`/`WALL_AUXILIARY_SCHEMA`/`WALL_UP` 拆到 X payload 的 bit8-10
+  （`splitAuxiliaryHigh`）。24 位是精确上限（偏移 ≤ 2^25 且为偶数，ULP=2），25 位起
+  开始丢低位。该能力是可选的：只在 ACK 明确回声明时启用，客户端单方面开启不算。
 - Z 通道 bit11-16 按 `Direction.ordinal()` 标记六个相邻位置中哪些墙的实际状态与
   Litematica 投影状态一致。比较必须忽略 `WATERLOGGED`，其余方块种类、四侧连接和
   `UP` 必须完全一致；不一致方向的 bit 不得发送，使该墙在服务端继续接受原版邻居更新。

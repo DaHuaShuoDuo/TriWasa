@@ -54,7 +54,6 @@ public final class EasyPlaceClientEncoder
 		// BlockHitResult. protocolPos is only used above to read projected/current state:
 		// Litematica 0.28/0.29 and bell placement plans resolve it differently, and the
 		// network codec stores the hit location as a float offset relative to blockPos.
-		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(pos, hitVec, rawValue);
 		int crafterDisabledMask = EasyPlaceCrafterSlotLock.getPendingMask();
 		int auxiliaryValue = encodedState.auxiliaryValue() | EasyPlaceUpdateFlags.current();
 		if(TriWasaConfigs.EASY_PLACE_WALL_BLOCK_NO_SHAPE_UPDATE.getBooleanValue())
@@ -99,11 +98,35 @@ public final class EasyPlaceClientEncoder
 			auxiliaryValue = (auxiliaryValue & ~EasyPlaceExtraProtocol.CRAFTER_SLOT_MASK)
 					| crafterDisabledMask;
 		}
-		if(auxiliaryValue != 0)
+		int wireAuxiliaryValue = auxiliaryValue == 0
+				? 0
+				: auxiliaryValue | EasyPlaceExtraProtocol.AUXILIARY_SCHEMA;
+		boolean relativeAux = EasyPlaceClientNetwork.supportsRelativeAux();
+		int auxiliaryHigh = relativeAux
+				? EasyPlaceExtraProtocol.splitAuxiliaryHigh(wireAuxiliaryValue)
+				: 0;
+		Vec3 encodedHitVec = EasyPlaceExtraProtocol.encodeX(
+				pos,
+				hitVec,
+				rawValue,
+				auxiliaryHigh
+		);
+		if(relativeAux)
+		{
+			if(wireAuxiliaryValue != 0)
+			{
+				encodedHitVec = EasyPlaceExtraProtocol.encodeRelativeAuxiliary(
+						pos,
+						encodedHitVec,
+						wireAuxiliaryValue
+				);
+			}
+		}
+		else if(wireAuxiliaryValue != 0)
 		{
 			encodedHitVec = EasyPlaceExtraProtocol.encodeAuxiliary(
 					encodedHitVec,
-					auxiliaryValue | EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
+					wireAuxiliaryValue
 			);
 		}
 		int pistonProtectionMask = 0;

@@ -23,6 +23,7 @@ public final class PrinterPacketAnchor
 	private static final ThreadLocal<BlockPos> ENCODE_ANCHOR = new ThreadLocal<>();
 	private static final ThreadLocal<Vec3> ENCODED_PAYLOAD = new ThreadLocal<>();
 	private static final ThreadLocal<Delta> PENDING = new ThreadLocal<>();
+	private static final ThreadLocal<Boolean> RELATIVE_Z = new ThreadLocal<>();
 
 	private PrinterPacketAnchor()
 	{
@@ -34,12 +35,16 @@ public final class PrinterPacketAnchor
 	 * <p>The payload instance is remembered as well, so a later attach can prove it is still
 	 * looking at this placement's payload instead of a leftover delta from a rejected click or a
 	 * native Litematica/Servux payload.</p>
+	 *
+	 * @param relativeZ whether the Z payload is anchored at the packet position (relative-aux
+	 *                  mode) or at the fixed world origin (legacy mode)
 	 */
-	public static void begin(BlockPos encodeAnchor, Vec3 encodedPayload)
+	public static void begin(BlockPos encodeAnchor, Vec3 encodedPayload, boolean relativeZ)
 	{
 		clear();
 		ENCODE_ANCHOR.set(encodeAnchor.immutable());
 		ENCODED_PAYLOAD.set(encodedPayload);
+		RELATIVE_Z.set(relativeZ);
 	}
 
 	/** Computes the translation for the click that is actually being queued. */
@@ -53,12 +58,13 @@ public final class PrinterPacketAnchor
 		}
 		int dx = packetTarget.getX() - encodeAnchor.getX();
 		int dy = packetTarget.getY() - encodeAnchor.getY();
-		if(dx == 0 && dy == 0)
+		int dz = packetTarget.getZ() - encodeAnchor.getZ();
+		if(dx == 0 && dy == 0 && dz == 0)
 		{
 			PENDING.remove();
 			return;
 		}
-		PENDING.set(new Delta(dx, dy));
+		PENDING.set(new Delta(dx, dy, dz));
 	}
 
 	/**
@@ -67,6 +73,9 @@ public final class PrinterPacketAnchor
 	 * <p>Anything other than the payload recorded by {@link #begin} is passed through untouched:
 	 * a rejected click can leave a pending delta behind, and a client that falls back to a native
 	 * V3/Servux payload must never be shifted by it.</p>
+	 *
+	 * <p>Z is translated only in relative-aux mode. The legacy auxiliary field is anchored at the
+	 * fixed world origin, so moving it would corrupt every flag it carries.</p>
 	 */
 	public static Vec3 apply(Vec3 encodedHitVec)
 	{
@@ -75,14 +84,17 @@ public final class PrinterPacketAnchor
 		Vec3 encoded = ENCODED_PAYLOAD.get();
 		ENCODED_PAYLOAD.remove();
 		ENCODE_ANCHOR.remove();
+		Boolean relativeZ = RELATIVE_Z.get();
+		RELATIVE_Z.remove();
 		if(delta == null || encoded == null || !encoded.equals(encodedHitVec))
 		{
 			return encodedHitVec;
 		}
+		boolean shiftZ = Boolean.TRUE.equals(relativeZ);
 		return new Vec3(
 				encodedHitVec.x + delta.dx(),
 				encodedHitVec.y + delta.dy(),
-				encodedHitVec.z
+				shiftZ ? encodedHitVec.z + delta.dz() : encodedHitVec.z
 		);
 	}
 
@@ -91,9 +103,10 @@ public final class PrinterPacketAnchor
 		ENCODE_ANCHOR.remove();
 		ENCODED_PAYLOAD.remove();
 		PENDING.remove();
+		RELATIVE_Z.remove();
 	}
 
-	private record Delta(int dx, int dy)
+	private record Delta(int dx, int dy, int dz)
 	{
 	}
 }

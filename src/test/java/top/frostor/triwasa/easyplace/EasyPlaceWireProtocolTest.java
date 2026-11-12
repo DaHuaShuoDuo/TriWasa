@@ -85,6 +85,52 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 				decodeAuxiliary(encodeAuxiliary(otherAnchor, railAuxiliary)) == railAuxiliary,
 				"the fixed-origin Z channel must not depend on the click position"
 		);
+		// relative-aux layout: the low 24 bits travel in Z anchored at the packet position,
+		// and the three high bits travel in the X payload
+		int relativeAuxiliary = EasyPlaceExtraProtocol.AUXILIARY_SCHEMA
+				| EasyPlaceExtraProtocol.WALL_AUXILIARY_SCHEMA
+				| EasyPlaceExtraProtocol.WALL_UP
+				| EasyPlaceExtraProtocol.AUX_LOW_MASK;
+		int highBits = EasyPlaceExtraProtocol.splitAuxiliaryHigh(relativeAuxiliary);
+		Vec3 relativeX = EasyPlaceExtraProtocol.encodeX(
+				pos,
+				new Vec3(0.5, 70.5, 31.5),
+				0x5a,
+				highBits
+		);
+		test.check(
+				EasyPlaceExtraProtocol.toRawValue(
+						EasyPlaceExtraProtocol.decode(relativeX, pos)
+				) == 0x5a,
+				"the moved auxiliary bits must not disturb the raw value"
+		);
+		test.check(
+				(EasyPlaceExtraProtocol.decode(relativeX, pos)
+						& EasyPlaceExtraProtocol.X_AUX_HIGH_MASK) == highBits,
+				"the three auxiliary bits must be readable from the X payload"
+		);
+		BlockPos[] relativePositions = {
+				pos,
+				new BlockPos(4, 64, 0),
+				new BlockPos(4, 64, -30000001),
+				new BlockPos(4, 64, 30000001)
+		};
+		for(BlockPos relativePos : relativePositions)
+		{
+			Vec3 relativeZ = EasyPlaceExtraProtocol.encodeRelativeAuxiliary(
+					relativePos,
+					relativeX,
+					relativeAuxiliary
+			);
+			float wire = (float)(relativeZ.z - relativePos.getZ());
+			Vec3 received = new Vec3(0.0, 0.0, (double)relativePos.getZ() + wire);
+			test.check(
+					(EasyPlaceExtraProtocol.decodeZ(received, relativePos)
+							& EasyPlaceExtraProtocol.AUX_LOW_MASK)
+							== (relativeAuxiliary & EasyPlaceExtraProtocol.AUX_LOW_MASK),
+					"the 24-bit relative payload must survive at z=" + relativePos.getZ()
+			);
+		}
 		test.check(
 				EasyPlaceExtraProtocol.stripAuxiliarySchema(
 						EasyPlaceExtraProtocol.decodeAuxiliary(

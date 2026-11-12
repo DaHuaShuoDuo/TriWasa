@@ -107,7 +107,12 @@ float 传输，Y payload 最大 `2+2*(2^21-1)=2^22`，低于精确整数上限 2
 X raw 与 Y 精度一律相对 packet `BlockHitResult.blockPos` 编码（不再用 `protocolPos`），
 FCA 在目标变换前的 packet 级快照中解码。打印机需要点击支撑方块时，`queueAction` 决定的
 packet 位置与编码锚点相差一格，框架会在入队到 `useProtocolHitModifier` 之间把 X/Y 平移
-同一差值，Z 不动（Z 是固定原点 auxiliary）。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
+同一差值；Z 仅在 relative 布局下一起平移。
+
+服务端确认 `easy_place_relative_aux` 后，Z 改用相对布局：低 24 位以 packet `blockPos`
+为锚点，`AUXILIARY_SCHEMA`、`WALL_AUXILIARY_SCHEMA`、`WALL_UP` 三位随 X payload 的
+bit8-10 一起发送。偏移 `2 + 2*payload ≤ 2^25` 且恒为偶数，binary32 在该区间 ULP 为 2，
+可以逐位还原；未确认时继续使用 legacy 固定原点布局。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
 和 TNT 保护位会被静默丢弃。26.2/26.3 放置语义统一：两版依赖的 Litematica 不同（0.28.6 / 0.29.1），且 26.3 把
 `ServerboundUseItemOnPacket` 改为 record，命中位置经 `BlockHitResult.STREAM_CODEC` 以
 **相对 `blockPos` 的 float** 传输。wire 的 X/Y/Z 只承认 packet `blockPos` 一个锚点：

@@ -22,6 +22,17 @@ public final class EasyPlaceExtraProtocol
 	public static final int WALL_UP = 1 << 27;
 	/** Marks a deliberately encoded Z auxiliary field. Must match the paired FCA build. */
 	public static final int AUXILIARY_SCHEMA = 1 << 24;
+	/**
+	 * Relative-aux mode: the low 24 bits travel in Z anchored at the packet blockPos, and the
+	 * three high bits ride in the X payload. Twenty-four bits keep the wire offset at or below
+	 * 2^25, where every even integer is exact.
+	 */
+	public static final int AUX_LOW_MASK = 0x00ff_ffff;
+	public static final int X_AUX_SCHEMA_BIT = 1 << 8;
+	public static final int X_WALL_SCHEMA_BIT = 1 << 9;
+	public static final int X_WALL_UP_BIT = 1 << 10;
+	public static final int X_AUX_HIGH_MASK =
+			X_AUX_SCHEMA_BIT | X_WALL_SCHEMA_BIT | X_WALL_UP_BIT;
 	public static final int RAIL_POWERED_MASK = 1 << 4;
 	public static final int RAIL_PROTECTION_FLAG_POWERED = 1 << 3;
 	public static final int RAIL_PROTECTION_FLAG_REGULAR = 1 << 4;
@@ -232,9 +243,44 @@ public final class EasyPlaceExtraProtocol
 				| EXTRA_MARKER;
 	}
 
+	/** Extracts the three auxiliary bits that travel in the X payload. */
+	public static int splitAuxiliaryHigh(int auxiliaryValue)
+	{
+		int high = 0;
+		if((auxiliaryValue & AUXILIARY_SCHEMA) != 0)
+		{
+			high |= X_AUX_SCHEMA_BIT;
+		}
+		if((auxiliaryValue & WALL_AUXILIARY_SCHEMA) != 0)
+		{
+			high |= X_WALL_SCHEMA_BIT;
+		}
+		if((auxiliaryValue & WALL_UP) != 0)
+		{
+			high |= X_WALL_UP_BIT;
+		}
+		return high;
+	}
+
 	public static Vec3 encodeX(BlockPos pos, Vec3 hitVec, int rawProtocolValue)
 	{
-		int extraProtocolValue = toExtraValue(rawProtocolValue);
+		return encodeX(pos, hitVec, rawProtocolValue, 0);
+	}
+
+	/**
+	 * Encodes the raw value together with the three auxiliary bits that no longer fit in Z.
+	 *
+	 * @param auxiliaryHighBits {@link #splitAuxiliaryHigh} output, or zero for the legacy layout
+	 */
+	public static Vec3 encodeX(
+			BlockPos pos,
+			Vec3 hitVec,
+			int rawProtocolValue,
+			int auxiliaryHighBits
+	)
+	{
+		int extraProtocolValue = toExtraValue(rawProtocolValue)
+				| (auxiliaryHighBits & X_AUX_HIGH_MASK);
 		return new Vec3(
 				pos.getX() + (extraProtocolValue << 1) + 2.0,
 				hitVec.y,
@@ -248,6 +294,26 @@ public final class EasyPlaceExtraProtocol
 				hitVec.x,
 				hitVec.y,
 				(auxiliaryValue << 1) + 2.0
+		);
+	}
+
+	/**
+	 * Encodes the low 24 bits of the auxiliary value relative to the packet blockPos.
+	 *
+	 * <p>A 24-bit payload keeps the wire offset at or below 2^25, where every even integer is
+	 * exact; the legacy fixed-origin field pushed the offset past that bound and lost low bits.</p>
+	 */
+	public static Vec3 encodeRelativeAuxiliary(
+			BlockPos pos,
+			Vec3 hitVec,
+			int auxiliaryValue
+	)
+	{
+		int payload = auxiliaryValue & AUX_LOW_MASK;
+		return new Vec3(
+				hitVec.x,
+				hitVec.y,
+				pos.getZ() + 2.0 + payload * 2.0
 		);
 	}
 }
