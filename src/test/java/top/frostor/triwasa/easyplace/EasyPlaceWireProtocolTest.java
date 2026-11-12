@@ -112,8 +112,9 @@ public final class EasyPlaceWireProtocolTest extends EasyPlaceTestSupport
 		BlockPos[] relativePositions = {
 				pos,
 				new BlockPos(4, 64, 0),
-				new BlockPos(4, 64, -30000001),
-				new BlockPos(4, 64, 30000001)
+				// WorldBorder.MAX_CENTER_COORDINATE: block coordinates never exceed +-29,999,984.
+				new BlockPos(4, 64, -29999984),
+				new BlockPos(4, 64, 29999984)
 		};
 		for(BlockPos relativePos : relativePositions)
 		{

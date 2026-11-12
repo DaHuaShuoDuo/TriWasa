@@ -12,8 +12,8 @@ import net.minecraft.world.phys.Vec3;
  * The packet codec stores the hit location as a binary32 float offset from that position, so the
  * server decodes one raw value low when the support block sits east or above the target.
  * Translating the X and Y channels by the queued target difference makes the payload
- * self-consistent with the packet position; the Z channel carries the fixed-origin auxiliary
- * payload and must not move.</p>
+ * self-consistent with the packet position. Z moves only in the negotiated relative-aux layout;
+ * the legacy fixed-origin auxiliary payload must remain unchanged.</p>
  *
  * <p>The whole record lives for one placement attempt: the encoder runs, the click is queued, and
  * the protocol payload is attached, all on the same thread within the same executor call.</p>

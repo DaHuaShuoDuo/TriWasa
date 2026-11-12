@@ -65,8 +65,8 @@ handling. FCA remains authoritative for final block state and placement
 validation.
 
 The master switch is `easyPlaceV2ProtocolExtra`.
-Its rail and wall protection children, `easyPlaceRailProtection` and
-`easyPlaceWallBlockNoShapeUpdate`, both default to enabled. The rail switch
+Its rail, wall, observer, TNT, and piston protection children all default to
+enabled. The rail switch
 suppresses rail shape recalculation and PP updates and preserves the initial
 `POWERED` state of powered, activator, and detector rails. In 26.x, powered and
 activator rails both use `PoweredRailBlock`, while detector rails use the
@@ -90,6 +90,11 @@ easy-place redstone priming of TNT while enabled. TNT has no persistent active
 block state, so no TNT state adapter is added.
 The request is emitted from the common `BlockItem` placement path for all block
 items, including standing/wall coral-fan items.
+The peer `easyPlacePistonProtection` switch compares the placement target, six
+face neighbors, and five QC second-hop candidates with the projection while
+the projected piston remains unextended. Matching entries are packed into the
+12-bit mask in Y bits 8-19 with `Y_PISTON_SCHEMA` at bit 20. Projected
+`EXTENDED` is never restored, and mismatched pistons retain vanilla updates.
 Disabling the rail switch omits the rail protection flag and match mask, as
 well as the initial active-state bit for powered, activator, and detector
 rails, returning rail synchronization and updates to the unprotected path.
@@ -113,14 +118,22 @@ marker and protocol version remain 1. In the auxiliary Z channel, the low nine
 bits remain the crafter slot mask, while bits 9 and 10 request rail and wall
 update protection, bits 11-16 mark matching wall neighbors, and bit 17 requests
 rail neighbors in `NORTH,SOUTH,WEST,EAST,UP` order through bits 17-21; bit 22
-requests observer protection and bit 23 requests TNT protection; bits 24-25
-are free. The handshake also advertises the `easy_place_y_precision`
-capability with `y_precision_bits=8`. Once the server confirms it, the client
-stores an eight-bit fixed-point hit height relative to the bottom of the target
-block in Y. X raw is encoded relative to the packet's
-`BlockHitResult.blockPos`, and FCA decodes it against the same anchor before
-target transformations. Servers that do not
-confirm the capability continue receiving the original Y value. Multiface wire
+requests observer protection and bit 23 requests TNT protection; bit 24 is the
+`AUXILIARY_SCHEMA` marker, bit 25 is free, and bits 26-27 are the wall schema
+and `UP` value. Auxiliary Z data has two layouts. The legacy layout,
+`z = auxiliary * 2 + 2`, stays anchored at world Z=0. After the server confirms
+`easy_place_relative_aux`, only the low 24 bits remain in Z and are anchored at
+the packet `blockPos`; the three high bits move to X payload bits 8-10. The
+relative offset stays at or below 2^25 and every even value is exact in
+binary32. The handshake also advertises `easy_place_y_precision` with
+`y_precision_bits=8` and `easy_place_piston_protection` with
+`piston_protection_bits=12`. Once confirmed, the client stores an eight-bit
+fixed-point hit height in Y bits 0-7, the piston mask in bits 8-19, and the
+schema marker at bit 20. X raw and Y precision are encoded relative to the
+packet's `BlockHitResult.blockPos`, and FCA decodes them against the same anchor
+before target transformations. The HELLO handshake must declare
+`easy_place_packet_anchor`; a client without that capability falls back to
+vanilla easy place instead of silently decoding the wrong raw state. Multiface wire
 indices use the fixed order
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`; vine derives `UP, NORTH, SOUTH, WEST,
 EAST` by filtering out `DOWN`. Clients or servers built with the historical

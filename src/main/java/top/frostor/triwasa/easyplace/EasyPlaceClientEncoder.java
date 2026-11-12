@@ -80,7 +80,7 @@ public final class EasyPlaceClientEncoder
 			if(railNeighborMatchMask != 0
 					|| state.getBlock() instanceof net.minecraft.world.level.block.BaseRailBlock)
 			{
-				TriWasa.LOGGER.info(
+				TriWasa.LOGGER.debug(
 						"[EasyPlace-Rail] client target={} state={} auxiliary=0x{} mask=0x{}",
 						protocolPos,
 						state,

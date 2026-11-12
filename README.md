@@ -56,7 +56,7 @@ TriWasa 在 Litematica 的真实放置入口编码 FCA V2-Extra 方块状态，�
 V2/V3 命中坐标处理；最终方块状态与放置合法性由 FCA 服务端校验。
 
 配置总开关为 `easyPlaceV2ProtocolExtra`。
-其下提供 `easyPlaceRailProtection` 与 `easyPlaceWallBlockNoShapeUpdate`，默认开启。
+其下提供铁轨、墙体、observer、TNT 与活塞保护子开关，均默认开启。
 铁轨开关请求 FCA 抑制铁轨形状重算与 PP 更新，并保留动力铁轨、激活铁轨和探测铁轨的
 初始 `POWERED` 状态。26.x 中动力铁轨与激活铁轨都使用 `PoweredRailBlock`，探测铁轨
 使用独立的 `DetectorRailBlock`。客户端会把相邻实际铁轨与投影比较，通过 Z 通道
