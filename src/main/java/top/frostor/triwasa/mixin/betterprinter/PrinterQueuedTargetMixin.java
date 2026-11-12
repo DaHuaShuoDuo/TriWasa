@@ -1,11 +1,9 @@
 package top.frostor.triwasa.mixin.betterprinter;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import top.frostor.triwasa.betterprinter.PrinterPacketAnchor;
 
 /**
@@ -14,19 +12,24 @@ import top.frostor.triwasa.betterprinter.PrinterPacketAnchor;
  * <p>{@code queueAction} either clicks the schematic target or the support block next to it, so
  * the click sink is the only place that knows the packet position without re-deriving the
  * support/air decision.</p>
+ *
+ * <p>The selector is name-only on purpose: spelling out the full descriptor broke on this build
+ * with "invalid target descriptor / no refMap loaded", while {@code argsOnly} already resolves the
+ * argument from the target method descriptor at runtime.</p>
  */
 @Mixin(targets = "me.aleksilassila.litematica.printer.printer.ActionManager")
 public abstract class PrinterQueuedTargetMixin
 {
-	@Inject(method = "queueClick", at = @At("RETURN"))
-	private void triwasa$recordPacketTarget(
-			CallbackInfoReturnable<Boolean> cir,
-			@Local(argsOnly = true, ordinal = 0) BlockPos target
+	@ModifyVariable(
+			method = "queueClick",
+			at = @At("HEAD"),
+			argsOnly = true,
+			ordinal = 0,
+			require = 1
 	)
+	private BlockPos triwasa$recordPacketTarget(BlockPos target)
 	{
-		if(Boolean.TRUE.equals(cir.getReturnValue()))
-		{
-			PrinterPacketAnchor.recordTarget(target);
-		}
+		PrinterPacketAnchor.recordTarget(target);
+		return target;
 	}
 }

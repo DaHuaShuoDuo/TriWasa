@@ -2,7 +2,6 @@ package top.frostor.triwasa.betterprinter;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import top.frostor.triwasa.TriWasa;
 
 /**
  * Carries the encoder anchor of a printer placement over to the moment the wire payload is
@@ -63,11 +62,6 @@ public final class PrinterPacketAnchor
 		{
 			return encodedHitVec;
 		}
-		TriWasa.LOGGER.debug(
-				"[EasyPlace] Re-anchored printer payload by x={}, y={}",
-				delta.dx(),
-				delta.dy()
-		);
 		return new Vec3(
 				encodedHitVec.x + delta.dx(),
 				encodedHitVec.y + delta.dy(),

@@ -12,6 +12,7 @@
 		"betterprinter.LitematicaPrinterMixin",
 		"betterprinter.BetterPrinterActionSupportMixin",
 		"betterprinter.PrinterQueuedTargetMixin",
+		"betterprinter.PrinterBrokerTargetMixin",
 		"betterprinter.PrinterProtocolAnchorMixin",
 		"betterprinter.BetterPrinterGuideAccessor",
 		"betterprinter.BetterPrinterGuideMixin",
