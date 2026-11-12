@@ -34,11 +34,14 @@ public abstract class LitematicaPrinterMixin
 		Vec3 encoded = EasyPlaceClientEncoder.encode(pos, state, original);
 		if(encoded == null)
 		{
+			// A native V2/V3 payload is about to be attached; drop any state that a rejected
+			// click may have left behind so it can never translate this placement.
+			PrinterPacketAnchor.clear();
 			return original;
 		}
 		// The payload is anchored at the schematic target; the queued click may target the
 		// support block instead, so remember the anchor until the click is actually queued.
-		PrinterPacketAnchor.begin(pos);
+		PrinterPacketAnchor.begin(pos, encoded);
 		return encoded;
 	}
 }

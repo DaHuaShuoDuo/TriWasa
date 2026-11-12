@@ -29,6 +29,7 @@ public final class PrinterPacketAnchorTest
 		checks += new PrinterPacketAnchorTest().checkAxisTranslation();
 		checks += new PrinterPacketAnchorTest().checkWireRoundTrip();
 		checks += new PrinterPacketAnchorTest().checkOneShot();
+		checks += new PrinterPacketAnchorTest().checkForeignPayload();
 		return checks;
 	}
 
@@ -38,7 +39,7 @@ public final class PrinterPacketAnchorTest
 		Vec3 applied = PrinterPacketAnchor.apply(encoded);
 		check(same(applied, encoded), "apply without a recorded anchor must be a no-op");
 
-		PrinterPacketAnchor.begin(TARGET);
+		PrinterPacketAnchor.begin(TARGET, encoded);
 		PrinterPacketAnchor.recordTarget(TARGET);
 		applied = PrinterPacketAnchor.apply(encoded);
 		check(same(applied, encoded), "a click on the target must not translate the payload");
@@ -48,7 +49,7 @@ public final class PrinterPacketAnchorTest
 	private int checkAxisTranslation()
 	{
 		Vec3 encoded = payload(TARGET, 0x2a);
-		PrinterPacketAnchor.begin(TARGET);
+		PrinterPacketAnchor.begin(TARGET, encoded);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
 		Vec3 east = PrinterPacketAnchor.apply(encoded);
 		check(
@@ -58,7 +59,7 @@ public final class PrinterPacketAnchorTest
 				"an east support click must translate X only"
 		);
 
-		PrinterPacketAnchor.begin(TARGET);
+		PrinterPacketAnchor.begin(TARGET, encoded);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.UP));
 		Vec3 up = PrinterPacketAnchor.apply(encoded);
 		check(
@@ -68,7 +69,7 @@ public final class PrinterPacketAnchorTest
 				"an up support click must translate Y only"
 		);
 
-		PrinterPacketAnchor.begin(TARGET);
+		PrinterPacketAnchor.begin(TARGET, encoded);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.WEST));
 		Vec3 west = PrinterPacketAnchor.apply(encoded);
 		check(
@@ -92,7 +93,7 @@ public final class PrinterPacketAnchorTest
 			for(Direction side : Direction.values())
 			{
 				BlockPos support = TARGET.relative(side);
-				PrinterPacketAnchor.begin(TARGET);
+				PrinterPacketAnchor.begin(TARGET, encoded);
 				PrinterPacketAnchor.recordTarget(support);
 				Vec3 reanchored = PrinterPacketAnchor.apply(encoded);
 				Vec3 received = wire(support, reanchored);
@@ -117,12 +118,47 @@ public final class PrinterPacketAnchorTest
 	private int checkOneShot()
 	{
 		Vec3 encoded = payload(TARGET, 0x2a);
-		PrinterPacketAnchor.begin(TARGET);
+		PrinterPacketAnchor.begin(TARGET, encoded);
 		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
 		PrinterPacketAnchor.apply(encoded);
 		Vec3 second = PrinterPacketAnchor.apply(encoded);
 		check(same(second, encoded), "the recorded anchor must be consumed after one payload");
 		return 1;
+	}
+
+	/**
+	 * A rejected click can leave a pending delta behind, and the client may then fall back to a
+	 * native Litematica/Servux payload. That payload must pass through untouched, and the stale
+	 * delta must not survive to the next attempt.
+	 */
+	private int checkForeignPayload()
+	{
+		Vec3 encoded = payload(TARGET, 0x2a);
+		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
+
+		Vec3 nativePayload = new Vec3(
+				TARGET.getX() + 2.5,
+				TARGET.getY() + 0.5,
+				TARGET.getZ() + 0.5
+		);
+		check(
+				same(PrinterPacketAnchor.apply(nativePayload), nativePayload),
+				"a native payload must never be translated by a printer delta"
+		);
+		check(
+				same(PrinterPacketAnchor.apply(nativePayload), nativePayload),
+				"the foreign attach must consume the stale delta"
+		);
+
+		PrinterPacketAnchor.begin(TARGET, encoded);
+		PrinterPacketAnchor.recordTarget(TARGET.relative(Direction.EAST));
+		PrinterPacketAnchor.clear();
+		check(
+				same(PrinterPacketAnchor.apply(encoded), encoded),
+				"clear() must drop the pending delta and the remembered payload"
+		);
+		return 3;
 	}
 
 	/** Encodes X, Y and the fixed-origin Z the way the client encoder does. */

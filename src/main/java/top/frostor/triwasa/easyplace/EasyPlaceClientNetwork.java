@@ -11,6 +11,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import top.frostor.triwasa.TriWasa;
+import top.frostor.triwasa.betterprinter.PrinterPacketAnchor;
 import top.frostor.triwasa.config.TriWasaConfigs;
 
 public final class EasyPlaceClientNetwork
@@ -49,7 +50,8 @@ public final class EasyPlaceClientNetwork
 				if(EasyPlacePayloadBridge.packetId(payload) == EasyPlacePayload.HELLO_ACK)
 				{
 					CompoundTag data = EasyPlacePayloadBridge.data(payload);
-					serverSupports = acceptsCapability(data);
+					serverSupports = acceptsCapability(data)
+							&& acceptsPacketAnchorCapability(data);
 					serverSupportsYPrecision = serverSupports
 							&& acceptsYPrecisionCapability(data);
 					serverSupportsPistonProtection = serverSupportsYPrecision
@@ -113,6 +115,7 @@ public final class EasyPlaceClientNetwork
 			helloPending = false;
 			wasEnabled = false;
 			EasyPlaceCrafterSlotLock.clear();
+			PrinterPacketAnchor.clear();
 			return;
 		}
 
@@ -133,6 +136,7 @@ public final class EasyPlaceClientNetwork
 		helloPending = false;
 		wasEnabled = TriWasaConfigs.EASY_PLACE_V2_PROTOCOL_EXTRA.getBooleanValue();
 		EasyPlaceCrafterSlotLock.clear();
+		PrinterPacketAnchor.clear();
 	}
 
 	private static void tick(Minecraft client)
@@ -178,6 +182,7 @@ public final class EasyPlaceClientNetwork
 		data.putString("mod_version", version);
 		data.putInt(NBT_PROTOCOL_VERSION, PROTOCOL_VERSION);
 		data.putBoolean(CAPABILITY_EASY_PLACE_V2_EXTRA, true);
+		data.putBoolean(CAPABILITY_PACKET_ANCHOR, true);
 		data.putBoolean(CAPABILITY_Y_PRECISION, true);
 		data.putBoolean(CAPABILITY_PISTON_PROTECTION, true);
 		data.putInt(NBT_Y_PRECISION_BITS, EasyPlaceExtraProtocol.Y_PRECISION_BITS);
@@ -200,6 +205,17 @@ public final class EasyPlaceClientNetwork
 	{
 		return data.getIntOr(NBT_PROTOCOL_VERSION, -1) == PROTOCOL_VERSION
 				&& data.getBooleanOr(CAPABILITY_EASY_PLACE_V2_EXTRA, false);
+	}
+
+	/**
+	 * The server only decodes the packet anchor, so an ACK that does not advertise the same
+	 * contract must not activate V2-Extra: the client would encode payloads the server reads one
+	 * raw value off. Both the explicit boolean and the capabilities list have to agree.
+	 */
+	static boolean acceptsPacketAnchorCapability(CompoundTag data)
+	{
+		return data.getBooleanOr(CAPABILITY_PACKET_ANCHOR, false)
+				&& advertisesCapability(data, CAPABILITY_PACKET_ANCHOR);
 	}
 
 	static boolean acceptsYPrecisionCapability(CompoundTag data)

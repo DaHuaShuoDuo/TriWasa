@@ -21,17 +21,25 @@ import net.minecraft.world.phys.Vec3;
 public final class PrinterPacketAnchor
 {
 	private static final ThreadLocal<BlockPos> ENCODE_ANCHOR = new ThreadLocal<>();
+	private static final ThreadLocal<Vec3> ENCODED_PAYLOAD = new ThreadLocal<>();
 	private static final ThreadLocal<Delta> PENDING = new ThreadLocal<>();
 
 	private PrinterPacketAnchor()
 	{
 	}
 
-	/** Marks the position the encoder just anchored its payload at. */
-	public static void begin(BlockPos encodeAnchor)
+	/**
+	 * Marks the position the encoder anchored its payload at.
+	 *
+	 * <p>The payload instance is remembered as well, so a later attach can prove it is still
+	 * looking at this placement's payload instead of a leftover delta from a rejected click or a
+	 * native Litematica/Servux payload.</p>
+	 */
+	public static void begin(BlockPos encodeAnchor, Vec3 encodedPayload)
 	{
-		PENDING.remove();
+		clear();
 		ENCODE_ANCHOR.set(encodeAnchor.immutable());
+		ENCODED_PAYLOAD.set(encodedPayload);
 	}
 
 	/** Computes the translation for the click that is actually being queued. */
@@ -53,12 +61,21 @@ public final class PrinterPacketAnchor
 		PENDING.set(new Delta(dx, dy));
 	}
 
-	/** Applies the pending translation to an encoded payload and clears it. */
+	/**
+	 * Applies the pending translation to this placement's payload and clears it.
+	 *
+	 * <p>Anything other than the payload recorded by {@link #begin} is passed through untouched:
+	 * a rejected click can leave a pending delta behind, and a client that falls back to a native
+	 * V3/Servux payload must never be shifted by it.</p>
+	 */
 	public static Vec3 apply(Vec3 encodedHitVec)
 	{
 		Delta delta = PENDING.get();
 		PENDING.remove();
-		if(delta == null)
+		Vec3 encoded = ENCODED_PAYLOAD.get();
+		ENCODED_PAYLOAD.remove();
+		ENCODE_ANCHOR.remove();
+		if(delta == null || encoded == null || !encoded.equals(encodedHitVec))
 		{
 			return encodedHitVec;
 		}
@@ -72,6 +89,7 @@ public final class PrinterPacketAnchor
 	public static void clear()
 	{
 		ENCODE_ANCHOR.remove();
+		ENCODED_PAYLOAD.remove();
 		PENDING.remove();
 	}
 
