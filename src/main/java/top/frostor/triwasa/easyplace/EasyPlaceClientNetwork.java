@@ -22,6 +22,7 @@ public final class EasyPlaceClientNetwork
 	private static final String NBT_Y_PRECISION_BITS = "y_precision_bits";
 	private static final String NBT_PISTON_PROTECTION_BITS = "piston_protection_bits";
 	private static final String CAPABILITY_EASY_PLACE_V2_EXTRA = "easy_place_v2_extra";
+	private static final String CAPABILITY_PACKET_ANCHOR = "easy_place_packet_anchor";
 	private static final String CAPABILITY_Y_PRECISION = "easy_place_y_precision";
 	private static final String CAPABILITY_PISTON_PROTECTION = "easy_place_piston_protection";
 	private static boolean serverSupports;
@@ -186,6 +187,7 @@ public final class EasyPlaceClientNetwork
 		);
 		ListTag capabilities = new ListTag();
 		capabilities.add(StringTag.valueOf(CAPABILITY_EASY_PLACE_V2_EXTRA));
+		capabilities.add(StringTag.valueOf(CAPABILITY_PACKET_ANCHOR));
 		capabilities.add(StringTag.valueOf(CAPABILITY_Y_PRECISION));
 		capabilities.add(StringTag.valueOf(CAPABILITY_PISTON_PROTECTION));
 		data.put(NBT_CAPABILITIES, capabilities);

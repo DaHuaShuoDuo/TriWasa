@@ -105,14 +105,16 @@ Z 通道使用**固定原点**编码（`z = auxiliary * 2 + 2`，对齐世界 Z=
 掩码为零或能力缺失时与纯精度编码逐位一致。命中位置按相对 `blockPos` 的 binary32
 float 传输，Y payload 最大 `2+2*(2^21-1)=2^22`，低于精确整数上限 2^24。
 X raw 与 Y 精度一律相对 packet `BlockHitResult.blockPos` 编码（不再用 `protocolPos`），
-FCA 在目标变换前的 packet 级快照中解码。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
+FCA 在目标变换前的 packet 级快照中解码。打印机需要点击支撑方块时，`queueAction` 决定的
+packet 位置与编码锚点相差一格，框架会在入队到 `useProtocolHitModifier` 之间把 X/Y 平移
+同一差值，Z 不动（Z 是固定原点 auxiliary）。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
 和 TNT 保护位会被静默丢弃。26.2/26.3 放置语义统一：两版依赖的 Litematica 不同（0.28.6 / 0.29.1），且 26.3 把
 `ServerboundUseItemOnPacket` 改为 record，命中位置经 `BlockHitResult.STREAM_CODEC` 以
-**相对 `blockPos` 的 float** 传输。为屏蔽这些差异，wire 的 X/Y 锚点固定为 packet
-`blockPos`；`BellRules.resolveProtocolTarget` 等解析出的 `protocolPos` 只用于读取投影与
-当前世界状态，不得传给 `encodeX`/`encodeY`。服务端以 Z 的 `AUXILIARY_SCHEMA` 位为主判据，
-X 主锚点失配时再按命中面及 X 轴相邻锚点兜底。两版因此走同一套解码路径，侧挂钟等
-`facing` 落在 X 轴的目标不会再因锚点偏移丢失 V2-Extra marker。
+**相对 `blockPos` 的 float** 传输。wire 的 X/Y/Z 只承认 packet `blockPos` 一个锚点：
+`BellRules.resolveProtocolTarget` 等解析出的 `protocolPos` 只用于读取投影与当前世界状态，
+不得传给 `encodeX`/`encodeY`。服务端不再按命中面或 X 轴相邻锚点兜底，因此客户端必须在
+HELLO 中声明 `easy_place_packet_anchor`；未声明该能力的客户端不会获得 V2-Extra，会回落到
+原版 easy place，而不是静默放错状态。
 多面方块的面索引顺序固定为
 `DOWN, UP, NORTH, SOUTH, WEST, EAST`，藤蔓从同一顺序过滤 `DOWN` 得到
 `UP, NORTH, SOUTH, WEST, EAST`。使用历史面顺序构建的客户端或服务端必须升级到

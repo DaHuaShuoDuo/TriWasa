@@ -7,6 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import top.frostor.triwasa.betterprinter.PrinterPacketAnchor;
 import top.frostor.triwasa.easyplace.EasyPlaceClientEncoder;
 import top.frostor.triwasa.easyplace.EasyPlaceRules;
 
@@ -31,6 +32,13 @@ public abstract class LitematicaPrinterMixin
 			return original;
 		}
 		Vec3 encoded = EasyPlaceClientEncoder.encode(pos, state, original);
-		return encoded == null ? original : encoded;
+		if(encoded == null)
+		{
+			return original;
+		}
+		// The payload is anchored at the schematic target; the queued click may target the
+		// support block instead, so remember the anchor until the click is actually queued.
+		PrinterPacketAnchor.begin(pos);
+		return encoded;
 	}
 }

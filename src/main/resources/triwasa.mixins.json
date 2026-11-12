@@ -11,6 +11,8 @@
 		"EasyPlaceUtilsInvoker",
 		"betterprinter.LitematicaPrinterMixin",
 		"betterprinter.BetterPrinterActionSupportMixin",
+		"betterprinter.PrinterQueuedTargetMixin",
+		"betterprinter.PrinterProtocolAnchorMixin",
 		"betterprinter.BetterPrinterGuideAccessor",
 		"betterprinter.BetterPrinterGuideMixin",
 		"betterprinter.BetterPrinterGuidesMixin",

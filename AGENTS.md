@@ -127,10 +127,13 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   `EXTENDED` 不得参与状态恢复或比较。
 - 26.2/26.3 放置语义必须统一：两版分别依赖 Litematica 0.28.6 / 0.29.1，且 26.3 的
   `ServerboundUseItemOnPacket` 是 record，命中位置以相对 `blockPos` 的 float 传输。wire 的
-  X/Y 编码锚点只能是 packet `BlockHitResult.blockPos`；`resolveProtocolTarget` 一类的
-  `protocolPos` 仅用于读投影/世界状态，禁止进入 `encodeX`/`encodeY`。服务端以 Z 的
-  `AUXILIARY_SCHEMA` 位识别 V2-Extra 包，并在 X 主锚点无 marker 时按命中面及 X 轴
-  相邻锚点兜底，不得按 Minecraft 版本分叉实现。
+  X/Y/Z 只承认 packet `BlockHitResult.blockPos` 一个锚点；`resolveProtocolTarget` 一类的
+  `protocolPos` 仅用于读投影/世界状态，禁止进入 `encodeX`/`encodeY`。printer 点击支撑方块
+  时，`Action.queueAction` 选定的 packet 位置与编码锚点相差一格，必须在
+  `ActionManager.queueClick` 到 `useProtocolHitModifier` 之间把 X/Y 平移
+  `packetTarget - encodeAnchor`，Z 不得平移；服务端已删除命中面/X 轴候选兜底，所以
+  HELLO 必须声明 `easy_place_packet_anchor`，缺少该能力会被 FCA 拒绝并回落原版
+  easy place。
 - Z 通道 bit11-16 按 `Direction.ordinal()` 标记六个相邻位置中哪些墙的实际状态与
   Litematica 投影状态一致。比较必须忽略 `WATERLOGGED`，其余方块种类、四侧连接和
   `UP` 必须完全一致；不一致方向的 bit 不得发送，使该墙在服务端继续接受原版邻居更新。
