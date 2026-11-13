@@ -159,6 +159,17 @@ hand-placement or vanilla Mixin fixes should remain under
 Glow lichen, sculk veins, resin clumps, and other multiface blocks increment one face at a time at the same position until the projected face set is complete.
 Vines use the same same-position incremental path for missing faces while retaining valid-attachment checks.
 
+`easyPlaceFullBlockSelection` is a peer of `betterPrinter`, is disabled by
+default, and is governed by the `betterEasyPlace` master switch. While enabled,
+the easy place schematic trace treats torches, buttons,
+slabs, stairs, fences, candles, and signs as full 1×1×1 blocks, so aiming at the
+empty part of a cell still selects the target. The scope covers only that single
+easy place schematic trace: area selection dragging, pick block, verifier
+highlights, and printer targets keep the real outline shapes. The click uses the
+full block hit position and face, so face-dependent blocks (slab halves, wall
+torches, trapdoors) may end up with a facing that differs from the schematic when
+FCA is not installed; an FCA server forcing the V2-Extra state is unaffected.
+
 ### Better Printer (Child Option)
 
 `betterPrinter` is enabled by default and is a child option of `betterEasyPlace`.

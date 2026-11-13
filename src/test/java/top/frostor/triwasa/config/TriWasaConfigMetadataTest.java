@@ -4,6 +4,7 @@ import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.IConfigBoolean;
 import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import top.frostor.triwasa.easyplace.EasyPlaceRules;
+import top.frostor.triwasa.easyplace.SchematicSelectionBoost;
 
 import java.util.List;
 
@@ -124,6 +125,24 @@ public final class TriWasaConfigMetadataTest
 				"betterPrinter parent changed"
 		);
 		check(
+				TriWasaConfigs.BETTER_EASY_PLACE_OPTIONS.contains(
+						TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION)
+						&& TriWasaConfigs.UTILITY_FILE_OPTIONS.contains(
+								TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION),
+				"easy place full block selection must stay an auxiliary feature option"
+		);
+		check(
+				TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION.getBooleanValue() == false,
+				"easy place full block selection must default to disabled"
+		);
+		check(
+				TriWasaConfigs.isChildConfig(TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION)
+						&& TriWasaConfigs.getParentConfig(
+								TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION)
+						== TriWasaConfigs.BETTER_EASY_PLACE,
+				"easy place full block selection must be a child of betterEasyPlace"
+		);
+		check(
 				TriWasaConfigs.UTILITY_OPTIONS.contains(TriWasaConfigs.PROJECTION_MATERIAL_STATS_FIX)
 						&& TriWasaConfigs.UTILITY_FILE_OPTIONS.contains(
 								TriWasaConfigs.PROJECTION_MATERIAL_STATS_FIX),
@@ -166,25 +185,37 @@ public final class TriWasaConfigMetadataTest
 			);
 		}
 
-		check(booleanOptions == 16, "unexpected number of visible boolean options");
+		check(booleanOptions == 17, "unexpected number of visible boolean options");
 
 		boolean easyPlace = TriWasaConfigs.BETTER_EASY_PLACE.getBooleanValue();
 		boolean printer = TriWasaConfigs.BETTER_PRINTER.getBooleanValue();
+		boolean fullBlockSelection =
+				TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION.getBooleanValue();
 		try
 		{
 			TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(false);
+			TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION.setBooleanValue(true);
 			check(!EasyPlaceRules.isEnabled(), "betterEasyPlace master switch is not authoritative");
 			check(!EasyPlaceRules.isPrinterEnabled(), "betterPrinter must be inactive when its parent is off");
+			check(
+					!SchematicSelectionBoost.isEnabled(),
+					"full block selection must be inactive when its parent is off"
+			);
 
 			TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(true);
 			TriWasaConfigs.BETTER_PRINTER.setBooleanValue(false);
 			check(EasyPlaceRules.isEnabled(), "betterEasyPlace master switch must remain active");
 			check(!EasyPlaceRules.isPrinterEnabled(), "betterPrinter child switch is not authoritative");
+			check(
+					SchematicSelectionBoost.isEnabled(),
+					"full block selection child switch is not authoritative"
+			);
 		}
 		finally
 		{
 			TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(easyPlace);
 			TriWasaConfigs.BETTER_PRINTER.setBooleanValue(printer);
+			TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION.setBooleanValue(fullBlockSelection);
 		}
 		System.out.println("TriWasaConfigMetadataTest passed " + checks + " checks");
 	}

@@ -84,6 +84,9 @@ public final class TriWasaConfigs implements IConfigHandler
 			new ConfigBoolean("betterEasyPlaceExpanded", false).apply(UTILITIES_TRANSLATION_PREFIX);
 	public static final ConfigBoolean BETTER_PRINTER =
 			new ConfigBoolean("betterPrinter", true).apply(UTILITIES_TRANSLATION_PREFIX);
+	public static final ConfigBoolean EASY_PLACE_FULL_BLOCK_SELECTION =
+			new ConfigBoolean("easyPlaceFullBlockSelection", false)
+					.apply(UTILITIES_TRANSLATION_PREFIX);
 	public static final ConfigBoolean QUICK_SHULKER_HAND_RESTOCK_EXPANDED =
 			new ConfigBoolean("quickShulkerHandRestockExpanded", false).apply(UTILITIES_TRANSLATION_PREFIX);
 	public static final ConfigInteger QUICK_SHULKER_HAND_RESTOCK_THRESHOLD =
@@ -175,6 +178,8 @@ public final class TriWasaConfigs implements IConfigHandler
 			booleanHotkey("itemPickupFilterPauseWhileSneaking");
 	public static final ConfigHotkey BETTER_EASY_PLACE_HOTKEY = booleanHotkey("betterEasyPlace");
 	public static final ConfigHotkey BETTER_PRINTER_HOTKEY = booleanHotkey("betterPrinter");
+	public static final ConfigHotkey EASY_PLACE_FULL_BLOCK_SELECTION_HOTKEY =
+			booleanHotkey("easyPlaceFullBlockSelection");
 	public static final ConfigHotkey QUICK_SHULKER_HAND_RESTOCK_HOTKEY =
 			booleanHotkey("quickShulkerHandRestock");
 	public static final ConfigHotkey BIG_ENDER_CHEST_TERMINAL_ENABLED_HOTKEY =
@@ -203,6 +208,7 @@ public final class TriWasaConfigs implements IConfigHandler
 					.put(PICKUP_FILTER_PAUSE_WHILE_SNEAKING, PICKUP_FILTER_PAUSE_WHILE_SNEAKING_HOTKEY)
 					.put(BETTER_EASY_PLACE, BETTER_EASY_PLACE_HOTKEY)
 					.put(BETTER_PRINTER, BETTER_PRINTER_HOTKEY)
+					.put(EASY_PLACE_FULL_BLOCK_SELECTION, EASY_PLACE_FULL_BLOCK_SELECTION_HOTKEY)
 					.put(QUICK_SHULKER_HAND_RESTOCK, QUICK_SHULKER_HAND_RESTOCK_HOTKEY)
 					.put(BIG_ENDER_CHEST_TERMINAL_ENABLED, BIG_ENDER_CHEST_TERMINAL_ENABLED_HOTKEY)
 					.put(BIG_ENDER_CHEST_REMEMBER_SEARCH, BIG_ENDER_CHEST_REMEMBER_SEARCH_HOTKEY)
@@ -235,10 +241,12 @@ public final class TriWasaConfigs implements IConfigHandler
 	public static final ImmutableList<IConfigBase> BETTER_EASY_PLACE_OPTIONS = ImmutableList.of(
 			BETTER_EASY_PLACE,
 			BETTER_EASY_PLACE_EXPANDED,
-			BETTER_PRINTER
+			BETTER_PRINTER,
+			EASY_PLACE_FULL_BLOCK_SELECTION
 	);
 	public static final ImmutableList<IConfigBase> BETTER_EASY_PLACE_CHILDREN = ImmutableList.of(
-			BETTER_PRINTER
+			BETTER_PRINTER,
+			EASY_PLACE_FULL_BLOCK_SELECTION
 	);
 	public static final ImmutableList<IConfigBase> QUICK_SHULKER_HAND_RESTOCK_OPTIONS = ImmutableList.of(
 			QUICK_SHULKER_HAND_RESTOCK,

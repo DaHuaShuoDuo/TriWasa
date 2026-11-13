@@ -34,6 +34,8 @@
 		"betterprinter.BetterPrinterPlacementValidationMixin",
 		"betterprinter.BetterPrinterSchematicBlockContextAccessor",
 		"bettereasyplace.BetterEasyPlaceWallHangingSignMixin",
+		"bettereasyplace.BetterEasyPlaceSchematicHitboxMixin",
+		"bettereasyplace.BetterEasyPlaceLegacyTraceScopeMixin",
 		"EasyPlaceV3Mixin",
 		"EasyPlaceWorldUtilsCallSiteMixin",
 		"InventoryProfilesNextContainerScreenMixin",
