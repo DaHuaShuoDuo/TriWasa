@@ -64,14 +64,14 @@ shape preservation, crafter slot locks, and Litematica V2/V3 hit-position
 handling. FCA remains authoritative for final block state and placement
 validation.
 
-The master switch is `easyPlaceV2ProtocolExtra`.
+The master switch is `easyPlaceV2ProtocolExtra`, disabled by default.
 Its rail, wall, observer, TNT, and piston protection children all default to
-enabled. The rail switch
+disabled. The rail switch
 suppresses rail shape recalculation and PP updates and preserves the initial
 `POWERED` state of powered, activator, and detector rails. In 26.x, powered and
 activator rails both use `PoweredRailBlock`, while detector rails use the
 separate `DetectorRailBlock`. The client compares adjacent actual rails with
-the projection and sends a match mask through the Z channel, so only rail type
+the schematic state and sends a match mask through the Z channel, so only rail type
 and shape matches are protected. Neighbor redstone state is not compared, and
 ordinary rails have no redstone state.
 Disabling the wall switch omits wall V2-Extra state and wall-protection flags,
@@ -82,16 +82,16 @@ channel. `WATERLOGGED` is ignored; other mismatches do not receive neighbor
 update protection.
 Observers use a dedicated family that synchronizes only `FACING`; projected
 `POWERED` is never encoded, so server-side placement always starts inactive.
-The peer `easyPlaceObserverProtection` switch defaults to enabled; disabling it
+The peer `easyPlaceObserverProtection` switch defaults to disabled; disabling it
 omits observer V2-Extra state and protection flags, restoring vanilla placement
 and detection-face updates.
-The peer `easyPlaceTntProtection` switch defaults to enabled and prevents
+The peer `easyPlaceTntProtection` switch defaults to disabled and prevents
 easy-place redstone priming of TNT while enabled. TNT has no persistent active
 block state, so no TNT state adapter is added.
 The request is emitted from the common `BlockItem` placement path for all block
 items, including standing/wall coral-fan items.
 The peer `easyPlacePistonProtection` switch compares the placement target, six
-face neighbors, and five QC second-hop candidates with the projection while
+face neighbors, and five QC second-hop candidates with the schematic while
 the projected piston remains unextended. Matching entries are packed into the
 12-bit mask in Y bits 8-19 with `Y_PISTON_SCHEMA` at bit 20. Projected
 `EXTENDED` is never restored, and mismatched pistons retain vanilla updates.
@@ -144,7 +144,7 @@ compatibility only and is no longer maintained.
 
 ### Better Easy Place
 
-`betterEasyPlace` is enabled by default and is the master switch for TriWasa's
+`betterEasyPlace` is disabled by default and is the master switch for TriWasa's
 shared Litematica placement corrections. It does not depend on the FCA protocol handshake.
 It fixes support-block and click-face selection for hanging signs and allows
 unsupported wall hanging signs and candles to use a virtual target-position click.
@@ -159,9 +159,40 @@ hand-placement or vanilla Mixin fixes should remain under
 Glow lichen, sculk veins, resin clumps, and other multiface blocks increment one face at a time at the same position until the projected face set is complete.
 Vines use the same same-position incremental path for missing faces while retaining valid-attachment checks.
 
+`easyPlaceFullBlockSelection` is a **standalone switch**, independent of
+`betterEasyPlace` and not governed by its master switch, and is disabled by
+default. While enabled,
+the easy place schematic trace treats torches, buttons,
+slabs, stairs, fences, candles, and signs as full 1×1×1 blocks, so aiming at the
+empty part of a cell still selects the target. The scope covers only that single
+easy place schematic trace: area selection dragging, pick block, verifier
+highlights, and printer targets keep the real outline shapes. The click uses the
+full block hit position and face, so face-dependent blocks (slab halves, wall
+torches, trapdoors) may end up with a facing that differs from the schematic when
+FCA is not installed; an FCA server forcing the V2-Extra state is unaffected.
+The expanded hit box **only applies to blocks whose state is wrong**.
+This reuses Litematica's own check in `EasyPlaceUtils#handleEasyPlace`: the
+schematic world state and the client world state are compared by reference
+(`==`), and an identical state means the block is already correct, so it keeps
+its real outline instead of stealing clicks from adjacent cells. Any difference,
+including `WATERLOGGED`, means the block still needs to be placed. Only block
+states are compared, not block entity data such as sign text or container
+contents.
+
+`easyPlaceSelectionOutline` is likewise a **standalone switch**, independent of
+`betterEasyPlace`, disabled by default, and a render-only feature. While easy place mode is enabled (and the
+tool mode is not REBUILD), the vanilla block selection box is drawn on the
+schematic cell that the click would use. It only replaces the render-only outline
+state, so `hitResult`, attacks, pick block, and the protocol stay untouched. The
+box always follows the active hit box semantics: a full block while full block
+selection is enabled, otherwise the real outline of the projected block, so it
+never suggests a larger target than the player can actually click. Blocks whose
+state already matches the schematic do not get this box, using the same
+Litematica check described above.
+
 ### Better Printer (Child Option)
 
-`betterPrinter` is enabled by default and is a child option of `betterEasyPlace`.
+`betterPrinter` is disabled by default and is a child option of `betterEasyPlace`.
 It groups the Guide/Action-level Mixins that directly modify Hana's
 Fourth-Revision Printer (the Hana `litematica-printer` branch) and is active only when
 that printer is installed and the parent switch is enabled.
@@ -184,6 +215,9 @@ Mixins are not interchangeable.
 Every mismatch-state row in the Litematica schematic verifier has a **Pick Position** button. The child screen lists every block position for that mismatch state and supports searching by coordinate, block ID, state, or display name. Click positions to toggle them, and keep the child screen open while selecting multiple blocks. Selections from different mismatch groups are independent and persist together; the world overlays, targeted outline, and verifier HUD show the selected blocks from every group. Each row has a **Copy** button for copying that block's integer `x y z` coordinates. **Show All** selects every position in the current group. Coarse-selecting a state row marks every position in that state as selected in the child screen; a row with exact selections is also highlighted, and clicking it again clears both the coarse and exact selections for that group.
 
 This feature only narrows verifier highlighting. It does not change mismatch counts, sorting, or the scope of ignoring a mismatch state.
+The `verifierPositionPicker` switch (disabled by default) controls the **Pick Position** button on each
+mismatch row; when disabled the button is hidden, the verifier falls back to the vanilla per-category
+highlighting, and existing exact selections no longer affect overlay merging.
 
 ### Big Ender Chest Terminal
 
@@ -218,10 +252,14 @@ Press `C+T` by default to open the main TriWasa configuration screen. The hotkey
 can be rebound on the All tab. With Mod Menu installed, the configuration
 button in the mod list opens the same screen.
 
+Every true/false option has a keybind slot to the right of its switch; together
+they fill the original row width, and all of them are unbound by default. Once
+bound, pressing the key toggles that option exactly like clicking the switch.
+
 ### Quick Shulker Hand Restocking
 
-`quickShulkerHandRestock` can restock the selected hand item from Quick Shulker
-boxes in the player inventory. It triggers only when a main-hand right-click use
+`quickShulkerHandRestock` can restock the held item from Quick Shulker
+boxes in the player inventory. It triggers only when a right-click use
 reduces the item or leaves a remainder; moving the stack or depositing it into a
 container does not trigger a restock. It handles cases such as an empty bucket
 after using a water or powder snow bucket or a bowl after eating stew. Remainders
@@ -229,11 +267,29 @@ use available inventory capacity first, then the shulker box, and are dropped
 only when neither has room. It does not read schematic material lists. Quick
 Shulker must be installed on both the client and server.
 
+The `quickShulkerOffhandRestock` child option is disabled by default. While
+enabled, the offhand is restocked the same way: when an offhand use reduces the
+stack or leaves a remainder, the same item and components are pulled from the
+same shulker box and the new stack is placed back into the offhand slot. A
+main-hand restock always takes priority, so enabling the offhand never delays
+the main hand. The offhand slot is `Inventory.SLOT_OFFHAND` in container
+interactions, so the hand swap reuses the same `SWAP` operation as the main hand
+and adds no extra click sequence.
+
 ### Client Pickup Filter
 
 After the client receives a pickup result, `itemPickupFilterEnabled` can discard
 matching items by stack using a blacklist or whitelist. It cannot replace server
 permissions, region protection, or entity interception.
+
+### Litematica Material Stats Fix
+
+`projectionMaterialStatsFix` fixes Litematica's material list undercounting
+multi-item and multiface blocks. It is off by default; when enabled, pink
+petals, wildflowers and leaf litter count 1-4 segments, resin clumps count their
+attached faces, and vines count up to five faces. It also removes the duplicated
+multiplier in the recipe JSON export. Regenerate the material list after
+toggling the switch.
 
 ### Other Mod Fixes
 
@@ -249,10 +305,23 @@ TriWasa stores configuration in `config/triwasa.json` through MaLiLib:
 
 - **All**: the configuration hotkey, every feature option, and fix information
   in one searchable list.
-- **Porting**: V2-Extra easy place and pickup filtering.
-- **Auxiliary Features**: Better Easy Place, Better Printer, Quick Shulker, and the big ender
-  chest terminal.
+- **Litematica Assistance**: every option that changes Litematica behaviour —
+  V2-Extra Easy Place, Better Easy Place (including Better Printer, full block
+  selection and the schematic target box), the Litematica material stats fix,
+  and the verifier position picker.
+- **Auxiliary Features**: non-Litematica features — item pickup filtering,
+  Quick Shulker, and the big ender chest terminal.
 - **Other Mod Fixes**: optional fixes that change another mod's own behavior.
+
+The two master switches from the former "Ports" tab state their origin directly
+in the config screen:
+
+- `easyPlaceV2ProtocolExtra` — ported from
+  [EarlyCompat](https://github.com/chenjunfu2/EarlyCompat) by chenjunfu2 (CC0-1.0).
+- `itemPickupFilterEnabled` — ported from
+  [Item Pickup Filter](https://github.com/dev-jcwd/Item-Pickup-Filter) by jcwd (MIT).
+
+See `THIRD_PARTY_NOTICES.md` for the full notices.
 
 The `[+]` / `[-]` control on a parent only expands or collapses child options;
 it is not a feature switch. Missing configuration, search filtering, and a

@@ -5,6 +5,7 @@ import top.frostor.triwasa.bigenderchest.client.BigEnderChestHoverResolverTest;
 import top.frostor.triwasa.bigenderchest.client.BigEnderChestTextLayoutTest;
 import top.frostor.triwasa.config.TriWasaConfigMetadataTest;
 import top.frostor.triwasa.easyplace.EasyPlaceProtocolTest;
+import top.frostor.triwasa.materiallist.ProjectionMaterialStatsTest;
 import top.frostor.triwasa.verifier.VerifierPositionOverlayFilterTest;
 
 public final class BigEnderChestLogicTests
@@ -25,6 +26,7 @@ public final class BigEnderChestLogicTests
 		BigEnderChestTextLayoutTest.run();
 		BigEnderChestHoverResolverTest.run();
 		TriWasaConfigMetadataTest.run();
+		ProjectionMaterialStatsTest.run();
 		VerifierPositionOverlayFilterTest.run();
 	}
 }

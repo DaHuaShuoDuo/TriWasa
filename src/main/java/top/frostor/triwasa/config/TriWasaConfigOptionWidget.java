@@ -51,7 +51,7 @@ final class TriWasaConfigOptionWidget extends WidgetConfigOption
 		int expandButtonX = x + EXPAND_BUTTON_LEFT_OFFSET;
 		x += EXPAND_BUTTON_WIDTH;
 		labelWidth = Math.max(20, labelWidth - EXPAND_BUTTON_WIDTH);
-		super.addConfigOption(x, y, labelWidth, configWidth, config);
+		super.addConfigOption(x, y, labelWidth, configWidth, TriWasaConfigs.getGuiConfig(config));
 
 		ConfigBoolean expansion = TriWasaConfigs.getExpansionState(config);
 		if(expansion != null)

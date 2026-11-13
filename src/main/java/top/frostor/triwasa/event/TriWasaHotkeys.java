@@ -1,5 +1,8 @@
 package top.frostor.triwasa.event;
 
+import fi.dy.masa.malilib.config.IConfigBase;
+import fi.dy.masa.malilib.config.IConfigBoolean;
+import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.hotkeys.IKeybind;
@@ -25,7 +28,22 @@ public final class TriWasaHotkeys implements IKeybindProvider
 	{
 		TriWasaConfigs.OPEN_CONFIG_GUI.getKeybind()
 				.setCallback((action, keybind) -> openConfigScreen(action));
+		TriWasaConfigs.BOOLEAN_HOTKEYS.forEach(
+				(config, hotkey) -> hotkey.getKeybind()
+						.setCallback((action, keybind) -> toggleBoolean(action, config))
+		);
 		InputEventHandler.getKeybindManager().registerKeybindProvider(INSTANCE);
+	}
+
+	private static boolean toggleBoolean(KeyAction action, IConfigBase config)
+	{
+		if(action != KeyAction.PRESS || (config instanceof IConfigBoolean) == false)
+		{
+			return false;
+		}
+
+		((IConfigBoolean) config).toggleBooleanValue();
+		return true;
 	}
 
 	private static boolean openConfigScreen(KeyAction action)
@@ -49,6 +67,11 @@ public final class TriWasaHotkeys implements IKeybindProvider
 	public void addKeysToMap(IKeybindManager manager)
 	{
 		manager.addKeybindToMap(TriWasaConfigs.OPEN_CONFIG_GUI.getKeybind());
+
+		for(ConfigHotkey hotkey : TriWasaConfigs.BOOLEAN_HOTKEYS.values())
+		{
+			manager.addKeybindToMap(hotkey.getKeybind());
+		}
 	}
 
 	@Override
@@ -59,6 +82,11 @@ public final class TriWasaHotkeys implements IKeybindProvider
 				TriWasa.MOD_NAME,
 				"triwasa.hotkeys.category.general",
 				hotkeys
+		);
+		manager.addHotkeysForCategory(
+				TriWasa.MOD_NAME,
+				"triwasa.hotkeys.category.toggles",
+				List.copyOf(TriWasaConfigs.BOOLEAN_HOTKEYS.values())
 		);
 	}
 }
