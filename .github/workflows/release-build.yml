@@ -1,13 +1,25 @@
 name: Release Build
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag to rebuild, or to publish with publish=true
+        required: false
+        type: string
+      publish:
+        description: Publish the built artifacts to Modrinth and CurseForge
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-build-${{ github.ref }}
+  group: release-build-${{ github.event.release.tag_name || inputs.release_tag || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -19,28 +31,88 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       fca_version: ${{ steps.version.outputs.fca_version }}
       fca_ref: ${{ steps.version.outputs.fca_ref }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
+      release_type: ${{ steps.version.outputs.release_type }}
+      source_ref: ${{ steps.version.outputs.source_ref }}
       source_sha: ${{ steps.version.outputs.source_sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.release_tag || github.ref }}
 
       - name: Read and validate release versions
         id: version
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+          PUBLISH_INPUT: ${{ inputs.publish }}
+          SOURCE_REF: ${{ github.event.release.tag_name || inputs.release_tag || github.ref }}
         run: |
           set -euo pipefail
           version="$(sed -n 's/^mod_version=//p' gradle.properties)"
           fca_version="$(sed -n 's/^fca_version=//p' gradle.properties)"
           source_sha="$(git rev-parse HEAD)"
+          release_tag="$REQUESTED_RELEASE_TAG"
+          publish="$PUBLISH_INPUT"
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            publish=true
+          fi
 
           test -n "$version"
           test -n "$fca_version"
+          if [[ -n "$release_tag" ]]; then
+            [[ "$release_tag" == v* ]] || {
+              echo "Release tag must start with v: $release_tag" >&2
+              exit 1
+            }
+            [[ "$release_tag" == "v${version}" ]] || {
+              echo "Tag $release_tag does not match mod_version=$version." >&2
+              exit 1
+            }
+          elif [[ "$publish" == "true" ]]; then
+            echo "workflow_dispatch publishing requires release_tag." >&2
+            exit 1
+          fi
+
+          if [[ "$version" == *-alpha* ]]; then
+            release_type="alpha"
+          elif [[ "$version" == *-beta* || "$version" == *-rc* ||
+            "$version" == *-* ]]; then
+            release_type="beta"
+          else
+            release_type="release"
+          fi
 
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "fca_version=${fca_version}" >> "$GITHUB_OUTPUT"
           echo "fca_ref=v${fca_version}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
+          echo "release_type=${release_type}" >> "$GITHUB_OUTPUT"
+          echo "source_ref=${SOURCE_REF}" >> "$GITHUB_OUTPUT"
           echo "source_sha=${source_sha}" >> "$GITHUB_OUTPUT"
           echo "Preparing TriWasa ${version} against FCA v${fca_version}"
+
+      - name: Validate publishing configuration
+        if: github.event_name == 'release' || inputs.publish
+        shell: bash
+        env:
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "$MODRINTH_PROJECT_ID" ]] || missing+=("MODRINTH_PROJECT_ID repository variable")
+          [[ -n "$CURSEFORGE_PROJECT_ID" ]] || missing+=("CURSEFORGE_PROJECT_ID repository variable")
+          [[ -n "$MODRINTH_TOKEN" ]] || missing+=("MODRINTH_TOKEN repository secret")
+          [[ -n "$CURSEFORGE_TOKEN" ]] || missing+=("CURSEFORGE_TOKEN repository secret")
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing release configuration: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
 
   build:
     name: Minecraft ${{ matrix.minecraft }}
@@ -61,26 +133,28 @@ jobs:
 
     steps:
       - name: Checkout TriWasa
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.prepare.outputs.source_ref }}
 
       - name: Checkout matching FCA release
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: DaHuaShuoDuo/Frostors-Carpet-Addition
           ref: ${{ needs.prepare.outputs.fca_ref }}
           path: .ci/Frostors-Carpet-Addition
 
       - name: Validate Gradle wrappers
-        uses: gradle/actions/wrapper-validation@v5
+        uses: gradle/actions/wrapper-validation@0723195856401067f7a2779048b490ace7a47d7c
 
       - name: Set up Java 25
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c
         with:
           distribution: temurin
           java-version: "25"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
@@ -152,7 +226,7 @@ jobs:
           echo "Prepared $main_jar"
 
       - name: Upload release build part
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: triwasa-release-part-${{ matrix.minecraft }}
           path: release-artifacts/*.jar
@@ -168,7 +242,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Download release build parts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: triwasa-release-part-*
           path: release-artifacts
@@ -196,9 +270,96 @@ jobs:
           cat BUILD-INFO.txt
 
       - name: Upload packaged release artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: triwasa-${{ needs.prepare.outputs.version }}
           path: release-artifacts/
           if-no-files-found: error
           retention-days: 90
+
+  publish:
+    name: Publish Minecraft ${{ matrix.minecraft }}
+    if: github.event_name == 'release' || inputs.publish
+    needs:
+      - prepare
+      - package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        minecraft:
+          - "26.2"
+          - "26.3"
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.prepare.outputs.source_ref }}
+
+      - name: Download packaged release artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: triwasa-${{ needs.prepare.outputs.version }}
+          path: release-artifacts
+
+      - name: Prepare release notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          set -euo pipefail
+          mkdir -p .ci
+          notes="${RELEASE_BODY:-}"
+          if [[ -z "$notes" ]]; then
+            notes="$(gh release view "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --json body \
+              --jq '.body')"
+          fi
+          if [[ -z "$notes" ]]; then
+            notes="Release ${RELEASE_TAG}."
+          fi
+          printf '%s\n' "$notes" > .ci/release-notes.md
+
+      - name: Select release JAR
+        shell: bash
+        env:
+          MC_VERSION: ${{ matrix.minecraft }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          mapfile -t jars < <(find release-artifacts -maxdepth 1 -type f \
+            -name "*fabric-${MC_VERSION}-${VERSION}.jar" -print)
+          if (( ${#jars[@]} != 1 )); then
+            printf 'Expected one Minecraft %s release JAR, found %s.\n' \
+              "$MC_VERSION" "${#jars[@]}" >&2
+            exit 1
+          fi
+          mkdir -p publish-artifacts
+          cp "${jars[0]}" \
+            "publish-artifacts/triwasa-${VERSION}-fabric-${MC_VERSION}.jar"
+
+      - name: Publish to Modrinth and CurseForge
+        uses: Kira-Antipov/mc-publish@c23376546a97f5ba7984e94445da359459b14419
+        with:
+          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: publish-artifacts/triwasa-${{ needs.prepare.outputs.version }}-fabric-${{ matrix.minecraft }}.jar
+          name: TriWasa ${{ needs.prepare.outputs.version }} for Minecraft ${{ matrix.minecraft }}
+          version: ${{ needs.prepare.outputs.version }}+${{ matrix.minecraft }}
+          version-type: ${{ needs.prepare.outputs.release_type }}
+          changelog-file: .ci/release-notes.md
+          loaders: fabric
+          environment: "client"
+          game-versions: "${{ matrix.minecraft }}"
+          game-version-filter: none
+          java: "Java 25"
+          retry-attempts: 3
+          retry-delay: 15000
+          fail-mode: fail

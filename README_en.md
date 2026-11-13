@@ -369,10 +369,26 @@ runs only when build-related files change.
 
 ### Release Build
 
-Run **Release Build** manually from GitHub Actions. The workflow checks out the FCA
-tag matching `fca_version`, builds both 26.2 and 26.3, and uploads a
+GitHub Releases are the release entry point. After publishing a release tagged
+`v<mod_version>`, `Release Build` verifies `mod_version`, checks out the FCA tag
+matching `fca_version`, builds and tests both 26.2 and 26.3, and publishes each
+JAR to Modrinth and CurseForge. Platform versions use
+`<mod_version>+<Minecraft version>`, and the GitHub Release body becomes the
+changelog.
+
+Running **Release Build** manually can still produce only the
 `triwasa-<version>` Actions artifact containing both JARs, `SHA256SUMS.txt`, and
-`BUILD-INFO.txt` for creating a GitHub Release.
+`BUILD-INFO.txt`. To retry an existing release, provide its complete `release_tag`
+and enable `publish`.
+
+Before the first release, create the Modrinth and CurseForge projects and add
+these GitHub repository settings:
+
+- Actions variables: `MODRINTH_PROJECT_ID`, `CURSEFORGE_PROJECT_ID`
+- Actions secrets: `MODRINTH_TOKEN`, `CURSEFORGE_TOKEN`
+
+Tokens are never committed. Publish TriWasa from an FCA Release matching
+`fca_version` so both repositories use the same protocol version.
 
 ## License and Third-Party Sources
 
