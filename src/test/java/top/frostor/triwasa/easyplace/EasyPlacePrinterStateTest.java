@@ -21,28 +21,32 @@ public final class EasyPlacePrinterStateTest extends EasyPlaceTestSupport
 
 	private void checkForcedPlacementScope()
 	{
+		boolean easyPlace = TriWasaConfigs.BETTER_EASY_PLACE.getBooleanValue();
+		TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(true);
 		EasyPlaceUtils.setHandling(false);
-		check(
-				!CandleRules.shouldAllowUnsupportedPlacement(Blocks.CANDLE.defaultBlockState()),
-				"normal candle placement must retain vanilla support checks"
-		);
-		check(
-				!HangingSignRules.shouldAllowUnsupportedWallPlacement(
-						Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState()
-				),
-				"normal wall hanging sign placement must retain vanilla support checks"
-		);
-		check(
-				!HangingSignRules.shouldSuppressEasyPlaceChaining(
-						Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState(),
-						Blocks.OAK_HANGING_SIGN.asItem()
-				),
-				"normal wall hanging sign interactions must retain vanilla chaining"
-		);
 
-		EasyPlaceUtils.setHandling(true);
 		try
 		{
+			check(
+					!CandleRules.shouldAllowUnsupportedPlacement(Blocks.CANDLE.defaultBlockState()),
+					"normal candle placement must retain vanilla support checks"
+			);
+			check(
+					!HangingSignRules.shouldAllowUnsupportedWallPlacement(
+							Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState()
+					),
+					"normal wall hanging sign placement must retain vanilla support checks"
+			);
+			check(
+					!HangingSignRules.shouldSuppressEasyPlaceChaining(
+							Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState(),
+							Blocks.OAK_HANGING_SIGN.asItem()
+					),
+					"normal wall hanging sign interactions must retain vanilla chaining"
+			);
+
+			EasyPlaceUtils.setHandling(true);
+
 			check(
 					CandleRules.shouldAllowUnsupportedPlacement(Blocks.CANDLE.defaultBlockState()),
 					"easy-place and printer candle interactions must allow unsupported placement"
@@ -64,6 +68,7 @@ public final class EasyPlacePrinterStateTest extends EasyPlaceTestSupport
 		finally
 		{
 			EasyPlaceUtils.setHandling(false);
+			TriWasaConfigs.BETTER_EASY_PLACE.setBooleanValue(easyPlace);
 		}
 	}
 

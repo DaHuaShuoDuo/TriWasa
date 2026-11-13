@@ -67,9 +67,9 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 			));
 			return wrappers;
 		}
-		if(currentTab == Tab.PORTING)
+		if(currentTab == Tab.LITEMATICA)
 		{
-			return ConfigOptionWrapper.createFor(TriWasaConfigs.PORTING_OPTIONS);
+			return ConfigOptionWrapper.createFor(TriWasaConfigs.LITEMATICA_OPTIONS);
 		}
 		if(currentTab == Tab.UTILITIES)
 		{
@@ -100,7 +100,7 @@ public final class TriWasaConfigGui extends GuiConfigsBase
 	private enum Tab
 	{
 		ALL("triwasa.gui.config_category.all"),
-		PORTING("triwasa.gui.config_category.porting"),
+		LITEMATICA("triwasa.gui.config_category.litematica"),
 		UTILITIES("triwasa.gui.config_category.utilities"),
 		OTHER_MOD_FIXES("triwasa.gui.config_category.other_mod_fixes");
 

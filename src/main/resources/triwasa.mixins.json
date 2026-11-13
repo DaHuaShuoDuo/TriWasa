@@ -36,6 +36,8 @@
 		"bettereasyplace.BetterEasyPlaceWallHangingSignMixin",
 		"bettereasyplace.BetterEasyPlaceSchematicHitboxMixin",
 		"bettereasyplace.BetterEasyPlaceLegacyTraceScopeMixin",
+		"bettereasyplace.BetterEasyPlaceOutlineMixin",
+		"bettereasyplace.BetterEasyPlaceOutlineGateMixin",
 		"EasyPlaceV3Mixin",
 		"EasyPlaceWorldUtilsCallSiteMixin",
 		"InventoryProfilesNextContainerScreenMixin",

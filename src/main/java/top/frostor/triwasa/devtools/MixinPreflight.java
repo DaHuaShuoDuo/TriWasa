@@ -8,6 +8,8 @@ public final class MixinPreflight
 			"net.minecraft.world.item.BlockItem",
 			"net.minecraft.world.item.HangingSignItem",
 			"net.minecraft.client.multiplayer.MultiPlayerGameMode",
+			"net.minecraft.client.renderer.GameRenderer",
+			"net.minecraft.client.renderer.extract.LevelExtractor",
 			"net.minecraft.world.level.block.BaseRailBlock",
 			"net.minecraft.world.level.block.DetectorRailBlock",
 			"net.minecraft.world.level.block.FenceGateBlock",

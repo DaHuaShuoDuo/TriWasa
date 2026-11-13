@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.NonNullList;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
@@ -20,18 +21,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Restocks the selected hotbar item from carried shulker boxes.
+ * Restocks the held item from carried shulker boxes.
  *
  * <p>This follows Tweakeroo's hand-restock target semantics: the item already held by
- * the player is replenished after a main-hand right-click use reduces it to the configured
- * low-water mark. Other ways of reducing the stack, such as moving it into a container, do
- * not trigger a restock. It does not consult a schematic material list. Quick Shulker is
- * used only to open a matching carried box; TriWasa owns the menu confirmation, hotbar
- * swap, timeout and recovery.</p>
+ * the player is replenished after a right-click use reduces it to the configured low-water
+ * mark. Other ways of reducing the stack, such as moving it into a container, do not trigger
+ * a restock. It does not consult a schematic material list. Quick Shulker is used only to open
+ * a matching carried box; TriWasa owns the menu confirmation, hand swap, timeout and
+ * recovery.</p>
+ *
+ * <p>The offhand is handled as a separate opt-in switch. Its target is the vanilla offhand
+ * inventory slot, which {@link ContainerInput#SWAP} addresses with button
+ * {@code Inventory.SLOT_OFFHAND}, so the same swap path covers both hands.</p>
  */
 public final class QuickShulkerHandRestock
 {
 	private static final int SHULKER_SLOT_COUNT = 27;
+	private static final int OFFHAND_SLOT = Inventory.SLOT_OFFHAND;
 	private static final int OPEN_TIMEOUT_TICKS = 80;
 	private static final int SWAP_TIMEOUT_TICKS = 40;
 	private static final int RETRY_DELAY_TICKS = 20;
@@ -41,10 +47,11 @@ public final class QuickShulkerHandRestock
 	private static RestockSession session;
 	private static boolean rightClickUseArmed;
 	private static ItemStack previousMainHand = ItemStack.EMPTY;
+	private static ItemStack previousOffHand = ItemStack.EMPTY;
 	private static int previousHotbarSlot = -1;
 	private static ItemStack pendingTarget = ItemStack.EMPTY;
 	private static ItemStack pendingResidue = ItemStack.EMPTY;
-	private static int pendingHotbarSlot = -1;
+	private static int pendingTargetSlot = -1;
 	private static int retryDelay;
 	private static int automaticAttempts;
 
@@ -75,7 +82,12 @@ public final class QuickShulkerHandRestock
 			rightClickUseArmed = false;
 			return;
 		}
-		rightClickUseArmed = !player.getMainHandItem().isEmpty();
+
+		// Do not require a non-empty hand here. Consuming the last item empties the hand in the
+		// same tick in which startUseItem runs again, so looking at the hand would clear the flag
+		// before tick() could observe the 1 -> 0 consumption. An empty or unchanged hand simply
+		// fails the snapshot comparison in tick() and clears the flag there.
+		rightClickUseArmed = true;
 	}
 
 	public static boolean shouldSuppressScreen(Screen screen)
@@ -108,18 +120,28 @@ public final class QuickShulkerHandRestock
 			return;
 		}
 
-		ItemStack current = player.getMainHandItem();
-		int selectedHotbarSlot = player.getInventory().getSelectedSlot();
 		int threshold = TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK_THRESHOLD.getIntegerValue();
-		boolean shouldRestock = shouldRestock(current, selectedHotbarSlot, threshold);
-		ItemStack target = previousHotbarSlot == selectedHotbarSlot ? previousMainHand : current;
-		if(shouldRestock)
+		int mainSlot = player.getInventory().getSelectedSlot();
+		ItemStack mainStack = player.getMainHandItem();
+		ItemStack mainPrevious = previousHotbarSlot == mainSlot ? previousMainHand : mainStack;
+		ItemStack offhandStack = player.getOffhandItem();
+		int restockSlot = QuickShulkerRestockLogic.selectRestockSlot(
+				shouldRestock(mainStack, mainPrevious, previousHotbarSlot == mainSlot, threshold),
+				mainSlot,
+				isOffhandEnabled(),
+				shouldRestock(offhandStack, previousOffHand, true, threshold)
+		);
+
+		if(restockSlot >= 0)
 		{
+			boolean offhand = restockSlot == OFFHAND_SLOT;
+			ItemStack current = offhand ? offhandStack : mainStack;
+			ItemStack target = offhand ? previousOffHand : mainPrevious;
 			pendingTarget = target.copy();
 			pendingResidue = QuickShulkerRestockLogic.isRemainderOf(target, current)
 					? current.copy()
 					: ItemStack.EMPTY;
-			pendingHotbarSlot = selectedHotbarSlot;
+			pendingTargetSlot = restockSlot;
 			retryDelay = 0;
 			automaticAttempts = 0;
 			rightClickUseArmed = false;
@@ -128,8 +150,9 @@ public final class QuickShulkerHandRestock
 		{
 			rightClickUseArmed = false;
 		}
-		previousMainHand = current.copy();
-		previousHotbarSlot = selectedHotbarSlot;
+		previousMainHand = mainStack.copy();
+		previousOffHand = offhandStack.copy();
+		previousHotbarSlot = mainSlot;
 
 		if(!canStart(player))
 		{
@@ -138,35 +161,51 @@ public final class QuickShulkerHandRestock
 		tickPendingRestock(player, threshold);
 	}
 
-	private static boolean shouldRestock(ItemStack current, int selectedHotbarSlot, int threshold)
+	private static boolean isOffhandEnabled()
 	{
-		if(!rightClickUseArmed || previousMainHand.isEmpty() || previousHotbarSlot != selectedHotbarSlot)
+		return TriWasaConfigs.QUICK_SHULKER_OFFHAND_RESTOCK.getBooleanValue();
+	}
+
+	private static boolean shouldRestock(
+			ItemStack current,
+			ItemStack previous,
+			boolean sameSlot,
+			int threshold
+	)
+	{
+		if(!rightClickUseArmed || previous.isEmpty() || !sameSlot)
 		{
 			return false;
 		}
-		boolean reachesThreshold = previousMainHand.getCount() <= threshold;
+		// Compare the post-use count as well, so reaching the threshold itself restocks instead of
+		// waiting for one more consumption.
+		boolean reachesThreshold = previous.getCount() <= threshold
+				|| current.getCount() <= threshold;
 		if(current.isEmpty())
 		{
 			return reachesThreshold;
 		}
-		if(QuickShulkerRestockLogic.isRemainderOf(previousMainHand, current))
+		if(QuickShulkerRestockLogic.isRemainderOf(previous, current))
 		{
 			return reachesThreshold;
 		}
-		if(!ItemStack.isSameItemSameComponents(previousMainHand, current))
+		if(!ItemStack.isSameItemSameComponents(previous, current))
 		{
 			return false;
 		}
-		return current.getCount() < previousMainHand.getCount() && current.getCount() <= threshold;
+		return current.getCount() < previous.getCount() && current.getCount() <= threshold;
 	}
 
 	private static boolean canStart(LocalPlayer player)
 	{
+		// isUsingItem is deliberately not checked: when the use key is held down, the next
+		// consumption starts in the same tick the previous one finishes, so the client is
+		// effectively always "using" while eating a stack. Opening the box below interrupts the
+		// current use, which is what the player expects once the stack hits the threshold.
 		if(!TriWasaConfigs.QUICK_SHULKER_HAND_RESTOCK.getBooleanValue()
 				|| !QuickShulkerBridge.isLoaded()
 				|| player.isSpectator()
 				|| player.getAbilities().instabuild
-				|| player.isUsingItem()
 				|| CLIENT.gui.screen() != null
 				|| player.containerMenu != player.inventoryMenu
 				|| !player.containerMenu.getCarried().isEmpty())
@@ -180,11 +219,11 @@ public final class QuickShulkerHandRestock
 			LocalPlayer player,
 			ItemStack target,
 			ItemStack slotStack,
-			int selectedHotbarSlot,
+			int targetSlot,
 			ItemStack residue
 	)
 	{
-		if(hasMatchingInventoryReserve(player, target, selectedHotbarSlot))
+		if(hasMatchingInventoryReserve(player, target, targetSlot))
 		{
 			return false;
 		}
@@ -196,16 +235,24 @@ public final class QuickShulkerHandRestock
 				player,
 				target,
 				currentCount,
-				selectedHotbarSlot
+				targetSlot
 		);
 		if(candidate == null)
 		{
 			return false;
 		}
 
+		// We are about to touch a container while the player may still be holding the use key,
+		// so release the running use first; otherwise the client would keep eating while the box
+		// opens and the two state machines would fight each other.
+		if(player.isUsingItem())
+		{
+			player.stopUsingItem();
+		}
+
 		if(!residue.isEmpty() && hasBackpackCapacity(player, residue))
 		{
-			int residueMenuSlot = findInventoryMenuSlot(player.inventoryMenu, selectedHotbarSlot);
+			int residueMenuSlot = findInventoryMenuSlot(player.inventoryMenu, targetSlot);
 			if(residueMenuSlot < 0)
 			{
 				return false;
@@ -220,7 +267,7 @@ public final class QuickShulkerHandRestock
 			);
 			session = new RestockSession(
 					target.copy(),
-					selectedHotbarSlot,
+					targetSlot,
 					candidate.expectedContents(),
 					residue.copy(),
 					candidate.shulkerStack(),
@@ -237,7 +284,7 @@ public final class QuickShulkerHandRestock
 
 		session = new RestockSession(
 				target.copy(),
-				selectedHotbarSlot,
+				targetSlot,
 				candidate.expectedContents(),
 				residue.copy(),
 				candidate.shulkerStack(),
@@ -245,21 +292,21 @@ public final class QuickShulkerHandRestock
 				false
 		);
 		TriWasa.LOGGER.debug(
-				"[QuickShulkerRestock] Opening shulker for {} in hotbar slot {}",
+				"[QuickShulkerRestock] Opening shulker for {} in slot {}",
 				target.getItem(),
-				selectedHotbarSlot
+				targetSlot
 		);
 		return true;
 	}
 
 	private static void tickPendingRestock(LocalPlayer player, int threshold)
 	{
-		if(pendingTarget.isEmpty() || pendingHotbarSlot < 0 || retryDelay > 0)
+		if(pendingTarget.isEmpty() || pendingTargetSlot < 0 || retryDelay > 0)
 		{
 			return;
 		}
 
-		ItemStack slotStack = player.getInventory().getItem(pendingHotbarSlot);
+		ItemStack slotStack = player.getInventory().getItem(pendingTargetSlot);
 		if(!slotStack.isEmpty())
 		{
 			boolean matchesTarget = ItemStack.isSameItemSameComponents(pendingTarget, slotStack);
@@ -277,7 +324,7 @@ public final class QuickShulkerHandRestock
 				player,
 				pendingTarget,
 				slotStack,
-				pendingHotbarSlot,
+				pendingTargetSlot,
 				pendingResidue
 		);
 		if(started)
@@ -300,12 +347,12 @@ public final class QuickShulkerHandRestock
 	private static boolean hasMatchingInventoryReserve(
 			LocalPlayer player,
 			ItemStack target,
-			int selectedHotbarSlot
+			int targetSlot
 	)
 	{
 		for(int slot = 0; slot < player.getInventory().getContainerSize(); slot++)
 		{
-			if(slot == selectedHotbarSlot)
+			if(slot == targetSlot)
 			{
 				continue;
 			}
@@ -375,7 +422,7 @@ public final class QuickShulkerHandRestock
 			LocalPlayer player,
 			ItemStack target,
 			int currentCount,
-			int selectedHotbarSlot
+			int targetSlot
 	)
 	{
 		ShulkerCandidate best = null;
@@ -383,7 +430,7 @@ public final class QuickShulkerHandRestock
 
 		for(int inventorySlot = 0; inventorySlot < player.getInventory().getContainerSize(); inventorySlot++)
 		{
-			if(inventorySlot == selectedHotbarSlot)
+			if(inventorySlot == targetSlot)
 			{
 				continue;
 			}
@@ -466,7 +513,8 @@ public final class QuickShulkerHandRestock
 
 	private static void tickBackpackMove(LocalPlayer player, RestockSession active)
 	{
-		if(player.getInventory().getSelectedSlot() != active.selectedHotbarSlot
+		if((active.targetSlot != OFFHAND_SLOT
+				&& player.getInventory().getSelectedSlot() != active.targetSlot)
 				|| player.containerMenu != player.inventoryMenu
 				|| !player.containerMenu.getCarried().isEmpty()
 				|| CLIENT.gui.screen() != null)
@@ -477,7 +525,7 @@ public final class QuickShulkerHandRestock
 
 		// Do not open the shulker in the same tick as the backpack QUICK_MOVE. Otherwise the
 		// first menu can open against unsettled state, fail to restock, and only work on retry.
-		ItemStack selectedStack = player.getInventory().getItem(active.selectedHotbarSlot);
+		ItemStack selectedStack = player.getInventory().getItem(active.targetSlot);
 		if(!selectedStack.isEmpty())
 		{
 			if(!ItemStack.isSameItemSameComponents(active.residue, selectedStack))
@@ -495,7 +543,7 @@ public final class QuickShulkerHandRestock
 
 		if(!QuickShulkerBridge.open(active.shulkerStack, active.shulkerMenuSlot))
 		{
-			queueRestockRetry(active.target, active.selectedHotbarSlot);
+			queueRestockRetry(active.target, active.targetSlot);
 			session = null;
 			return;
 		}
@@ -506,11 +554,11 @@ public final class QuickShulkerHandRestock
 		active.ticksWaiting = 0;
 	}
 
-	private static void queueRestockRetry(ItemStack target, int selectedHotbarSlot)
+	private static void queueRestockRetry(ItemStack target, int targetSlot)
 	{
 		pendingTarget = target.copy();
 		pendingResidue = ItemStack.EMPTY;
-		pendingHotbarSlot = selectedHotbarSlot;
+		pendingTargetSlot = targetSlot;
 		retryDelay = RETRY_DELAY_TICKS;
 		automaticAttempts = Math.max(1, automaticAttempts);
 		resetTracking();
@@ -577,12 +625,17 @@ public final class QuickShulkerHandRestock
 			return;
 		}
 
-		if(slotMatches(menu, active.targetMenuSlot, active.expectedTargetAfter)
-				&& slotMatches(menu, active.sourceMenuSlot, active.expectedSourceAfter))
+		boolean targetMatches = active.targetSlot == OFFHAND_SLOT
+				? ItemStack.matches(
+						active.expectedTargetAfter,
+						player.getInventory().getItem(OFFHAND_SLOT))
+				: slotMatches(menu, active.targetMenuSlot, active.expectedTargetAfter);
+
+		if(targetMatches && slotMatches(menu, active.sourceMenuSlot, active.expectedSourceAfter))
 		{
 			TriWasa.LOGGER.debug(
-					"[QuickShulkerRestock] Restocked hotbar slot {} from a shulker box",
-					active.selectedHotbarSlot
+					"[QuickShulkerRestock] Restocked slot {} from a shulker box",
+					active.targetSlot
 			);
 			finishSession(player);
 			return;
@@ -590,13 +643,21 @@ public final class QuickShulkerHandRestock
 
 		if(++active.ticksWaiting > SWAP_TIMEOUT_TICKS)
 		{
-			TriWasa.LOGGER.debug("[QuickShulkerRestock] Timed out waiting for the hotbar swap");
+			TriWasa.LOGGER.debug("[QuickShulkerRestock] Timed out waiting for the hand swap");
 			abortSession(true);
 		}
 	}
 
 	private static void tickResidueInShulker(AbstractContainerMenu menu, RestockSession active)
 	{
+		// The offhand slot is not part of the shulker menu, so an offhand remainder is always
+		// moved into the inventory before the box is opened (see startRestock).
+		if(active.targetMenuSlot < 0)
+		{
+			active.residueCleared = true;
+			return;
+		}
+
 		ItemStack current = menu.slots.get(active.targetMenuSlot).getItem();
 		if(current.isEmpty())
 		{
@@ -654,13 +715,18 @@ public final class QuickShulkerHandRestock
 		}
 
 		int sourceMenuSlot = findLargestMatchingSlot(menu, active.target);
-		int targetMenuSlot = findInventoryMenuSlot(menu, active.selectedHotbarSlot);
-		if(sourceMenuSlot < 0 || targetMenuSlot < 0)
+		boolean offhand = active.targetSlot == OFFHAND_SLOT;
+		int targetMenuSlot = offhand ? -1 : findInventoryMenuSlot(menu, active.targetSlot);
+		if(sourceMenuSlot < 0 || (!offhand && targetMenuSlot < 0))
 		{
 			return false;
 		}
 
-		ItemStack targetStack = menu.slots.get(targetMenuSlot).getItem();
+		// The offhand slot is not part of a shulker menu, so its current content has to be read
+		// from the inventory instead of a menu slot.
+		ItemStack targetStack = offhand
+				? player.getInventory().getItem(OFFHAND_SLOT)
+				: menu.slots.get(targetMenuSlot).getItem();
 		boolean matchesTarget = ItemStack.isSameItemSameComponents(active.target, targetStack);
 		boolean matchesResidue = !active.residue.isEmpty()
 				&& ItemStack.isSameItemSameComponents(active.residue, targetStack);
@@ -696,10 +762,11 @@ public final class QuickShulkerHandRestock
 
 	private static void sendSwap(LocalPlayer player, AbstractContainerMenu menu, RestockSession active)
 	{
-		ItemStack slotStack = player.getInventory().getItem(active.selectedHotbarSlot);
-		if(!menu.getCarried().isEmpty()
-				|| (!slotStack.isEmpty()
-				&& !ItemStack.isSameItemSameComponents(active.target, slotStack)))
+		ItemStack slotStack = player.getInventory().getItem(active.targetSlot);
+		boolean acceptable = slotStack.isEmpty()
+				|| ItemStack.isSameItemSameComponents(active.target, slotStack)
+				|| QuickShulkerRestockLogic.isRemainderOf(active.target, slotStack);
+		if(!menu.getCarried().isEmpty() || acceptable == false)
 		{
 			abortSession(true);
 			return;
@@ -709,10 +776,14 @@ public final class QuickShulkerHandRestock
 		active.ticksWaiting = 0;
 		active.expectedSourceAfter = slotStack.copy();
 		active.expectedTargetAfter = menu.slots.get(active.sourceMenuSlot).getItem().copy();
+
+		// A button of 40 is the vanilla offhand swap (the F key in a container); the server
+		// applies it to the player inventory directly, so it works inside a shulker menu even
+		// though that menu has no offhand slot.
 		CLIENT.gameMode.handleContainerInput(
 				menu.containerId,
 				active.sourceMenuSlot,
-				active.selectedHotbarSlot,
+				active.targetSlot,
 				ContainerInput.SWAP,
 				player
 		);
@@ -744,7 +815,7 @@ public final class QuickShulkerHandRestock
 		// Read the hand before closing the container; closing can replace the active menu.
 		if(retry && active != null && player != null)
 		{
-			ItemStack current = player.getInventory().getItem(active.selectedHotbarSlot);
+			ItemStack current = player.getInventory().getItem(active.targetSlot);
 			if(!current.isEmpty() && QuickShulkerRestockLogic.isRemainderOf(active.target, current))
 			{
 				retryResidue = current.copy();
@@ -759,7 +830,7 @@ public final class QuickShulkerHandRestock
 		{
 			pendingTarget = active.target.copy();
 			pendingResidue = retryResidue;
-			pendingHotbarSlot = active.selectedHotbarSlot;
+			pendingTargetSlot = active.targetSlot;
 			retryDelay = RETRY_DELAY_TICKS;
 			automaticAttempts = Math.max(1, automaticAttempts);
 		}
@@ -775,7 +846,7 @@ public final class QuickShulkerHandRestock
 	{
 		pendingTarget = ItemStack.EMPTY;
 		pendingResidue = ItemStack.EMPTY;
-		pendingHotbarSlot = -1;
+		pendingTargetSlot = -1;
 		retryDelay = 0;
 		automaticAttempts = 0;
 	}
@@ -784,6 +855,7 @@ public final class QuickShulkerHandRestock
 	{
 		rightClickUseArmed = false;
 		previousMainHand = ItemStack.EMPTY;
+		previousOffHand = ItemStack.EMPTY;
 		previousHotbarSlot = -1;
 	}
 
@@ -805,7 +877,7 @@ public final class QuickShulkerHandRestock
 	private static final class RestockSession
 	{
 		private final ItemStack target;
-		private final int selectedHotbarSlot;
+		private final int targetSlot;
 		private final List<ItemStack> expectedContents;
 		private ItemStack residue;
 		private final ItemStack shulkerStack;
@@ -824,7 +896,7 @@ public final class QuickShulkerHandRestock
 
 		private RestockSession(
 				ItemStack target,
-				int selectedHotbarSlot,
+				int targetSlot,
 				List<ItemStack> expectedContents,
 				ItemStack residue,
 				ItemStack shulkerStack,
@@ -833,7 +905,7 @@ public final class QuickShulkerHandRestock
 		)
 		{
 			this.target = target;
-			this.selectedHotbarSlot = selectedHotbarSlot;
+			this.targetSlot = targetSlot;
 			this.expectedContents = expectedContents;
 			this.residue = residue;
 			this.shulkerStack = shulkerStack;

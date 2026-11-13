@@ -136,6 +136,13 @@ public final class EasyPlaceClientNetwork
 
 		wasEnabled = true;
 		Minecraft client = Minecraft.getInstance();
+
+		if(client == null)
+		{
+			helloPending = false;
+			return;
+		}
+
 		helloPending = client.player != null && client.getConnection() != null;
 		if(helloPending)
 		{

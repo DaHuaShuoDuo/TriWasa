@@ -2,7 +2,10 @@ package top.frostor.triwasa.easyplace;
 
 import fi.dy.masa.litematica.util.EasyPlaceUtils;
 import fi.dy.masa.litematica.world.WorldSchematic;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import top.frostor.triwasa.config.TriWasaConfigs;
@@ -18,15 +21,20 @@ public final class SchematicSelectionBoost
 {
 	private static final ThreadLocal<Integer> TRACE_DEPTH = ThreadLocal.withInitial(() -> 0);
 	private static final ThreadLocal<Integer> LEGACY_DEPTH = ThreadLocal.withInitial(() -> 0);
+	private static final ThreadLocal<Integer> QUERY_DEPTH = ThreadLocal.withInitial(() -> 0);
 
 	private SchematicSelectionBoost()
 	{
 	}
 
+	/**
+	 * Standalone feature switch. It deliberately does not depend on betterEasyPlace: the boost is
+	 * a self contained ray trace change and must stay usable while the other placement
+	 * corrections are off.
+	 */
 	public static boolean isEnabled()
 	{
-		return EasyPlaceRules.isEnabled()
-				&& TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION.getBooleanValue();
+		return TriWasaConfigs.EASY_PLACE_FULL_BLOCK_SELECTION.getBooleanValue();
 	}
 
 	/**
@@ -89,23 +97,94 @@ public final class SchematicSelectionBoost
 		return TRACE_DEPTH.get() > 0;
 	}
 
-	public static VoxelShape expand(VoxelShape original)
+	/**
+	 * Marks the read only preview trace used to draw the target outline. It does not depend on
+	 * the easy place handling flag, which is only set while a click is being processed.
+	 */
+	public static void enterQuery()
 	{
-		return expandShape(original, isScoped());
+		if(isEnabled())
+		{
+			QUERY_DEPTH.set(QUERY_DEPTH.get() + 1);
+		}
+	}
+
+	public static void exitQuery()
+	{
+		if(isEnabled() == false)
+		{
+			return;
+		}
+
+		int depth = QUERY_DEPTH.get() - 1;
+		if(depth <= 0)
+		{
+			QUERY_DEPTH.remove();
+		}
+		else
+		{
+			QUERY_DEPTH.set(depth);
+		}
+	}
+
+	public static VoxelShape expand(VoxelShape original, BlockPos pos, BlockState schematicState)
+	{
+		if(isScoped() == false || original.isEmpty())
+		{
+			return original;
+		}
+
+		return expandShape(
+				original,
+				true,
+				isStateCorrect(pos, schematicState, Minecraft.getInstance().level)
+		);
 	}
 
 	/**
-	 * Air and other shapes without an outline stay untouchable, so the boost can never turn an
-	 * empty schematic position into a valid click target.
+	 * Empty shapes never become click targets, and blocks that already match the schematic keep
+	 * their real outline: there is nothing to place there, so enlarging their hit box would only
+	 * steal the click from neighbouring positions.
 	 */
-	public static VoxelShape expandShape(VoxelShape original, boolean active)
+	public static VoxelShape expandShape(
+			VoxelShape original,
+			boolean active,
+			boolean stateCorrect
+	)
 	{
-		if(active == false || original.isEmpty())
+		if(active == false || stateCorrect || original.isEmpty())
 		{
 			return original;
 		}
 
 		return Shapes.block();
+	}
+
+	public static boolean isStateCorrect(
+			BlockPos pos,
+			BlockState schematicState,
+			Level clientLevel
+	)
+	{
+		if(clientLevel == null)
+		{
+			return false;
+		}
+
+		return isSameBlockState(clientLevel.getBlockState(pos), schematicState);
+	}
+
+	/**
+	 * Mirrors Litematica's own "nothing to place here" check in
+	 * {@code EasyPlaceUtils#handleEasyPlace}: it compares the two {@code BlockState} references
+	 * with {@code ==} ({@code if_acmpeq}). There is no public Litematica helper for it, and the
+	 * property-loop comparison used by the wall neighbour protection must NOT be reused here:
+	 * that one deliberately ignores WATERLOGGED for update suppression, which would classify a
+	 * block Litematica still wants to place as already correct.
+	 */
+	public static boolean isSameBlockState(BlockState actual, BlockState projected)
+	{
+		return actual != null && projected != null && actual == projected;
 	}
 
 	private static boolean shouldBoost(Level level)
@@ -115,6 +194,6 @@ public final class SchematicSelectionBoost
 
 	private static boolean isEasyPlaceContext()
 	{
-		return EasyPlaceUtils.isHandling() || LEGACY_DEPTH.get() > 0;
+		return EasyPlaceUtils.isHandling() || LEGACY_DEPTH.get() > 0 || QUERY_DEPTH.get() > 0;
 	}
 }
