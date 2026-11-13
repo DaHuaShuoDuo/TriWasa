@@ -297,10 +297,22 @@ PR 始终运行变更分类和 `CI Gate`；只有构建相关文件变化时才�
 
 ### 发布构建
 
-在 GitHub Actions 中手动运行 **Release Build**。工作流会按
-`gradle.properties` 中的 `mod_version` 和 `fca_version` 检出对应的 FCA 标签，
-构建 26.2、26.3 两个版本，并上传一个包含两个 JAR、`SHA256SUMS.txt` 和
-`BUILD-INFO.txt` 的 `triwasa-<version>` Actions artifact，供创建 Release 使用。
+发布以 GitHub Release 为入口。创建并发布标签为 `v<mod_version>` 的 Release 后，
+`Release Build` 会校验 `mod_version`，按 `fca_version` 检出匹配的 FCA 标签，
+构建并测试 26.2、26.3 两个版本，再分别发布到 Modrinth 和 CurseForge。平台版本号
+使用 `<mod_version>+<Minecraft 版本>`，GitHub Release 正文会作为更新日志。
+
+手动运行 **Release Build** 仍可只生成包含两个 JAR、`SHA256SUMS.txt` 和
+`BUILD-INFO.txt` 的 `triwasa-<version>` Actions artifact。需要重试已有 Release 时，
+输入完整 `release_tag` 并启用 `publish`。
+
+首次启用前需要创建对应的 Modrinth 与 CurseForge 项目，并在 GitHub 仓库设置中配置：
+
+- Actions variables：`MODRINTH_PROJECT_ID`、`CURSEFORGE_PROJECT_ID`
+- Actions secrets：`MODRINTH_TOKEN`、`CURSEFORGE_TOKEN`
+
+令牌不会写入仓库。TriWasa 发布应使用与 `fca_version` 对应的 FCA Release，确保
+两个仓库的协议版本匹配。
 
 ## 许可证与第三方来源
 
