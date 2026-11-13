@@ -19,8 +19,8 @@ on a dedicated server.
 
 | Minecraft | Fabric Loader | Fabric API | MaLiLib | Litematica |
 | --- | --- | --- | --- | --- |
-| 26.2 | >= 0.19.3 | >= 0.152.1 | >= 0.29.5 | >= 0.28.6 < 0.29.0 |
-| 26.3 | >= 0.19.5 | >= 0.160.5 | >= 0.30.2 | >= 0.29.1 < 0.30.0 |
+| 26.2 | >= 0.19.3 | >= 0.145.4 | >= 0.29.4 | >= 0.28.3 < 0.29.0 |
+| 26.3 | >= 0.19.5 | >= 0.153.1 | >= 0.30.1 | >= 0.29.0 < 0.30.0 |
 
 TriWasa requires Java 25. Install the build matching your Minecraft version.
 
