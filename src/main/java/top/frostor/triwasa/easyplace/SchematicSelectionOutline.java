@@ -71,6 +71,14 @@ public final class SchematicSelectionOutline
 		Minecraft minecraft = Minecraft.getInstance();
 		WorldSchematic schematic = SchematicWorldHandler.getSchematicWorld();
 
+		// F1 hides the HUD, and vanilla folds that into shouldRenderBlockOutline(). Keep the
+		// same behaviour: no target box at all while the HUD is hidden.
+		if(minecraft.gui.hud.isHidden())
+		{
+			note("HUD is hidden, keeping the vanilla outline behaviour");
+			return null;
+		}
+
 		if(minecraft.level == null || minecraft.player == null || schematic == null)
 		{
 			note("no level, player or schematic world");
