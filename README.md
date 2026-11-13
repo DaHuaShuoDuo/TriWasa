@@ -15,8 +15,8 @@ V2-Extra 轻松放置、更好的轻松放置、更好的打印机、大末影�
 
 | Minecraft | Fabric Loader | Fabric API | MaLiLib | Litematica |
 | --- | --- | --- | --- | --- |
-| 26.2 | >= 0.19.3 | >= 0.152.1 | >= 0.29.5 | >= 0.28.6 < 0.29.0 |
-| 26.3 | >= 0.19.5 | >= 0.160.5 | >= 0.30.2 | >= 0.29.1 < 0.30.0 |
+| 26.2 | >= 0.19.3 | >= 0.145.4 | >= 0.29.4 | >= 0.28.3 < 0.29.0 |
+| 26.3 | >= 0.19.5 | >= 0.153.1 | >= 0.30.1 | >= 0.29.0 < 0.30.0 |
 
 项目要求 Java 25。必须选择与 Minecraft 版本对应的 TriWasa 构建。
 
@@ -113,7 +113,7 @@ packet 位置与编码锚点相差一格，框架会在入队到 `useProtocolHit
 为锚点，`AUXILIARY_SCHEMA`、`WALL_AUXILIARY_SCHEMA`、`WALL_UP` 三位随 X payload 的
 bit8-10 一起发送。偏移 `2 + 2*payload ≤ 2^25` 且恒为偶数，binary32 在该区间 ULP 为 2，
 可以逐位还原；未确认时继续使用 legacy 固定原点布局。该 Z 通道契约要求 TriWasa 与 FCA 同版本号配套使用，混用版本时铁轨、墙、observer
-和 TNT 保护位会被静默丢弃。26.2/26.3 放置语义统一：两版依赖的 Litematica 不同（0.28.6 / 0.29.1），且 26.3 把
+和 TNT 保护位会被静默丢弃。26.2/26.3 放置语义统一：两版对应的 Litematica 系列不同（26.2 为 0.28.x，26.3 为 0.29.x），且 26.3 把
 `ServerboundUseItemOnPacket` 改为 record，命中位置经 `BlockHitResult.STREAM_CODEC` 以
 **相对 `blockPos` 的 float** 传输。wire 的 X/Y/Z 只承认 packet `blockPos` 一个锚点：
 `BellRules.resolveProtocolTarget` 等解析出的 `protocolPos` 只用于读取投影与当前世界状态，

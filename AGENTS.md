@@ -65,8 +65,8 @@ $env:JAVA_HOME = '<JDK 25 installation>'
 
 | Minecraft | Fabric Loader | Fabric API | MaLiLib | Litematica |
 | --- | --- | --- | --- | --- |
-| 26.2 | >= 0.19.3 | >= 0.152.1 | >= 0.29.5 | >= 0.28.6 < 0.29.0 |
-| 26.3 | >= 0.19.5 | >= 0.160.5 | >= 0.30.2 | >= 0.29.1 < 0.30.0 |
+| 26.2 | >= 0.19.3 | >= 0.145.4 | >= 0.29.4 | >= 0.28.3 < 0.29.0 |
+| 26.3 | >= 0.19.5 | >= 0.153.1 | >= 0.30.1 | >= 0.29.0 < 0.30.0 |
 
 - 根 `gradle.properties` 管共享属性（模组/FCA 版本、group、产物前缀、Loom 版本）；
   Minecraft、Loader、Fabric API、MaLiLib、Litematica、REI 和 Cloth Config 版本由
@@ -79,6 +79,17 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   FCA 编译输入和双版本构建验证。
 - 修改运行时依赖范围后，必须检查生成的两个 `fabric.mod.json`，确认环境为 `client`
   且依赖边界没有变化。
+- 上表中的下限是"实测可编译的最低版本"，不等于 `*_version` 编译基线。编译基线保持
+  26.2 用 MaLiLib 0.29.5 / Litematica 0.28.6、26.3 用 MaLiLib 0.30.2 / Litematica
+  0.29.1；这样既不会通过新 API 悄悄抬高实际需求，也能让 CI 稳定复现。
+- 调整依赖下限前，必须用该版本的 jar 实际编译一次对应版本模块。Maven 上没有的版本
+  （例如 Litematica 0.28.3）可用 `-Pmalilib_local_file=` / `-Plitematica_local_file=`
+  指向 `libs/` 下的本地 jar，并确认 Mixin 目标类（如
+  `fi.dy.masa.litematica.util.EasyPlaceUtils$PlacementProtocolData`）仍然存在。
+- MaLiLib 下限同时受 Litematica 自身声明约束：Litematica 0.28.3/0.28.4 要求 MaLiLib
+  `>=0.29.2`，0.28.5 要求 `>=0.29.4`，0.28.6 起要求 `>=0.29.5`；26.3 的 0.29.0 要求
+  `>=0.30.1`。TriWasa 自身则用到 `addConfigComment(int,int,int,int,MutableComponent)`
+  （MaLiLib 0.29.4 引入），因此 0.29.4 是当前代码能支持的最低 MaLiLib。
 
 ## FCA 协议边界
 
@@ -125,7 +136,7 @@ $env:JAVA_HOME = '<JDK 25 installation>'
   与 `easy_place_y_precision` 时才计算掩码；掩码为零时 Y 必须与纯精度编码逐位一致。
   掩码 bit0 是放置目标，bit1-6 是匹配的面邻居，bit7-11 是五个 QC 二跳目标；投影中的
   `EXTENDED` 不得参与状态恢复或比较。
-- 26.2/26.3 放置语义必须统一：两版分别依赖 Litematica 0.28.6 / 0.29.1，且 26.3 的
+- 26.2/26.3 放置语义必须统一：两版分别对应 Litematica 0.28.x / 0.29.x，且 26.3 的
   `ServerboundUseItemOnPacket` 是 record，命中位置以相对 `blockPos` 的 float 传输。wire 的
   X/Y/Z 只承认 packet `BlockHitResult.blockPos` 一个锚点；`resolveProtocolTarget` 一类的
   `protocolPos` 仅用于读投影/世界状态，禁止进入 `encodeX`/`encodeY`。printer 点击支撑方块
